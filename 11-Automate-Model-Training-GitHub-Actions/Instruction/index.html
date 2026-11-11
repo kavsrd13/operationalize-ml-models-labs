@@ -50,6 +50,7 @@
 <li><strong>Login failed:</strong> compare the OIDC credential&#x27;s exact <code>repo:...:ref:refs/heads/main</code> subject with your GitHub repository and branch; check client, tenant, and subscription IDs.</li>
 <li><strong>Resource check failed:</strong> run exercise 00 again with <code>--create-cluster</code>, verify the same workspace variables, and check the OIDC identity&#x27;s workspace role.</li>
 <li><strong>Training failed:</strong> open the Azure ML job link or job name in Studio and read <code>user_logs/std_log.txt</code>. The workflow reports the actual Azure ML final status.</li>
+<li><strong>Log streaming says <code>Incorrect padding</code>:</strong> inspect the final <code>Status</code> in the workflow summary. The workflow checks Azure ML status separately, so a local log-stream error alone does not mark a completed training job as failed.</li>
 </ul>
 <h2>Validation status</h2>
 <p>The workflow and YAML are checked locally. The GitHub OIDC run requires each learner&#x27;s own repository identity and has not yet been executed in GitHub Actions.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

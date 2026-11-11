@@ -88,6 +88,9 @@ explains the matching repository subject.
   same workspace variables, and check the OIDC identity's workspace role.
 - **Training failed:** open the Azure ML job link or job name in Studio and read
   `user_logs/std_log.txt`. The workflow reports the actual Azure ML final status.
+- **Log streaming says `Incorrect padding`:** inspect the final `Status` in the
+  workflow summary. The workflow checks Azure ML status separately, so a
+  local log-stream error alone does not mark a completed training job as failed.
 
 ## Validation status
 

@@ -36,6 +36,11 @@ Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.
    az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv
    ```
 
+   If this CLI version reports `Incorrect padding` while streaming, the job
+   can still finish normally. Use `az ml job show` for its final status and
+   `az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all` to inspect logs,
+   `outputs/metrics.json`, and the model folder.
+
 8. In Studio compare MAE against the median baseline, inspect the prediction
    plot and `outputs/model`, and identify the held-out time period. The model
    output is used by exercise 08.

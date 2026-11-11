@@ -63,6 +63,8 @@ their updated scoring scripts. Cloud commands create billable resources and shou
 be run deliberately in the learner's own workspace.
 See `AZURE_VALIDATION_2026-11-10.md` and
 `AZURE_ENDPOINT_VALIDATION_2026-11-11.md` for earlier live results and cleanup.
+See `SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md` for the latest shared
+compute training run and GitHub workflow publication check.
 The newer shared-compute YAML, named IMDB/Delhi data assets, GitHub OIDC workflow,
 and explicit IMDB/Delhi serving scripts still require live validation in the
 client's workspace before being described as cloud-verified.
