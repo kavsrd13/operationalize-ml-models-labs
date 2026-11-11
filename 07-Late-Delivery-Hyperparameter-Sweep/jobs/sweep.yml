@@ -18,7 +18,7 @@ limits:
   max_concurrent_trials: 1
   timeout: 18000
   trial_timeout: 1800
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu
 inputs:
   training_data:
     type: mltable

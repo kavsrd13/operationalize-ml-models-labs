@@ -9,4 +9,4 @@ inputs:
     type: uri_file
     path: azureml:course-imdb-data:1
 environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu

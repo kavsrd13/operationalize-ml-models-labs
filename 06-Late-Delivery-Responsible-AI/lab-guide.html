@@ -108,7 +108,7 @@ test -f prepare.py &amp;&amp; test -f jobs/rai-dashboard.yml &amp;&amp; echo 'Ex
 
       <section id="python">
         <div class="step">Step 03 / Shared environment</div><h2>Use bootstrap's repository virtual environment</h2>
-        <p>From the repository root, follow the <a href="../../README.md">shared bootstrap instructions</a> once with your existing workspace identifiers. It extracts nine CSVs, installs root <code>.venv</code> and the <strong>Python (Olist Azure ML)</strong> notebook kernel, writes ignored <code>config.json</code>, and registers raw asset <code>olist-ecommerce-raw:1</code>. The optional <code>--create-cluster</code> flag provisions <code>olist-course-cpu</code>; omit it until compute is actually needed. Bootstrap does not create a workspace.</p>
+        <p>From the repository root, follow the <a href="../../README.md">shared bootstrap instructions</a> once with your existing workspace identifiers. It extracts nine CSVs, installs root <code>.venv</code> and the <strong>Python (Olist Azure ML)</strong> notebook kernel, writes ignored <code>config.json</code>, and registers raw asset <code>olist-ecommerce-raw:1</code>. The optional <code>--create-cluster</code> flag provisions <code>course-cpu</code>; omit it until compute is actually needed. Bootstrap does not create a workspace.</p>
         <div class="cmd-label">Bash: after Step 02, return to the repository root (replace placeholders)</div>
         <pre><code>cd ../..
 az login --use-device-code
@@ -171,9 +171,9 @@ az ml workspace show -n "$WS" -g "$RG" --subscription "$SUB" --query '{name:name
 
       <section id="compute">
         <div class="step">Step 08 / One-node compute</div><h2>Check the scale-to-zero cluster</h2>
-        <p>The shared bootstrap optionally creates <code>olist-course-cpu</code> with <code>Standard_E4ds_v4</code>, a maximum of one node and zero-node minimum. Check it first; if missing, explicitly rerun bootstrap from the repository root with <code>--skip-install --create-cluster</code> and the same three workspace identifiers. Training uses this shared compute. Check quota before opting in to compute creation; if unavailable, adjust the compute configuration and training VM together.</p>
+        <p>The shared bootstrap optionally creates <code>course-cpu</code> with <code>Standard_E4ds_v4</code>, a maximum of one node and zero-node minimum. Check it first; if missing, explicitly rerun bootstrap from the repository root with <code>--skip-install --create-cluster</code> and the same three workspace identifiers. Training uses this shared compute. Check quota before opting in to compute creation; if unavailable, adjust the compute configuration and training VM together.</p>
         <div class="cmd-label">Bash: read-only cluster check</div>
-        <pre><code>az ml compute show -n olist-course-cpu -g "$RG" -w "$WS" --subscription "$SUB" --query '{name:name,min:min_instances,max:max_instances}' -o json</code></pre>
+        <pre><code>az ml compute show -n course-cpu -g "$RG" -w "$WS" --subscription "$SUB" --query '{name:name,min:min_instances,max:max_instances}' -o json</code></pre>
         <div class="cmd-label">Optional: only if missing and after reviewing quota and charges</div>
         <pre><code>( cd "$ROOT" &amp;&amp; python3 00-Shared-Setup-and-Data/scripts/bootstrap.py --skip-install --create-cluster \
     --subscription "$SUB" --resource-group "$RG" --workspace "$WS" )</code></pre>
@@ -247,7 +247,7 @@ az ml job list -p "$RAI_JOB" -g "$RG" -w "$WS" --subscription "$SUB" --query '[]
         <p>The cluster has a zero-node minimum and should scale down after its idle period. Verify job completion and compute configuration. Saved datasets, model versions, and workspace storage still exist. If you created a <strong>dedicated</strong> resource group for this lab and no longer need it, delete it through the Azure portal after checking its contents; do not delete an instructor's shared workspace.</p>
         <div class="cmd-label">Bash: read-only checks</div>
         <pre><code>az ml job show -n "$RAI_JOB" -g "$RG" -w "$WS" --subscription "$SUB" --query status -o tsv
-az ml compute show -n olist-course-cpu -g "$RG" -w "$WS" --subscription "$SUB" --query '{min:min_instances,max:max_instances}' -o json
+az ml compute show -n course-cpu -g "$RG" -w "$WS" --subscription "$SUB" --query '{min:min_instances,max:max_instances}' -o json
 az resource list -g "$RG" --subscription "$SUB" -o table</code></pre>
       </section>
 

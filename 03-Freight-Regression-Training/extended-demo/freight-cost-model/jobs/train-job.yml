@@ -36,7 +36,7 @@ inputs:
   max_iter: 600
 
 environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu
 
 tags:
   dataset: olist-ecommerce-raw:1

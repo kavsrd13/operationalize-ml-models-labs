@@ -6,38 +6,84 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 10: Delhi climate time-series regression</h1>
 <h2>Goal</h2>
 <p>Create lag-based climate features, train and track a forecasting model locally, then register, deploy, and invoke it through Azure ML.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="../train_delhi_climate_timeseries_local.ipynb"><code>train_delhi_climate_timeseries_local.ipynb</code></a></li>
+<li><a href="../src/train.py"><code>train.py</code></a></li>
+<li><a href="../jobs/train.yml"><code>train.yml</code></a></li>
+<li><a href="../data/train.yml"><code>train.yml</code></a></li>
+<li><a href="../data/test.yml"><code>test.yml</code></a></li>
+<li><a href="../deploy/score.py"><code>score.py</code></a></li>
+<li><a href="../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
+<li><a href="../deploy/deployment.yml"><code>deployment.yml</code></a></li>
+<li><a href="../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="../DailyDelhiClimateTrain.csv"><code>DailyDelhiClimateTrain.csv</code></a></li>
+<li><a href="../DailyDelhiClimateTest.csv"><code>DailyDelhiClimateTest.csv</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Local route</h2>
 <ol start="1">
-<li>Open <code>../train_delhi_climate_timeseries_local.ipynb</code>.</li>
+<li>Install the local Python packages and notebook kernel from the cloned root:</li>
+</ol>
+<pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<ol start="2">
 <li>Start/configure MLflow.</li>
 <li>Load the train and test CSVs, create lag-one features, train, and inspect metrics.</li>
 </ol>
+<h2>Create or reuse Azure resources for this lab</h2>
+<p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
+<p>Check regional quota for <code>Standard_E4ds_v4</code> before creating the cluster and <code>Standard_D2ds_v5</code> before deploying the endpoint.</p>
 <h2>Azure route</h2>
-<p>Use the same Azure ML workspace and <code>olist-course-cpu</code> cluster as exercises 03–09. From the collection root, register the two CSVs once as named assets, then submit the command job. It creates lag-one features and logs test MAE/RMSE.</p>
+<p>Use the Azure ML workspace and <code>course-cpu</code> cluster created above. From the collection root, register the two CSVs once as named assets, then submit the command job. It creates lag-one features and logs test MAE/RMSE.</p>
 <pre><code>az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+  -g $RG -w $WS
 az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml data show -n course-delhi-train -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml data show -n course-delhi-test -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `
-  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE</code></pre>
-<p>Use <code>az ml job stream -n YOUR_COMPLETED_JOB -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code> and wait for <code>Completed</code>. Inspect metrics and <code>outputs/model</code>, then register it as a new version of <code>course-delhi-climate-model</code>:</p>
-<pre><code>az ml model create -n course-delhi-climate-model --type mlflow_model `
-  --path &quot;azureml://jobs/YOUR_COMPLETED_JOB/outputs/artifacts/paths/outputs/model/&quot; `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  -g $RG -w $WS
+az ml data show -n course-delhi-train -v 1 -g $RG -w $WS
+az ml data show -n course-delhi-test -v 1 -g $RG -w $WS
+$JOB = az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `
+  --resource-group $RG --workspace-name $WS --query name -o tsv
+az ml job show -n $JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>; if streaming fails, inspect logs in Studio. Inspect metrics and <code>outputs/model</code>, then register it as a new version of <code>course-delhi-climate-model</code>:</p>
+<pre><code>$MODEL_VERSION = az ml model create -n course-delhi-climate-model --type mlflow_model `
+  --path &quot;azureml://jobs/$JOB/outputs/artifacts/paths/outputs/model/&quot; `
+  -g $RG -w $WS --query version -o tsv
+Write-Host &quot;Registered model version $MODEL_VERSION&quot;</code></pre>
 <p>The older interactive Azure notebook assumes a pre-existing folder data asset and nearby <code>config.json</code>; use the command job for the reproducible student path.</p>
-<p>For serving, replace the endpoint name and model version below with values from your workspace. From the collection root:</p>
-<pre><code>az ml online-endpoint create -f .\10-Delhi-Climate-Time-Series\deploy\endpoint.yml `
-  --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+<p>For serving, set a globally unique endpoint name. The deployment uses the model version returned above. From the collection root:</p>
+<pre><code>$ENDPOINT = &#x27;YOUR_GLOBALLY_UNIQUE_ENDPOINT_NAME&#x27;
+az ml online-endpoint create -f .\10-Delhi-Climate-Time-Series\deploy\endpoint.yml `
+  --set name=$ENDPOINT -g $RG -w $WS
 az ml online-deployment create -f .\10-Delhi-Climate-Time-Series\deploy\deployment.yml `
-  --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:course-delhi-climate-model:YOUR_MODEL_VERSION `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+  --set endpoint_name=$ENDPOINT model=azureml:course-delhi-climate-model:$MODEL_VERSION `
+  -g $RG -w $WS
+az ml online-endpoint update -n $ENDPOINT --traffic blue=100 `
+  -g $RG -w $WS
+az ml online-endpoint invoke -n $ENDPOINT `
   --request-file .\10-Delhi-Climate-Time-Series\deploy\sample-request.json `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  -g $RG -w $WS
+az ml online-endpoint delete -n $ENDPOINT --yes `
+  -g $RG -w $WS</code></pre>
 <p>Endpoint creation succeeded in a temporary East US workspace, but Azure&#x27;s generated MLflow scoring image failed its health checks. This folder now supplies an explicit scoring script and inference environment; their live deployment and invocation remain unverified. See the endpoint validation report before teaching this serving step.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

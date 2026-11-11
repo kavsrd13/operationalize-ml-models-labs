@@ -2,7 +2,7 @@
 
 Follow `lab-guide.html` on a Linux Azure ML compute instance. Root
 `scripts/bootstrap.py` extracts shared Olist CSVs, writes ignored workspace
-`config.json`, and optionally creates the scale-to-zero `olist-course-cpu` cluster
+`config.json`, and optionally creates the scale-to-zero `course-cpu` cluster
 with `--create-cluster`. `prepare.py` defaults to those shared CSVs (or use
 `--raw-data` for a different directory). Register
 the four Parquet-backed MLTable assets, submit `jobs/train.yml`, register its

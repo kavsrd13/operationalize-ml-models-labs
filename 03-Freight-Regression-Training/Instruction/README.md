@@ -5,15 +5,56 @@
 Predict item freight cost from checkout-time features, compare a median baseline,
 Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.
 
+## Start from a fresh clone
+
+Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:
+
+```powershell
+gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs
+```
+
+Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named `course-cpu`. Reuse the same names in later labs. Check regional quota for `Standard_E4ds_v4`.
+
+```powershell
+$SUB = 'YOUR_SUBSCRIPTION_ID'
+$RG = 'rg-course-ml'
+$WS = 'mlw-course-ml'
+$LOCATION = 'eastus'
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
+```
+
+## Code files
+
+The actual code for this exercise is here:
+
+- [`freight-cost-local.ipynb`](../freight-cost-local.ipynb)
+- [`train.py`](../src/train.py)
+- [`train-job.yml`](../jobs/train-job.yml)
+
+Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
+
+
 ## Steps
 
-1. Complete exercise 00. At the collection root in PowerShell set
-   `$RG = 'YOUR_RESOURCE_GROUP'` and `$WS = 'YOUR_WORKSPACE'`.
+1. Use the `$RG` and `$WS` values from the standalone setup above.
 2. Confirm the shared resources:
 
    ```powershell
    az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
-   az ml compute show -n olist-course-cpu -g $RG -w $WS --query name -o tsv
+   az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
    ```
 
 3. Read `../src/train.py` in execution order: input CSVs, joins, checkout-time

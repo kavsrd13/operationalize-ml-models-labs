@@ -6,33 +6,75 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 08: Online model serving</h1>
 <h2>Goal</h2>
 <p>Deploy the freight model to a managed online endpoint, validate requests, invoke the endpoint, and test a small Gradio client.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="../src/train.py"><code>train.py</code></a></li>
+<li><a href="../jobs/train-job.yml"><code>train-job.yml</code></a></li>
+<li><a href="../deploy/score.py"><code>score.py</code></a></li>
+<li><a href="../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
+<li><a href="../deploy/deployment.yml"><code>deployment.yml</code></a></li>
+<li><a href="../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="../app/app.py"><code>app.py</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>Wait for exercise 03&#x27;s job status to become <code>Completed</code>. Register that job&#x27;s <code>outputs/model</code> folder as an MLflow model. Use its returned version, not a version number copied from another workspace.</li>
+<li>Open this lab&#x27;s <code>src/train.py</code> and <code>jobs/train-job.yml</code>. The command job trains a freight model from the raw asset created above. Submit it, then wait for <code>Completed</code> before registering its <code>outputs/model</code> folder. This lab does not require a run from exercise 03.</li>
 </ol>
-<pre><code>   az ml model create -n olist-freight-cost --type mlflow_model `
-     --path &#x27;azureml://jobs/YOUR_TRAIN_JOB/outputs/artifacts/paths/outputs/model/&#x27; `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<pre><code>   $TRAIN_JOB = az ml job create -f .\08-Online-Model-Serving\jobs\train-job.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job show -n $TRAIN_JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>. In Studio, check MAE against the median baseline and inspect the model output. Register that specific job&#x27;s model:</p>
+<pre><code>   $MODEL_VERSION = az ml model create -n olist-freight-cost --type mlflow_model `
+     --path &quot;azureml://jobs/$TRAIN_JOB/outputs/artifacts/paths/outputs/model/&quot; `
+     -g $RG -w $WS --query version -o tsv
+   Write-Host &quot;Registered model version $MODEL_VERSION&quot;</code></pre>
 <ol start="2">
-<li>Pick one globally unique endpoint name and use it in <strong>both</strong> endpoint and deployment definitions. The checked-in YAML names are placeholders.</li>
+<li>Pick a globally unique endpoint name and set the variable before running the deployment commands. The checked-in YAML names are placeholders.</li>
+</ol>
+<pre><code>   $ENDPOINT = &#x27;YOUR_GLOBALLY_UNIQUE_ENDPOINT_NAME&#x27;</code></pre>
+<ol start="3">
 <li>Review the inference VM size and quota. From the collection root, create and test:</li>
 </ol>
 <pre><code>   az ml online-endpoint create --file .\08-Online-Model-Serving\deploy\endpoint.yml `
-     --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+     --set name=$ENDPOINT -g $RG -w $WS
    az ml online-deployment create --file .\08-Online-Model-Serving\deploy\deployment.yml `
-     --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:olist-freight-cost:YOUR_MODEL_VERSION `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-   az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-   az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+     --set endpoint_name=$ENDPOINT model=azureml:olist-freight-cost:$MODEL_VERSION `
+     -g $RG -w $WS
+   az ml online-endpoint update -n $ENDPOINT --traffic blue=100 `
+     -g $RG -w $WS
+   az ml online-endpoint invoke -n $ENDPOINT `
      --request-file .\08-Online-Model-Serving\deploy\sample-request.json `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+     -g $RG -w $WS</code></pre>
 <ol start="4">
 <li>Invoke <code>../deploy/sample-invalid-request.json</code> with the same endpoint command; verify that scoring reports a useful validation error.</li>
 <li>In <code>../app/.env</code>, set <code>FREIGHT_ENDPOINT_URL</code> from <code>az ml online-endpoint show -n YOUR_UNIQUE_ENDPOINT --query scoring_uri</code> and <code>FREIGHT_ENDPOINT_KEY</code> from <code>az ml online-endpoint get-credentials -n YOUR_UNIQUE_ENDPOINT --query primaryKey</code>. Keep this file untracked. Install <code>../app/requirements.txt</code>, run <code>python .\08-Online-Model-Serving\app\app.py</code>, and submit sample fields.</li>
 <li>Delete only your own endpoint immediately after the demo:</li>
 </ol>
-<pre><code>   az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<pre><code>   az ml online-endpoint delete -n $ENDPOINT --yes `
+     -g $RG -w $WS</code></pre>
 <p>Never copy endpoint keys into source files or instructional screenshots.</p>
-<p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. See the endpoint validation report.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. This exercise&#x27;s own training job and model registration completed in West US. A new West US endpoint attempt failed with a subscription registration error; the temporary endpoint was removed. See the endpoint and standalone validation reports in the repository root.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

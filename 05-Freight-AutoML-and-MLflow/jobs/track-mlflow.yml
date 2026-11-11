@@ -20,4 +20,4 @@ inputs:
     mode: ro_mount
   algorithm: ridge
 environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu

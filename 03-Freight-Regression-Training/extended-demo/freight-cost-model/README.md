@@ -4,7 +4,7 @@ This is supplemental source material with older example workspace names. Use
 `../../Instruction/README.md` for the current student commands.
 
 This module predicts the **shipping cost** (`freight_value`, in Brazilian reais) of an Olist
-order item. It trains the model as an **Azure ML command job** on the shared `olist-course-cpu` cluster, tracks
+order item. It trains the model as an **Azure ML command job** on the shared `course-cpu` cluster, tracks
 the run with **MLflow**, and **registers** the model in the workspace.
 
 It builds on Module 1 (`../azure-ml-infra`). That module created the workspace
@@ -53,7 +53,7 @@ It builds on Module 1 (`../azure-ml-infra`). That module created the workspace
 ```powershell
 cd freight-cost-model
 
-# 1. Train in the cloud (shared olist-course-cpu cluster; minimum zero nodes)
+# 1. Train in the cloud (shared course-cpu cluster; minimum zero nodes)
 .\scripts\submit-training.ps1
 
 # 2. Check metrics in studio (Jobs -> olist-freight-cost), then register the model

@@ -24,8 +24,11 @@ excluded.
     push or manual trigger using OIDC and the shared Azure ML resources.
 
 Open `index.html` for the complete offline student guide. Every exercise also has
-its own `Instruction/index.html` and editable `Instruction/README.md`. Rebuild the
-HTML after editing instructions with `python scripts/build_instructions.py`.
+its own `Instruction/index.html` and editable `Instruction/README.md`. Each guide
+starts with a fresh clone, then lists clickable links to that lab's actual code.
+Exercises 08 and 11 contain their own freight training script and job definition,
+so neither requires exercise 03 to have been run. Rebuild the HTML after editing
+instructions with `python scripts/build_instructions.py`.
 
 ## Shared Olist data
 
@@ -34,14 +37,15 @@ copying 42 MB into every exercise. The setup script extracts or verifies the nin
 All Olist notebooks locate this shared folder by walking up to this collection root.
 
 Use one Azure ML workspace and resource group for all cloud exercises. Keep the
-`olist-ecommerce-raw:1` data asset, the `olist-course-cpu` scale-to-zero cluster, and the
+`olist-ecommerce-raw:1` data asset, the `course-cpu` scale-to-zero cluster, and the
 `olist-sweep-env:2` environment between labs. Each job has its own experiment name;
 register models with exercise-specific names and use unique endpoint names so students
 in a shared workspace do not collide.
 
 ## First-time setup
 
-From this folder, run:
+From a cloned copy, first create or choose a resource group and Azure ML workspace
+as described in the exercise you want to run. Then run:
 
 ```powershell
 python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
@@ -65,7 +69,12 @@ See `AZURE_VALIDATION_2026-11-10.md` and
 `AZURE_ENDPOINT_VALIDATION_2026-11-11.md` for earlier live results and cleanup.
 See `SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md` for the latest shared
 compute training run and successful GitHub OIDC automation test.
-Exercise 03's shared-compute job and exercise 11's workflow were live-tested.
+Exercise 03's earlier shared-compute job and exercise 11's earlier workflow were
+live-tested. The generic `course-cpu` cluster is provisioned, and exercise 08's
+standalone training and model registration completed in Azure. A new West US
+endpoint attempt failed with a subscription registration error and was removed.
+The revised exercise 11 paths have not yet been run through GitHub Actions.
+See `STANDALONE_LABS_VALIDATION_2026-11-11.md` for the current checks.
 The newer shared-compute settings for 04–07 and 09–10, named IMDB/Delhi assets,
 and explicit IMDB/Delhi serving scripts still need live checks in a learner
 workspace before being described as cloud-verified.

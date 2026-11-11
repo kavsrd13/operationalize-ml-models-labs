@@ -9,7 +9,7 @@
 # =====================================================================================
 $schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
 name: blue
-endpoint_name: freight-olist   # placeholder - scripts/deploy-endpoint.ps1 replaces it with -EndpointName
+endpoint_name: freight-olist   # placeholder; student command overrides it with --set endpoint_name=...
 model: azureml:olist-freight-cost:1
 code_configuration:
   code: .

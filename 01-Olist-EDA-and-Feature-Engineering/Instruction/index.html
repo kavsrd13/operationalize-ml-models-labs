@@ -6,9 +6,23 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 01: Olist EDA and feature engineering</h1>
 <h2>Goal</h2>
 <p>Understand the Olist tables and construct freight-cost features without target leakage.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Run local setup; this lab does not create Azure resources:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Select the <strong>Python (Olist Azure ML)</strong> notebook kernel.</p>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="../olist-eda-feature-engineering.ipynb"><code>olist-eda-feature-engineering.ipynb</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>From the collection root run <code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code> if you only need local labs. Select the <strong>Python (Olist Azure ML)</strong> kernel installed by setup.</li>
+<li>Use the local setup above and select the <strong>Python (Olist Azure ML)</strong> kernel.</li>
 <li>Open <code>../olist-eda-feature-engineering.ipynb</code> and run its cells from top to bottom.</li>
 <li>Identify the nine input CSVs. Check join cardinality before interpreting rows: order items and orders have different grains.</li>
 <li>Inspect freight target distribution, missing values, purchase dates, and the train/test time split. Explain why delivery timestamps cannot be checkout features.</li>

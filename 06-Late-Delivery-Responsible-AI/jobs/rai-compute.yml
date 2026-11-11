@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/amlCompute.schema.json
-name: olist-course-cpu
+name: course-cpu
 type: amlcompute
 size: Standard_E4ds_v4
 min_instances: 0

@@ -18,4 +18,4 @@ inputs:
     path: azureml:olist-late-test:1
     mode: ro_mount
 environment: azureml://registries/azureml/environments/responsibleai-tabular/versions/28
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu

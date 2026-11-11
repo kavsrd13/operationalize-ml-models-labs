@@ -5,8 +5,8 @@ on:
   push:
     branches: [main]
     paths:
-      - '03-Freight-Regression-Training/jobs/train-job.yml'
-      - '03-Freight-Regression-Training/src/**'
+      - '11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml'
+      - '11-Automate-Model-Training-GitHub-Actions/src/**'
       - '.github/workflows/train-freight.yml'
 
 permissions:
@@ -42,7 +42,7 @@ jobs:
         run: |
           set -euo pipefail
           az ml workspace show -g "$RG" -n "$WS" --query name -o tsv
-          az ml compute show -g "$RG" -w "$WS" -n olist-course-cpu --query name -o tsv
+          az ml compute show -g "$RG" -w "$WS" -n course-cpu --query name -o tsv
           az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query name -o tsv
 
       - name: Submit training and check result
@@ -52,7 +52,7 @@ jobs:
         run: |
           set -euo pipefail
           JOB_NAME=$(az ml job create \
-            --file 03-Freight-Regression-Training/jobs/train-job.yml \
+            --file 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml \
             -g "$RG" -w "$WS" --query name -o tsv)
           echo "Azure ML job: $JOB_NAME"
           echo "### Azure ML training" >> "$GITHUB_STEP_SUMMARY"

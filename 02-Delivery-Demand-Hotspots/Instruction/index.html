@@ -6,9 +6,23 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 02: Delivery-demand hotspots</h1>
 <h2>Goal</h2>
 <p>Aggregate orders by location and explore geographic clusters. The result describes demand concentrations and does not determine optimal warehouse sites.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Run local setup; this lab does not create Azure resources:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Select the <strong>Python (Olist Azure ML)</strong> notebook kernel.</p>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="../olist-delivery-demand-hotspots.ipynb"><code>olist-delivery-demand-hotspots.ipynb</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>Complete the local setup in exercise 00 (<code>--skip-azure</code> is sufficient for this lab) and select <strong>Python (Olist Azure ML)</strong>.</li>
+<li>Use the local setup above and select <strong>Python (Olist Azure ML)</strong>.</li>
 <li>Open <code>../olist-delivery-demand-hotspots.ipynb</code> and run cells in order.</li>
 <li>Inspect ZIP-prefix coordinate cleaning. Count records before and after removing invalid coordinates.</li>
 <li>Aggregate orders by location and inspect demand counts. Compare a high-demand and low-demand area.</li>

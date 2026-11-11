@@ -115,10 +115,10 @@ def install_environment():
     if sys.version_info[:2] not in ((3, 10), (3, 11)):
         raise BootstrapError("Package installation requires Python 3.10 or 3.11. Use python3.10 or python3.11.")
     environment = ROOT / ".venv"
-    python = environment / "bin" / "python"
+    python = environment / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
     if not python.is_file():
         if environment.exists():
-            raise BootstrapError(f"Existing {environment} has no bin/python. Fix or move it before rerunning.")
+            raise BootstrapError(f"Existing {environment} has no {python.relative_to(environment)}. Fix or move it before rerunning.")
         print(f"Creating {environment}")
         try:
             venv.create(environment, with_pip=True)
@@ -206,7 +206,7 @@ def configure_azure(args):
         print(f"Registered data asset {asset}")
 
     if args.create_cluster:
-        cluster = "olist-course-cpu"
+        cluster = "course-cpu"
         if show_or_missing(az(args, "compute", "show", "--name", cluster), cluster):
             print(f"Compute {cluster} already exists; leaving it unchanged")
         else:
@@ -222,7 +222,7 @@ def main():
     parser.add_argument("--workspace", help="Existing Azure ML workspace name")
     parser.add_argument("--skip-install", action="store_true", help="Extract only; do not create .venv, install packages, or register a kernel")
     parser.add_argument("--skip-azure", action="store_true", help="Do not call Azure CLI or create cloud resources")
-    parser.add_argument("--create-cluster", action="store_true", help="Create the shared scale-to-zero olist-course-cpu cluster")
+    parser.add_argument("--create-cluster", action="store_true", help="Create the shared scale-to-zero course-cpu cluster")
     args = parser.parse_args()
     settings = (args.subscription, args.resource_group, args.workspace)
     if any(settings) and not all(settings):

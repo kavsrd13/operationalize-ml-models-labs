@@ -19,6 +19,6 @@ inputs:
     path: azureml:olist-late-sweep-validation:1
     mode: ro_mount
 environment: azureml:olist-sweep-env:2
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu
 limits:
   timeout: 1800

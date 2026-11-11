@@ -3,7 +3,7 @@
 <title>All exercises | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="assets/site.css"></head>
 <body><header><a class="brand" href="index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>All student instructions in one page. Start with shared setup, then follow the exercises in order.</p></div><div class="cards"><a class="card" href="00-Shared-Setup-and-Data/Instruction/index.html"><small>00</small><strong>Exercise 00: One shared Azure ML setup</strong><span>Open this exercise →</span></a>
+<main><div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>All student instructions in one page. Each exercise can start from a fresh clone; reuse the same Azure workspace and generic compute name when taking several labs.</p></div><div class="cards"><a class="card" href="00-Shared-Setup-and-Data/Instruction/index.html"><small>00</small><strong>Exercise 00: One shared Azure ML setup</strong><span>Open this exercise →</span></a>
 <a class="card" href="01-Olist-EDA-and-Feature-Engineering/Instruction/index.html"><small>01</small><strong>Exercise 01: Olist EDA and feature engineering</strong><span>Open this exercise →</span></a>
 <a class="card" href="02-Delivery-Demand-Hotspots/Instruction/index.html"><small>02</small><strong>Exercise 02: Delivery-demand hotspots</strong><span>Open this exercise →</span></a>
 <a class="card" href="03-Freight-Regression-Training/Instruction/index.html"><small>03</small><strong>Exercise 03: Train a freight regression model</strong><span>Open this exercise →</span></a>
@@ -17,38 +17,52 @@
 <a class="card" href="11-Automate-Model-Training-GitHub-Actions/Instruction/index.html"><small>11</small><strong>Exercise 11: Automate model training with GitHub Actions</strong><span>Open this exercise →</span></a></div><div class="all-labs"><section id="lab-00"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="00-Shared-Setup-and-Data/Instruction/index.html">Separate page</a></div><h1>Exercise 00: One shared Azure ML setup</h1>
 <h2>Goal</h2>
 <p>Use one workspace, one scale-to-zero CPU cluster, and named data assets throughout the course. Exercises 01 and 02 run locally; cloud exercises 03–11 reuse this setup.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/bootstrap.py"><code>bootstrap.py</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/compute.yml"><code>compute.yml</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../azure-ml-infra/README.md"><code>README.md</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Install Python 3.10 or 3.11, Azure CLI, the Azure ML CLI v2 extension, and a notebook editor. Check <code>python --version</code> and <code>az version</code>.</li>
-<li>Open PowerShell in the <strong>Streamlined Exercises</strong> folder. Sign in and select the subscription that contains your existing Azure ML workspace:</li>
-</ol>
-<pre><code>   az login
-   az extension add --name ml --yes
-   $SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
-   $RG = &#x27;YOUR_RESOURCE_GROUP&#x27;
-   $WS = &#x27;YOUR_WORKSPACE&#x27;
-   az account set --subscription $SUB
-   az ml workspace show -n $WS -g $RG --subscription $SUB --query name -o tsv</code></pre>
-<ol start="3">
-<li>Check regional quota for <code>Standard_E4ds_v4</code> and cost. The cluster has minimum zero, maximum one. If the workspace must be created, follow <code>../azure-ml-infra/README.md</code> and return here with its names.</li>
-<li>Run the setup once. It extracts Olist CSVs, installs the notebook kernel, writes ignored <code>config.json</code>, registers <code>olist-ecommerce-raw:1</code>, and creates <code>olist-course-cpu</code> only if absent:</li>
-</ol>
-<pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
-     --subscription $SUB --resource-group $RG --workspace $WS --create-cluster</code></pre>
-<ol start="5">
+<li>Check <code>python --version</code> and <code>az version</code>. The commands above clone the code, create or reuse the resource group and workspace, extract Olist data, install the notebook kernel, register <code>olist-ecommerce-raw:1</code>, and create <code>course-cpu</code> only if absent.</li>
 <li>Check the reusable resources:</li>
 </ol>
 <pre><code>   az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
-   az ml compute show -n olist-course-cpu -g $RG -w $WS `
+   az ml compute show -n course-cpu -g $RG -w $WS `
      --query &#x27;{name:name,min:min_instances,max:max_instances}&#x27; -o json</code></pre>
-<ol start="6">
+<ol start="3">
 <li>Open a local notebook, select <strong>Python (Olist Azure ML)</strong>, and run its first import and data-loading cells. Labs 01 and 02 submit no cloud jobs.</li>
 <li>On a second machine, clone the materials and rerun the setup with the <strong>same</strong> subscription, group, and workspace. Existing assets are checked and reused.</li>
 </ol>
 <h2>Naming map</h2>
 <table><thead><tr><th>Resource</th><th>Name</th><th>Reused by</th></tr></thead><tbody>
-<tr><td>Azure ML workspace</td><td>Your existing <code>$WS</code></td><td>03–11</td></tr>
-<tr><td>CPU training cluster</td><td><code>olist-course-cpu</code></td><td>03–07, 09–11</td></tr>
+<tr><td>Azure ML workspace</td><td><code>$WS</code>, created or reused above</td><td>03–11</td></tr>
+<tr><td>CPU training cluster</td><td><code>course-cpu</code></td><td>03–07, 09–11</td></tr>
 <tr><td>Olist raw data asset</td><td><code>olist-ecommerce-raw:1</code></td><td>03–07, 11</td></tr>
 <tr><td>Freight prepared assets</td><td><code>olist-freight-*</code></td><td>05</td></tr>
 <tr><td>Late-delivery prepared assets</td><td><code>olist-late-*</code></td><td>06–07</td></tr>
@@ -58,9 +72,23 @@
 <section id="lab-01"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="01-Olist-EDA-and-Feature-Engineering/Instruction/index.html">Separate page</a></div><h1>Exercise 01: Olist EDA and feature engineering</h1>
 <h2>Goal</h2>
 <p>Understand the Olist tables and construct freight-cost features without target leakage.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Run local setup; this lab does not create Azure resources:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Select the <strong>Python (Olist Azure ML)</strong> notebook kernel.</p>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="01-Olist-EDA-and-Feature-Engineering/Instruction/../olist-eda-feature-engineering.ipynb"><code>olist-eda-feature-engineering.ipynb</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>From the collection root run <code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code> if you only need local labs. Select the <strong>Python (Olist Azure ML)</strong> kernel installed by setup.</li>
+<li>Use the local setup above and select the <strong>Python (Olist Azure ML)</strong> kernel.</li>
 <li>Open <code>../olist-eda-feature-engineering.ipynb</code> and run its cells from top to bottom.</li>
 <li>Identify the nine input CSVs. Check join cardinality before interpreting rows: order items and orders have different grains.</li>
 <li>Inspect freight target distribution, missing values, purchase dates, and the train/test time split. Explain why delivery timestamps cannot be checkout features.</li>
@@ -70,9 +98,23 @@
 <section id="lab-02"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="02-Delivery-Demand-Hotspots/Instruction/index.html">Separate page</a></div><h1>Exercise 02: Delivery-demand hotspots</h1>
 <h2>Goal</h2>
 <p>Aggregate orders by location and explore geographic clusters. The result describes demand concentrations and does not determine optimal warehouse sites.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Run local setup; this lab does not create Azure resources:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Select the <strong>Python (Olist Azure ML)</strong> notebook kernel.</p>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="02-Delivery-Demand-Hotspots/Instruction/../olist-delivery-demand-hotspots.ipynb"><code>olist-delivery-demand-hotspots.ipynb</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>Complete the local setup in exercise 00 (<code>--skip-azure</code> is sufficient for this lab) and select <strong>Python (Olist Azure ML)</strong>.</li>
+<li>Use the local setup above and select <strong>Python (Olist Azure ML)</strong>.</li>
 <li>Open <code>../olist-delivery-demand-hotspots.ipynb</code> and run cells in order.</li>
 <li>Inspect ZIP-prefix coordinate cleaning. Count records before and after removing invalid coordinates.</li>
 <li>Aggregate orders by location and inspect demand counts. Compare a high-demand and low-demand area.</li>
@@ -83,13 +125,43 @@
 <section id="lab-03"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="03-Freight-Regression-Training/Instruction/index.html">Separate page</a></div><h1>Exercise 03: Train a freight regression model</h1>
 <h2>Goal</h2>
 <p>Predict item freight cost from checkout-time features, compare a median baseline, Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="03-Freight-Regression-Training/Instruction/../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a></li>
+<li><a href="03-Freight-Regression-Training/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="03-Freight-Regression-Training/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Complete exercise 00. At the collection root in PowerShell set <code>$RG = &#x27;YOUR_RESOURCE_GROUP&#x27;</code> and <code>$WS = &#x27;YOUR_WORKSPACE&#x27;</code>.</li>
+<li>Use the <code>$RG</code> and <code>$WS</code> values from the standalone setup above.</li>
 <li>Confirm the shared resources:</li>
 </ol>
 <pre><code>   az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
-   az ml compute show -n olist-course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
+   az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
 <ol start="3">
 <li>Read <code>../src/train.py</code> in execution order: input CSVs, joins, checkout-time features, time split, baseline, fitted models, and metrics. Find the <code>--data</code> argument and <code>outputs/model</code> artifact.</li>
 <li>Open <code>../freight-cost-local.ipynb</code> with the Olist kernel. Run every cell; record baseline MAE and fitted-model MAE.</li>
@@ -111,9 +183,40 @@
 <section id="lab-04"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="04-Delivery-Time-Pipeline/Instruction/index.html">Separate page</a></div><h1>Exercise 04: Train through an Azure ML pipeline</h1>
 <h2>Goal</h2>
 <p>Prepare order-level checkout features in one step, pass them to a training step, and inspect the model produced by the pipeline.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../delivery-time-local.ipynb"><code>delivery-time-local.ipynb</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/prep/prep.py"><code>prep.py</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/train/train.py"><code>train.py</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../pipelines/delivery-time-pipeline.yml"><code>delivery-time-pipeline.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Complete exercise 00 and set <code>$RG</code> and <code>$WS</code> in PowerShell as shown there. Confirm <code>olist-ecommerce-raw:1</code> and <code>olist-course-cpu</code> exist.</li>
+<li>Use the <code>$RG</code> and <code>$WS</code> values from the standalone setup above. Confirm <code>olist-ecommerce-raw:1</code> and <code>course-cpu</code> exist.</li>
 <li>Open <code>../delivery-time-local.ipynb</code> with the Olist kernel. Run every cell and identify which fields are known at checkout.</li>
 <li>Read <code>../src/prep/prep.py</code> and <code>../src/train/train.py</code>. Trace the feature folder from preparation into training.</li>
 <li>Read <code>../pipelines/delivery-time-pipeline.yml</code>. Find its raw input, default compute, <code>prep</code> output, <code>train</code> input, and <code>trained_model</code> output.</li>
@@ -133,13 +236,50 @@
 <section id="lab-05"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="05-Freight-AutoML-and-MLflow/Instruction/index.html">Separate page</a></div><h1>Exercise 05: Compare AutoML and MLflow experiments</h1>
 <h2>Goal</h2>
 <p>Prepare chronological freight data, compare bounded AutoML with tracked Ridge and boosting jobs, select on validation data, and use the held-out test once.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../Olist%20freight%20Azure%20ML%20experiments.ipynb"><code>Olist freight Azure ML experiments.ipynb</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../prepare.py"><code>prepare.py</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/evaluate.py"><code>evaluate.py</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/automl-regression.yml"><code>automl-regression.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/track-mlflow.yml"><code>track-mlflow.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/evaluate.yml"><code>evaluate.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/train.yml"><code>train.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/validation.yml"><code>validation.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/test.yml"><code>test.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Complete exercise 00. Confirm <code>olist-course-cpu</code> exists. Open <code>../Olist freight Azure ML experiments.ipynb</code> with <strong>Python (Olist Azure ML)</strong>.</li>
+<li>Confirm the setup above created <code>course-cpu</code>. Open <code>../Olist freight Azure ML experiments.ipynb</code> with <strong>Python (Olist Azure ML)</strong>.</li>
 <li>In notebook step 1 leave <code>UPLOAD_DATA</code>, <code>SUBMIT_JOBS</code>, and <code>SUBMIT_EVALUATION</code> set to <code>False</code>. Run the setup and preparation cells.</li>
 <li>Inspect the three <code>data/{train,validation,test}</code> folders. Each must have <code>orders.csv</code> and <code>MLTable</code>; dates must be chronological. The test set is reserved until a validation winner is chosen.</li>
 <li>Set <code>UPLOAD_DATA = True</code> and rerun the registration cell. Verify the named assets <code>olist-freight-train:1</code>, <code>olist-freight-validation:1</code>, and <code>olist-freight-test:1</code> in Studio. Existing version 1 assets are reused.</li>
-<li>Review <code>../jobs/automl-regression.yml</code> (five trials, one concurrent, 90-minute total), <code>../jobs/track-mlflow.yml</code>, and <code>../src/train.py</code>. All jobs use <code>olist-course-cpu</code>.</li>
+<li>Review <code>../jobs/automl-regression.yml</code> (five trials, one concurrent, 90-minute total), <code>../jobs/track-mlflow.yml</code>, and <code>../src/train.py</code>. All jobs use <code>course-cpu</code>.</li>
 <li>Set <code>SUBMIT_JOBS = True</code>, rerun notebook steps 6–8, and record the AutoML, Ridge, and boosting job IDs saved in ignored <code>.freight-run-ids.json</code>.</li>
 <li>Wait until all three jobs show <code>Completed</code>. In Studio inspect validation MAE, baseline, plots, MLflow parameters, and model outputs. Choose either Ridge or boosting using validation evidence; do not choose on test data.</li>
 <li>In the notebook&#x27;s final evaluation cell set <code>selected_algorithm</code> to the chosen manual model and <code>SUBMIT_EVALUATION = True</code>. This registers the selected model and submits <code>../jobs/evaluate.yml</code> against <code>olist-freight-test:1</code> once.</li>
@@ -150,9 +290,44 @@
 <section id="lab-06"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="06-Late-Delivery-Responsible-AI/Instruction/index.html">Separate page</a></div><h1>Exercise 06: Late delivery and Responsible AI</h1>
 <h2>Goal</h2>
 <p>Train a late-delivery classifier, register its model, and inspect cohort errors, feature explanations, and the Responsible AI dashboard.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../prepare.py"><code>prepare.py</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/rai-dashboard.yml"><code>rai-dashboard.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/train.yml"><code>train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/test.yml"><code>test.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-train.yml"><code>rai-train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-test.yml"><code>rai-test.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Complete exercise 00. In PowerShell at the collection root set <code>$RG</code> and <code>$WS</code> to your shared resource group and workspace. Confirm <code>olist-course-cpu</code> exists.</li>
+<li>Use the <code>$RG</code> and <code>$WS</code> values from the setup above. Confirm <code>course-cpu</code> exists.</li>
 <li>Read <code>../prepare.py</code>: identify the label, checkout-time features, full train/test split, and smaller stratified dashboard copies.</li>
 <li>Run the preparation script with the Olist environment:</li>
 </ol>
@@ -186,9 +361,42 @@
 <section id="lab-07"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/index.html">Separate page</a></div><h1>Exercise 07: Tune late-delivery classification</h1>
 <h2>Goal</h2>
 <p>Tune logistic regression on pre-April training and April–May validation data. Keep June–August test labels out of selection.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../Azure%20ML%20late%20delivery%20sweep.ipynb"><code>Azure ML late delivery sweep.ipynb</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../prepare.py"><code>prepare.py</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../src/sweep_train.py"><code>sweep_train.py</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep-smoke.yml"><code>sweep-smoke.yml</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep.yml"><code>sweep.yml</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../environment/environment.yml"><code>environment.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
 <ol start="1">
-<li>Complete exercise 00. Confirm <code>olist-course-cpu</code> exists. Open <code>../Azure ML late delivery sweep.ipynb</code> with the Olist kernel.</li>
+<li>Confirm the setup above created <code>course-cpu</code>. Open <code>../Azure ML late delivery sweep.ipynb</code> with the Olist kernel.</li>
 <li>In notebook step 1 leave <code>REGISTER_RESOURCES</code> and <code>SUBMIT_SWEEP</code> at <code>False</code>. Run preparation and inspect the generated train/validation <code>MLTable</code> and Parquet files.</li>
 <li>Set <code>REGISTER_RESOURCES = True</code> and rerun the registration cell. Verify <code>olist-late-sweep-train:1</code>, <code>olist-late-sweep-validation:1</code>, and <code>olist-sweep-env:2</code> in the shared workspace.</li>
 <li>Read <code>../jobs/sweep-smoke.yml</code>, <code>../jobs/sweep.yml</code>, and the trial script. The smoke job uses fixed values; the full sweep has at most eight trials, one concurrent trial, and a 300-minute limit.</li>
@@ -205,120 +413,288 @@
 <section id="lab-08"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="08-Online-Model-Serving/Instruction/index.html">Separate page</a></div><h1>Exercise 08: Online model serving</h1>
 <h2>Goal</h2>
 <p>Deploy the freight model to a managed online endpoint, validate requests, invoke the endpoint, and test a small Gradio client.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="08-Online-Model-Serving/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/score.py"><code>score.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../app/app.py"><code>app.py</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
 <ol start="1">
-<li>Wait for exercise 03&#x27;s job status to become <code>Completed</code>. Register that job&#x27;s <code>outputs/model</code> folder as an MLflow model. Use its returned version, not a version number copied from another workspace.</li>
+<li>Open this lab&#x27;s <code>src/train.py</code> and <code>jobs/train-job.yml</code>. The command job trains a freight model from the raw asset created above. Submit it, then wait for <code>Completed</code> before registering its <code>outputs/model</code> folder. This lab does not require a run from exercise 03.</li>
 </ol>
-<pre><code>   az ml model create -n olist-freight-cost --type mlflow_model `
-     --path &#x27;azureml://jobs/YOUR_TRAIN_JOB/outputs/artifacts/paths/outputs/model/&#x27; `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<pre><code>   $TRAIN_JOB = az ml job create -f .\08-Online-Model-Serving\jobs\train-job.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job show -n $TRAIN_JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>. In Studio, check MAE against the median baseline and inspect the model output. Register that specific job&#x27;s model:</p>
+<pre><code>   $MODEL_VERSION = az ml model create -n olist-freight-cost --type mlflow_model `
+     --path &quot;azureml://jobs/$TRAIN_JOB/outputs/artifacts/paths/outputs/model/&quot; `
+     -g $RG -w $WS --query version -o tsv
+   Write-Host &quot;Registered model version $MODEL_VERSION&quot;</code></pre>
 <ol start="2">
-<li>Pick one globally unique endpoint name and use it in <strong>both</strong> endpoint and deployment definitions. The checked-in YAML names are placeholders.</li>
+<li>Pick a globally unique endpoint name and set the variable before running the deployment commands. The checked-in YAML names are placeholders.</li>
+</ol>
+<pre><code>   $ENDPOINT = &#x27;YOUR_GLOBALLY_UNIQUE_ENDPOINT_NAME&#x27;</code></pre>
+<ol start="3">
 <li>Review the inference VM size and quota. From the collection root, create and test:</li>
 </ol>
 <pre><code>   az ml online-endpoint create --file .\08-Online-Model-Serving\deploy\endpoint.yml `
-     --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+     --set name=$ENDPOINT -g $RG -w $WS
    az ml online-deployment create --file .\08-Online-Model-Serving\deploy\deployment.yml `
-     --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:olist-freight-cost:YOUR_MODEL_VERSION `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-   az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-   az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+     --set endpoint_name=$ENDPOINT model=azureml:olist-freight-cost:$MODEL_VERSION `
+     -g $RG -w $WS
+   az ml online-endpoint update -n $ENDPOINT --traffic blue=100 `
+     -g $RG -w $WS
+   az ml online-endpoint invoke -n $ENDPOINT `
      --request-file .\08-Online-Model-Serving\deploy\sample-request.json `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+     -g $RG -w $WS</code></pre>
 <ol start="4">
 <li>Invoke <code>../deploy/sample-invalid-request.json</code> with the same endpoint command; verify that scoring reports a useful validation error.</li>
 <li>In <code>../app/.env</code>, set <code>FREIGHT_ENDPOINT_URL</code> from <code>az ml online-endpoint show -n YOUR_UNIQUE_ENDPOINT --query scoring_uri</code> and <code>FREIGHT_ENDPOINT_KEY</code> from <code>az ml online-endpoint get-credentials -n YOUR_UNIQUE_ENDPOINT --query primaryKey</code>. Keep this file untracked. Install <code>../app/requirements.txt</code>, run <code>python .\08-Online-Model-Serving\app\app.py</code>, and submit sample fields.</li>
 <li>Delete only your own endpoint immediately after the demo:</li>
 </ol>
-<pre><code>   az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<pre><code>   az ml online-endpoint delete -n $ENDPOINT --yes `
+     -g $RG -w $WS</code></pre>
 <p>Never copy endpoint keys into source files or instructional screenshots.</p>
-<p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. See the endpoint validation report.</p></section>
+<p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. This exercise&#x27;s own training job and model registration completed in West US. A new West US endpoint attempt failed with a subscription registration error; the temporary endpoint was removed. See the endpoint and standalone validation reports in the repository root.</p></section>
 <section id="lab-09"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="09-IMDB-Sentiment-Classification/Instruction/index.html">Separate page</a></div><h1>Exercise 09: IMDB sentiment classification</h1>
 <h2>Goal</h2>
 <p>Train and track a text sentiment classifier locally, then repeat the lifecycle with an Azure ML data asset, model registration, managed deployment, and invocation.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../train_imdb_sentiment_local.ipynb"><code>train_imdb_sentiment_local.ipynb</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../data/imdb.yml"><code>imdb.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/score.py"><code>score.py</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../IMDB%20Dataset.csv"><code>IMDB Dataset.csv</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Local route</h2>
 <ol start="1">
-<li>Open <code>../train_imdb_sentiment_local.ipynb</code>.</li>
+<li>Install the local Python packages and notebook kernel from the cloned root:</li>
+</ol>
+<pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Open <code>../train_imdb_sentiment_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<ol start="2">
 <li>Start the local MLflow server as instructed.</li>
 <li>Load <code>../IMDB Dataset.csv</code>, train the classifier, and inspect logged results.</li>
 </ol>
+<h2>Create or reuse Azure resources for this lab</h2>
+<p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
+<p>Check regional quota for <code>Standard_E4ds_v4</code> before creating the cluster and <code>Standard_D2ds_v5</code> before deploying the endpoint.</p>
 <h2>Azure route</h2>
-<p>Use the same Azure ML workspace and <code>olist-course-cpu</code> cluster as exercises 03–08. From the collection root, register the CSV once as a named asset, then submit the command job. The <code>../src/train.py</code> source has the same TF-IDF and logistic regression flow as the local notebook.</p>
+<p>Use the Azure ML workspace and <code>course-cpu</code> cluster created above. From the collection root, register the CSV once as a named asset, then submit the command job. The <code>../src/train.py</code> source has the same TF-IDF and logistic regression flow as the local notebook.</p>
 <pre><code>az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
-  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE
-az ml data show -n course-imdb-data -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml job create --file .\09-IMDB-Sentiment-Classification\jobs\train.yml `
-  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE</code></pre>
-<p>Use <code>az ml job stream -n YOUR_COMPLETED_JOB -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code> and wait for <code>Completed</code>. Inspect <code>test_accuracy</code> and <code>outputs/model</code>, then register that artifact as a new version of <code>course-imdb-sentiment-model</code> before deployment:</p>
-<pre><code>az ml model create -n course-imdb-sentiment-model --type mlflow_model `
-  --path &quot;azureml://jobs/YOUR_COMPLETED_JOB/outputs/artifacts/paths/outputs/model/&quot; `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  --resource-group $RG --workspace-name $WS
+az ml data show -n course-imdb-data -v 1 -g $RG -w $WS
+$JOB = az ml job create --file .\09-IMDB-Sentiment-Classification\jobs\train.yml `
+  --resource-group $RG --workspace-name $WS --query name -o tsv
+az ml job show -n $JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>; if streaming fails, inspect logs in Studio. Inspect <code>test_accuracy</code> and <code>outputs/model</code>, then register that artifact as a new version of <code>course-imdb-sentiment-model</code> before deployment:</p>
+<pre><code>$MODEL_VERSION = az ml model create -n course-imdb-sentiment-model --type mlflow_model `
+  --path &quot;azureml://jobs/$JOB/outputs/artifacts/paths/outputs/model/&quot; `
+  -g $RG -w $WS --query version -o tsv
+Write-Host &quot;Registered model version $MODEL_VERSION&quot;</code></pre>
 <p>The older <code>../train_imdb_sentiment_azureml.ipynb</code> shows an interactive route, but its asset and workspace setup assumptions require manual adaptation. Use the command job as the reproducible student path.</p>
-<p>For serving, replace the endpoint name and model version below with values from your workspace. From the collection root:</p>
-<pre><code>az ml online-endpoint create -f .\09-IMDB-Sentiment-Classification\deploy\endpoint.yml `
-  --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+<p>For serving, set a globally unique endpoint name. The deployment uses the model version returned above. From the collection root:</p>
+<pre><code>$ENDPOINT = &#x27;YOUR_GLOBALLY_UNIQUE_ENDPOINT_NAME&#x27;
+az ml online-endpoint create -f .\09-IMDB-Sentiment-Classification\deploy\endpoint.yml `
+  --set name=$ENDPOINT -g $RG -w $WS
 az ml online-deployment create -f .\09-IMDB-Sentiment-Classification\deploy\deployment.yml `
-  --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:course-imdb-sentiment-model:YOUR_MODEL_VERSION `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+  --set endpoint_name=$ENDPOINT model=azureml:course-imdb-sentiment-model:$MODEL_VERSION `
+  -g $RG -w $WS
+az ml online-endpoint update -n $ENDPOINT --traffic blue=100 `
+  -g $RG -w $WS
+az ml online-endpoint invoke -n $ENDPOINT `
   --request-file .\09-IMDB-Sentiment-Classification\deploy\sample-request.json `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  -g $RG -w $WS
+az ml online-endpoint delete -n $ENDPOINT --yes `
+  -g $RG -w $WS</code></pre>
 <p>Endpoint creation succeeded in a temporary East US workspace, but Azure&#x27;s generated MLflow scoring image failed its health checks. This folder now supplies an explicit scoring script and inference environment; their live deployment and invocation remain unverified. See the endpoint validation report before teaching this serving step.</p></section>
 <section id="lab-10"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="10-Delhi-Climate-Time-Series/Instruction/index.html">Separate page</a></div><h1>Exercise 10: Delhi climate time-series regression</h1>
 <h2>Goal</h2>
 <p>Create lag-based climate features, train and track a forecasting model locally, then register, deploy, and invoke it through Azure ML.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../train_delhi_climate_timeseries_local.ipynb"><code>train_delhi_climate_timeseries_local.ipynb</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/train.yml"><code>train.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/test.yml"><code>test.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/score.py"><code>score.py</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../DailyDelhiClimateTrain.csv"><code>DailyDelhiClimateTrain.csv</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../DailyDelhiClimateTest.csv"><code>DailyDelhiClimateTest.csv</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Local route</h2>
 <ol start="1">
-<li>Open <code>../train_delhi_climate_timeseries_local.ipynb</code>.</li>
+<li>Install the local Python packages and notebook kernel from the cloned root:</li>
+</ol>
+<pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<ol start="2">
 <li>Start/configure MLflow.</li>
 <li>Load the train and test CSVs, create lag-one features, train, and inspect metrics.</li>
 </ol>
+<h2>Create or reuse Azure resources for this lab</h2>
+<p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
+<p>Check regional quota for <code>Standard_E4ds_v4</code> before creating the cluster and <code>Standard_D2ds_v5</code> before deploying the endpoint.</p>
 <h2>Azure route</h2>
-<p>Use the same Azure ML workspace and <code>olist-course-cpu</code> cluster as exercises 03–09. From the collection root, register the two CSVs once as named assets, then submit the command job. It creates lag-one features and logs test MAE/RMSE.</p>
+<p>Use the Azure ML workspace and <code>course-cpu</code> cluster created above. From the collection root, register the two CSVs once as named assets, then submit the command job. It creates lag-one features and logs test MAE/RMSE.</p>
 <pre><code>az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+  -g $RG -w $WS
 az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml data show -n course-delhi-train -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml data show -n course-delhi-test -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `
-  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE</code></pre>
-<p>Use <code>az ml job stream -n YOUR_COMPLETED_JOB -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code> and wait for <code>Completed</code>. Inspect metrics and <code>outputs/model</code>, then register it as a new version of <code>course-delhi-climate-model</code>:</p>
-<pre><code>az ml model create -n course-delhi-climate-model --type mlflow_model `
-  --path &quot;azureml://jobs/YOUR_COMPLETED_JOB/outputs/artifacts/paths/outputs/model/&quot; `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  -g $RG -w $WS
+az ml data show -n course-delhi-train -v 1 -g $RG -w $WS
+az ml data show -n course-delhi-test -v 1 -g $RG -w $WS
+$JOB = az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `
+  --resource-group $RG --workspace-name $WS --query name -o tsv
+az ml job show -n $JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>; if streaming fails, inspect logs in Studio. Inspect metrics and <code>outputs/model</code>, then register it as a new version of <code>course-delhi-climate-model</code>:</p>
+<pre><code>$MODEL_VERSION = az ml model create -n course-delhi-climate-model --type mlflow_model `
+  --path &quot;azureml://jobs/$JOB/outputs/artifacts/paths/outputs/model/&quot; `
+  -g $RG -w $WS --query version -o tsv
+Write-Host &quot;Registered model version $MODEL_VERSION&quot;</code></pre>
 <p>The older interactive Azure notebook assumes a pre-existing folder data asset and nearby <code>config.json</code>; use the command job for the reproducible student path.</p>
-<p>For serving, replace the endpoint name and model version below with values from your workspace. From the collection root:</p>
-<pre><code>az ml online-endpoint create -f .\10-Delhi-Climate-Time-Series\deploy\endpoint.yml `
-  --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+<p>For serving, set a globally unique endpoint name. The deployment uses the model version returned above. From the collection root:</p>
+<pre><code>$ENDPOINT = &#x27;YOUR_GLOBALLY_UNIQUE_ENDPOINT_NAME&#x27;
+az ml online-endpoint create -f .\10-Delhi-Climate-Time-Series\deploy\endpoint.yml `
+  --set name=$ENDPOINT -g $RG -w $WS
 az ml online-deployment create -f .\10-Delhi-Climate-Time-Series\deploy\deployment.yml `
-  --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:course-delhi-climate-model:YOUR_MODEL_VERSION `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+  --set endpoint_name=$ENDPOINT model=azureml:course-delhi-climate-model:$MODEL_VERSION `
+  -g $RG -w $WS
+az ml online-endpoint update -n $ENDPOINT --traffic blue=100 `
+  -g $RG -w $WS
+az ml online-endpoint invoke -n $ENDPOINT `
   --request-file .\10-Delhi-Climate-Time-Series\deploy\sample-request.json `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
-  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+  -g $RG -w $WS
+az ml online-endpoint delete -n $ENDPOINT --yes `
+  -g $RG -w $WS</code></pre>
 <p>Endpoint creation succeeded in a temporary East US workspace, but Azure&#x27;s generated MLflow scoring image failed its health checks. This folder now supplies an explicit scoring script and inference environment; their live deployment and invocation remain unverified. See the endpoint validation report before teaching this serving step.</p></section>
 <section id="lab-11"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="11-Automate-Model-Training-GitHub-Actions/Instruction/index.html">Separate page</a></div><h1>Exercise 11: Automate model training with GitHub Actions</h1>
 <h2>Goal</h2>
-<p>Use a change to the freight training code to trigger an Azure ML training job. GitHub signs in to Azure with OpenID Connect (OIDC), checks the existing course assets, then submits exercise 03&#x27;s job and reports whether it completed.</p>
+<p>Use a change to the freight training code to trigger an Azure ML training job. GitHub signs in to Azure with OpenID Connect (OIDC), checks the existing course assets, then submits this exercise&#x27;s own job and reports whether it completed.</p>
+<h2>Start from a fresh clone</h2>
+<p>Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
+Set-Location .\operationalize-ml-models-labs</code></pre>
+<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
+<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+$RG = &#x27;rg-course-ml&#x27;
+$WS = &#x27;mlw-course-ml&#x27;
+$LOCATION = &#x27;eastus&#x27;
+az login
+az account set --subscription $SUB
+az extension add --name ml --yes
+az group create -n $RG -l $LOCATION
+az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
+}
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
+<h2>Code files</h2>
+<p>The actual code for this exercise is here:</p>
+<ul>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../src/train.py"><code>train.py</code></a></li>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../../.github/workflows/train-freight.yml"><code>train-freight.yml</code></a></li>
+</ul>
+<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Before you start</h2>
 <ol start="1">
-<li>Complete exercises 00 and 03 in one Azure ML workspace. Confirm the shared <code>olist-course-cpu</code> compute and <code>olist-ecommerce-raw:1</code> data asset exist. Keep the cluster minimum node count at zero.</li>
-<li>Put this <strong>collection&#x27;s contents at the root of your own GitHub repository</strong>. The workflow must be at <code>.github/workflows/train-freight.yml</code> relative to that root. GitHub Actions runs from the repository root; a nested workflow is not discovered. Install and sign in to GitHub CLI (<code>gh auth login</code>) for the identity commands below.</li>
-<li>Ask an Azure administrator for permission to create a Microsoft Entra application, service principal, and workspace role assignment for this repository. The identity needs <strong>AzureML Data Scientist</strong> on the course workspace; it does not need to create another compute cluster.</li>
-<li>Add a federated credential with issuer <code>https://token.actions.githubusercontent.com</code>, audience <code>api://AzureADTokenExchange</code>, and the exact GitHub OIDC subject for <code>main</code>. New GitHub repositories use an <strong>immutable subject</strong> containing numeric owner and repository IDs: <code>repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main</code>. Older repositories may still use <code>repo:OWNER/REPO:ref:refs/heads/main</code>. The subject is case-sensitive; use the format your repository issues. An Azure administrator can run the following in PowerShell after setting <code>$RG</code>, <code>$WS</code>, <code>$OWNER</code>, and <code>$REPO</code> to the student&#x27;s values:</li>
+<li>Confirm the setup above created <code>course-cpu</code> and <code>olist-ecommerce-raw:1</code>. Read this lab&#x27;s <code>src/train.py</code> and <code>jobs/train-job.yml</code> to understand the training code that GitHub Actions will submit. Keep the cluster minimum at zero.</li>
+<li>Create a private repository under your own GitHub account and push this clone to it. The workflow must be at <code>.github/workflows/train-freight.yml</code> at the repository root; GitHub does not discover nested workflows. Use a new name for <code>$REPO</code> and keep the course repository as the <code>origin</code> remote:</li>
 </ol>
-<pre><code>   $APP_ID = az ad app create --display-name &quot;olist-course-github-$REPO&quot; --query appId -o tsv
+<pre><code>   $OWNER = gh api user --jq &#x27;.login&#x27;
+   $REPO = &#x27;my-azure-ml-training-lab&#x27;
+   gh repo create &quot;$OWNER/$REPO&quot; --private --source . --remote student --push
+   gh repo view &quot;$OWNER/$REPO&quot; --web</code></pre>
+<ol start="3">
+<li>Ask an Azure administrator for permission to create a Microsoft Entra application, service principal, and workspace role assignment for this repository. The identity needs <strong>AzureML Data Scientist</strong> on the course workspace; it does not need to create another compute cluster.</li>
+<li>Add a federated credential with issuer <code>https://token.actions.githubusercontent.com</code>, audience <code>api://AzureADTokenExchange</code>, and the exact GitHub OIDC subject for <code>main</code>. New GitHub repositories use an <strong>immutable subject</strong> containing numeric owner and repository IDs: <code>repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main</code>. Older repositories may still use <code>repo:OWNER/REPO:ref:refs/heads/main</code>. The subject is case-sensitive; use the format your repository issues. An Azure administrator can run the following in PowerShell using <code>$RG</code>, <code>$WS</code>, <code>$OWNER</code>, and <code>$REPO</code> from the steps above:</li>
+</ol>
+<pre><code>   $APP_ID = az ad app create --display-name &quot;course-github-$REPO&quot; --query appId -o tsv
    az ad sp create --id $APP_ID
    $SP_OBJECT_ID = az ad sp show --id $APP_ID --query id -o tsv
    $WORKSPACE_ID = az ml workspace show -n $WS -g $RG --query id -o tsv
@@ -339,7 +715,7 @@ az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
    az account show --query tenantId -o tsv</code></pre>
 <p>Use <code>$APP_ID</code> for <code>AZURE_CLIENT_ID</code>, the last command&#x27;s tenant ID for <code>AZURE_TENANT_ID</code>, and <code>az account show --query id -o tsv</code> for the subscription.</p>
 <ol start="5">
-<li>In GitHub <strong>Settings → Secrets and variables → Actions</strong>, add repository secrets <code>AZURE_CLIENT_ID</code>, <code>AZURE_TENANT_ID</code>, and <code>AZURE_SUBSCRIPTION_ID</code> from that application and subscription. Add repository variables <code>AZURE_RESOURCE_GROUP</code> and <code>AZURE_ML_WORKSPACE</code> with the names from exercise 00. These IDs are not passwords, but keep them in GitHub settings so the workflow can be reused.</li>
+<li>In GitHub <strong>Settings → Secrets and variables → Actions</strong>, add repository secrets <code>AZURE_CLIENT_ID</code>, <code>AZURE_TENANT_ID</code>, and <code>AZURE_SUBSCRIPTION_ID</code> from that application and subscription. Add repository variables <code>AZURE_RESOURCE_GROUP</code> and <code>AZURE_ML_WORKSPACE</code> with <code>$RG</code> and <code>$WS</code> above. These IDs are not passwords, but keep them in GitHub settings so the workflow can be reused.</li>
 </ol>
 <p>Microsoft&#x27;s <a href="https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect">OIDC setup guide</a> shows the portal screens for the app and federated credential. GitHub&#x27;s <a href="https://docs.github.com/en/actions/reference/security/oidc">OIDC reference</a> explains immutable subjects for newer repositories. If the sign-in step reports <code>AADSTS700213</code>, copy the <strong>presented assertion subject</strong> from the failed run and make the federated credential match it exactly.</p>
 <h2>Run the exercise</h2>
@@ -348,16 +724,21 @@ az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
 <li>In GitHub Actions variables, set <code>ENABLE_AZURE_TRAINING</code> to <code>true</code>. This gate prevents an automatic Azure job when the materials are first published.</li>
 <li>In <strong>Actions → Train freight model in Azure ML</strong>, choose <strong>Run workflow</strong> on <code>main</code>. The run checks the shared compute and asset before submitting training.</li>
 <li>Open the run logs. Record the Azure ML job name. In Azure ML Studio, open that job and inspect its <code>Completed</code> status, MAE, baseline comparison, and model output. The GitHub run must also finish green and show <code>Completed</code> in its summary.</li>
-<li>Edit one harmless setting in <code>03-Freight-Regression-Training/jobs/train-job.yml</code>, such as <code>display_name</code>, and commit it to <code>main</code>. The <code>push</code> trigger should start another workflow run automatically. Compare its new Azure ML job name with step 9.</li>
-<li>Commit a change outside the three watched paths, such as this instruction file. Verify that the freight training workflow does not start for that commit.</li>
+<li>Edit one harmless setting in <code>11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml</code>, such as <code>display_name</code>, and push it to your repository. The <code>push</code> trigger should start another workflow run automatically. Compare its Azure ML job name with step 9:</li>
+</ol>
+<pre><code>    git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
+    git commit -m &quot;Exercise 11: update training display name&quot;
+    git push student main</code></pre>
+<ol start="11">
+<li>Commit a change outside the three watched paths, such as this instruction file, and push it to <code>student main</code>. Verify that the freight training workflow does not start for that commit.</li>
 <li>Set <code>ENABLE_AZURE_TRAINING</code> back to <code>false</code> when finished. The shared compute scales to zero; delete only job outputs or identity permissions that you own and no longer need.</li>
 </ol>
 <h2>If a run fails</h2>
 <ul>
 <li><strong>Login failed:</strong> compare the exact subject printed in <code>AADSTS700213</code> with the federated credential, including numeric IDs in an immutable subject. Also check client, tenant, and subscription IDs.</li>
-<li><strong>Resource check failed:</strong> run exercise 00 again with <code>--create-cluster</code>, verify the same workspace variables, and check the OIDC identity&#x27;s workspace role.</li>
+<li><strong>Resource check failed:</strong> rerun the setup above, verify the same workspace variables, and check the OIDC identity&#x27;s workspace role.</li>
 <li><strong>Training failed:</strong> open the Azure ML job link or job name in Studio and read <code>user_logs/std_log.txt</code>. The workflow reports the actual Azure ML final status.</li>
 <li><strong>Azure ML logs are needed:</strong> use Studio or `az ml job download -n JOB_NAME -g RESOURCE_GROUP -w WORKSPACE --all`. The workflow polls job status; it does not depend on the CLI log-stream command, which can fail with <code>Incorrect padding</code>.</li>
 </ul>
 <h2>Validation status</h2>
-<p>This workflow completed a live GitHub Actions → Azure ML training run in the course test workspace on 11 November 2026. The temporary identity, GitHub settings, and test compute were removed afterward. Each learner must configure their own repository identity and shared Azure ML resources before running it. See <code>../../SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md</code> for the run record.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>An earlier version of this workflow completed a live GitHub Actions → Azure ML training run in the course test workspace on 11 November 2026. The temporary identity, GitHub settings, and test compute were removed afterward. The current standalone paths and generic compute name have not yet been rerun live. Each learner must configure their own repository identity and Azure ML resources. See <code>../../SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md</code> for the run record.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

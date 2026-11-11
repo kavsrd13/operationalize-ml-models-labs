@@ -3,7 +3,7 @@ type: automl
 task: regression
 experiment_name: olist-freight-automl
 display_name: olist-freight-automl-regression
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu
 description: Compare regression algorithms on chronological Olist freight data.
 training_data:
   type: mltable

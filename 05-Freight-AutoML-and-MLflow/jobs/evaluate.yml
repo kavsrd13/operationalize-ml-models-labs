@@ -18,4 +18,4 @@ inputs:
     path: azureml:olist-freight-test:1
     mode: ro_mount
 environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu

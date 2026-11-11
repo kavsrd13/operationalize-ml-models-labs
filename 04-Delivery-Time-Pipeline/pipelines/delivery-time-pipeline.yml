@@ -8,7 +8,7 @@
 #  * Each step is a command job with its own code folder and environment.
 #  * ${{parent.jobs.prep.outputs.features}} wires the output of "prep" into "train":
 #    Azure ML stores it in the workspace storage and runs "train" after "prep".
-#  * Both steps reuse the shared olist-course-cpu cluster.
+#  * Both steps reuse the shared course-cpu cluster.
 #  * The pipeline output "trained_model" is what scripts/register-model.ps1 registers.
 #  Schema: https://learn.microsoft.com/azure/machine-learning/reference-yaml-job-pipeline
 # =====================================================================================
@@ -21,7 +21,7 @@ description: >-
   known at checkout. Step 1 builds one row per order; step 2 trains and compares models.
 
 settings:
-  default_compute: azureml:olist-course-cpu
+  default_compute: azureml:course-cpu
 
 inputs:
   raw_data:

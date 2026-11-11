@@ -5,7 +5,7 @@ This is supplemental source material with older example workspace names. Use
 
 Predicts **how many days an Olist order will take from purchase to delivery**, using only
 information known when the customer checks out. Training runs as a two-step **Azure ML
-pipeline** on the shared `olist-course-cpu` cluster, is tracked with **MLflow**, and the model is **registered**
+pipeline** on the shared `course-cpu` cluster, is tracked with **MLflow**, and the model is **registered**
 as `olist-delivery-time`.
 
 ```

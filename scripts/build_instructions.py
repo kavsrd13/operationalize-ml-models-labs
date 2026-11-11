@@ -15,15 +15,22 @@ ROOT = Path(__file__).resolve().parents[1]
 LABS = sorted(p for p in ROOT.iterdir() if p.is_dir() and re.match(r"^\d\d-", p.name))
 
 
-def inline(value: str) -> str:
+def inline(value: str, link_prefix: str = "") -> str:
     value = html.escape(value)
     value = re.sub(r"`([^`]+)`", r"<code>\1</code>", value)
     value = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", value)
-    value = re.sub(r"\[([^]]+)\]\((https?://[^)]+)\)", r'<a href="\2">\1</a>', value)
+    def link(match: re.Match[str]) -> str:
+        label, target = match.groups()
+        if not (target.startswith(("https://", "http://", "../", "./"))):
+            return match.group(0)
+        href = target if target.startswith(("https://", "http://")) else link_prefix + target
+        return f'<a href="{html.escape(href, quote=True)}">{label}</a>'
+
+    value = re.sub(r"\[([^]]+)\]\(([^)]+)\)", link, value)
     return value
 
 
-def render(markdown: str) -> str:
+def render(markdown: str, link_prefix: str = "") -> str:
     out: list[str] = []
     lines = markdown.splitlines()
     paragraph: list[str] = []
@@ -33,7 +40,7 @@ def render(markdown: str) -> str:
 
     def flush_paragraph() -> None:
         if paragraph:
-            out.append(f"<p>{inline(' '.join(s.strip() for s in paragraph))}</p>")
+            out.append(f"<p>{inline(' '.join(s.strip() for s in paragraph), link_prefix)}</p>")
             paragraph.clear()
 
     def close_list() -> None:
@@ -44,9 +51,9 @@ def render(markdown: str) -> str:
 
     def flush_table() -> None:
         if table:
-            out.append("<table><thead><tr>" + "".join(f"<th>{inline(c)}</th>" for c in table[0]) + "</tr></thead><tbody>")
+            out.append("<table><thead><tr>" + "".join(f"<th>{inline(c, link_prefix)}</th>" for c in table[0]) + "</tr></thead><tbody>")
             for row in table[1:]:
-                out.append("<tr>" + "".join(f"<td>{inline(c)}</td>" for c in row) + "</tr>")
+                out.append("<tr>" + "".join(f"<td>{inline(c, link_prefix)}</td>" for c in row) + "</tr>")
             out.append("</tbody></table>")
             table.clear()
 
@@ -83,7 +90,7 @@ def render(markdown: str) -> str:
             flush_paragraph()
             close_list()
             level = len(heading.group(1))
-            out.append(f"<h{level}>{inline(heading.group(2))}</h{level}>")
+            out.append(f"<h{level}>{inline(heading.group(2), link_prefix)}</h{level}>")
             continue
         item = re.match(r"^(\d+\.\s+|[-*]\s+)(.+)$", stripped)
         if item:
@@ -94,10 +101,10 @@ def render(markdown: str) -> str:
                 start = f' start="{int(item.group(1).split(".")[0])}"' if kind == "ol" else ""
                 out.append(f"<{kind}{start}>")
                 list_kind = kind
-            out.append(f"<li>{inline(item.group(2))}</li>")
+            out.append(f"<li>{inline(item.group(2), link_prefix)}</li>")
             continue
         if list_kind and line.startswith(" ") and out and out[-1].startswith("<li>"):
-            out[-1] = out[-1][:-5] + " " + inline(stripped) + "</li>"
+            out[-1] = out[-1][:-5] + " " + inline(stripped, link_prefix) + "</li>"
         else:
             close_list()
             paragraph.append(stripped)
@@ -130,8 +137,9 @@ def main() -> None:
             newline="\n",
         )
         cards.append(f'<a class="card" href="{lab.name}/Instruction/index.html"><small>{lab.name[:2]}</small><strong>{html.escape(title)}</strong><span>Open this exercise →</span></a>')
-        sections.append(f'<section id="lab-{lab.name[:2]}"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="{lab.name}/Instruction/index.html">Separate page</a></div>{body}</section>')
-    body = '<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>All student instructions in one page. Start with shared setup, then follow the exercises in order.</p></div>'
+        root_body = render(markdown, f"{lab.name}/Instruction/")
+        sections.append(f'<section id="lab-{lab.name[:2]}"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="{lab.name}/Instruction/index.html">Separate page</a></div>{root_body}</section>')
+    body = '<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>All student instructions in one page. Each exercise can start from a fresh clone; reuse the same Azure workspace and generic compute name when taking several labs.</p></div>'
     body += '<div class="cards">' + "\n".join(cards) + '</div><div class="all-labs">' + "\n".join(sections) + '</div>'
     (ROOT / "index.html").write_text(page("All exercises", body, "assets/site.css", "index.html"), encoding="utf-8", newline="\n")
     print(f"Built {len(LABS)} exercise pages and one complete index")

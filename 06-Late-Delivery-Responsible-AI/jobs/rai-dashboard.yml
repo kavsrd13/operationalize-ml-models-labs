@@ -3,7 +3,7 @@ type: pipeline
 experiment_name: olist-late-delivery-responsible-ai
 display_name: olist-late-delivery-rai-dashboard
 description: Inspect late-class prediction errors and explanations on future Olist orders.
-compute: azureml:olist-course-cpu
+compute: azureml:course-cpu
 inputs:
   training_data:
     type: mltable
