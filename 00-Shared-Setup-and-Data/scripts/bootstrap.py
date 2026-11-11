@@ -154,10 +154,17 @@ def write_config(args):
 
 def az(args, *parts):
     return [
-        "az", "ml", *parts, "--subscription", args.subscription,
+        azure_cli(), "ml", *parts, "--subscription", args.subscription,
         "--resource-group", args.resource_group, "--workspace-name", args.workspace,
         "--output", "json",
     ]
+
+
+def azure_cli():
+    executable = shutil.which("az")
+    if not executable:
+        raise BootstrapError("Azure CLI is not installed or not on PATH. Install it before cloud setup.")
+    return executable
 
 
 def show_or_missing(command, what):
@@ -175,14 +182,13 @@ def show_or_missing(command, what):
 
 
 def configure_azure(args):
-    if not shutil.which("az"):
-        raise BootstrapError("Azure CLI is not installed or not on PATH. Install it before cloud setup.")
-    run(["az", "account", "show", "--subscription", args.subscription, "--output", "json"],
+    executable = azure_cli()
+    run([executable, "account", "show", "--subscription", args.subscription, "--output", "json"],
         "Azure CLI is not logged in to this subscription; run az login")
-    run(["az", "extension", "show", "--name", "ml", "--output", "json"],
+    run([executable, "extension", "show", "--name", "ml", "--output", "json"],
         "Azure CLI ml extension is missing; run az extension add --name ml")
     run([
-        "az", "ml", "workspace", "show", "--name", args.workspace,
+        executable, "ml", "workspace", "show", "--name", args.workspace,
         "--subscription", args.subscription, "--resource-group", args.resource_group,
         "--output", "json",
     ],

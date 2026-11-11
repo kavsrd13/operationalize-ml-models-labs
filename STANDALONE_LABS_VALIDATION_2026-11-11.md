@@ -29,6 +29,9 @@ The GitHub Actions workflow points to exercise 11's copy.
 - Windows bootstrap extracted and verified all nine Olist CSVs, installed the
   pinned packages, and registered the **Python (Olist Azure ML)** kernel. Its
   virtual environment path was corrected to `Scripts/python.exe` on Windows.
+  The cloud setup was also rerun in the temporary East US workspace; Windows
+  Azure CLI invocation was corrected to use the resolved `az.cmd` path. It
+  registered `olist-ecommerce-raw:1` and created `course-cpu` successfully.
 - Every code cell in exercise 01 and exercise 02 ran locally. Exercise 01
   exported 112,650 freight feature rows. Exercise 02 mapped 99,162 orders and
   found 84 hotspot clusters with its default settings. Its Folium tile source
@@ -45,6 +48,27 @@ the workspace endpoint list was empty afterward. The standalone training and
 model-registration steps were verified live; deployment with the newly
 registered model was not.
 
+## IMDB and Delhi serving in the teaching subscription
+
+In subscription `42848f6c-f0f7-4143-b9d3-76441ceeda99`, a temporary East US
+workspace `mlw-course-endpoint-validate` was created in
+`rg-course-endpoint-validate`. It used the generic `course-cpu` cluster.
+
+- Exercise 09: registered `course-imdb-data:1`; training job
+  `patient_brake_4pfjzf0nq6` completed; registered
+  `course-imdb-sentiment-model:1`; deployment `blue` succeeded at
+  `course-imdb-kvs-1111`. The supplied request returned
+  `{"sentiment": ["positive", "negative"]}`.
+- Exercise 10: registered `course-delhi-train:1` and
+  `course-delhi-test:1`; training job `orange_pear_2px33ccf9z` completed;
+  registered `course-delhi-climate-model:1`; deployment `blue` succeeded
+  at `course-delhi-kvs-1111`. The supplied request returned
+  `{"meantemp": [20.06247311088541]}`.
+
+The deployments took several minutes to build their custom inference image.
+The two temporary endpoints and the temporary resource group were deleted
+after the tests. The permanent `course-cpu` cluster remains only in the
+existing `AzureML/MachineLearn123` workspace as requested.
+
 The earlier GitHub Actions workflow also ran end to end (see
-`SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md`). The explicit IMDB and
-Delhi scoring deployments remain unverified live.
+`SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md`).

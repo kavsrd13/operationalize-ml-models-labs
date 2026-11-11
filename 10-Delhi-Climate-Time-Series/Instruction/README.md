@@ -136,7 +136,7 @@ az ml online-endpoint delete -n $ENDPOINT --yes `
   -g $RG -w $WS
 ```
 
-Endpoint creation succeeded in a temporary East US workspace, but Azure's generated
-MLflow scoring image failed its health checks. This folder now supplies an explicit
-scoring script and inference environment; their live deployment and invocation remain
-unverified. See the endpoint validation report before teaching this serving step.
+The explicit scoring script and inference environment passed a live East US
+deployment and sample invocation on 11 November 2026. The sample returned a
+temperature prediction. The custom image build took several minutes. See the
+standalone validation report in the repository root.

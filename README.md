@@ -61,9 +61,9 @@ endpoints use separate serving compute and need globally unique names.
 
 ## Validation boundary
 
-The numbered training and pipeline labs have recorded Azure results. Freight online
-serving was tested; IMDB and Delhi online serving still need live verification of
-their updated scoring scripts. Cloud commands create billable resources and should
+The numbered training and pipeline labs have recorded Azure results. Freight,
+IMDB, and Delhi online serving have passed live sample requests in East US.
+Cloud commands create billable resources and should
 be run deliberately in the learner's own workspace.
 See `AZURE_VALIDATION_2026-11-10.md` and
 `AZURE_ENDPOINT_VALIDATION_2026-11-11.md` for earlier live results and cleanup.
@@ -76,6 +76,7 @@ endpoint attempt failed with a subscription registration error and was removed.
 The revised exercise 11 workflow completed a live GitHub Actions → Azure ML
 training run on `course-cpu`. See `STANDALONE_LABS_VALIDATION_2026-11-11.md`
 for the current checks.
-The newer shared-compute settings for 04–07 and 09–10, named IMDB/Delhi assets,
-and explicit IMDB/Delhi serving scripts still need live checks in a learner
-workspace before being described as cloud-verified.
+The named IMDB/Delhi assets, training jobs, and explicit scoring scripts were
+live-tested in a temporary workspace in the teaching subscription. The newer
+shared-compute settings for 04–07 still need a fresh run before being described
+as verified in every learner workspace.
