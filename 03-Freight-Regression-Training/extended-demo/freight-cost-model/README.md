@@ -1,7 +1,10 @@
 # Module 2 — Olist Freight-Cost Model (Azure ML training job)
 
+This is supplemental source material with older example workspace names. Use
+`../../Instruction/README.md` for the current student commands.
+
 This module predicts the **shipping cost** (`freight_value`, in Brazilian reais) of an Olist
-order item. It trains the model as an **Azure ML command job** on serverless compute, tracks
+order item. It trains the model as an **Azure ML command job** on the shared `olist-course-cpu` cluster, tracks
 the run with **MLflow**, and **registers** the model in the workspace.
 
 It builds on Module 1 (`../azure-ml-infra`). That module created the workspace
@@ -12,7 +15,7 @@ It builds on Module 1 (`../azure-ml-infra`). That module created the workspace
 | File | What it does |
 |---|---|
 | `src/train.py` | Joins 7 Olist tables and builds features known at checkout time. It trains 3 models and logs metrics, plots and the model to MLflow. |
-| `jobs/train-job.yml` | The Azure ML job: code, data input, curated environment, serverless VM size |
+| `jobs/train-job.yml` | The Azure ML job: code, data input, curated environment, shared compute |
 | `scripts/submit-training.ps1` | Submits the job and streams its logs |
 | `scripts/register-model.ps1` | Registers the trained model as `olist-freight-cost:<version>` (uses the last submitted job by default) |
 | `deploy/` | Online endpoint: `endpoint.yml`, `deployment.yml`, `score.py`, `conda.yaml`, `sample-request.json` |
@@ -50,7 +53,7 @@ It builds on Module 1 (`../azure-ml-infra`). That module created the workspace
 ```powershell
 cd freight-cost-model
 
-# 1. Train in the cloud (serverless Standard_E4ds_v4; billed only while the job runs)
+# 1. Train in the cloud (shared olist-course-cpu cluster; minimum zero nodes)
 .\scripts\submit-training.ps1
 
 # 2. Check metrics in studio (Jobs -> olist-freight-cost), then register the model

@@ -1,8 +1,11 @@
 # Delivery-Time Model — Azure ML pipeline (data processing + training)
 
+This is supplemental source material with older example workspace names. Use
+`../../Instruction/README.md` for the current student commands.
+
 Predicts **how many days an Olist order will take from purchase to delivery**, using only
 information known when the customer checks out. Training runs as a two-step **Azure ML
-pipeline** on serverless compute, is tracked with **MLflow**, and the model is **registered**
+pipeline** on the shared `olist-course-cpu` cluster, is tracked with **MLflow**, and the model is **registered**
 as `olist-delivery-time`.
 
 ```
@@ -15,7 +18,7 @@ olist-ecommerce-raw:1 ──► [ prep ] ──orders_features.csv──► [ tr
 |---|---|
 | `src/prep/prep.py` | **Step 1, data processing.** Keeps delivered orders, computes the target `delivery_days`, combines the items of each order, adds the seller→customer distance and calendar features. Writes `orders_features.csv` (one row per order). |
 | `src/train/train.py` | **Step 2, training.** Time-based split, two benchmarks and three models, MLflow metrics and plots, saves the kept model in MLflow format. |
-| `pipelines/delivery-time-pipeline.yml` | The Azure ML pipeline that wires prep → train on serverless compute |
+| `pipelines/delivery-time-pipeline.yml` | The Azure ML pipeline that wires prep → train on shared compute |
 | `scripts/submit-pipeline.ps1` | Submits the pipeline and waits for it to finish (saves the job name in `.last-pipeline-job`) |
 | `scripts/register-model.ps1` | Registers the pipeline output as `olist-delivery-time:<version>` |
 
@@ -76,7 +79,7 @@ $env:MLFLOW_TRACKING_URI = "sqlite:///local-run/mlflow.db"
 python src\prep\prep.py   --raw_data "..\..\Ecommerce Dataset" --output_data local-run\features
 python src\train\train.py --features local-run\features --model_output local-run\model
 
-# In Azure ML (serverless, billed only while the steps run)
+# In Azure ML (shared scale-to-zero cluster)
 .\scripts\submit-pipeline.ps1 -ResourceGroup rg-olist-ml-dev -Workspace mlw-olist-dev
 .\scripts\register-model.ps1  -ResourceGroup rg-olist-ml-dev -Workspace mlw-olist-dev
 ```

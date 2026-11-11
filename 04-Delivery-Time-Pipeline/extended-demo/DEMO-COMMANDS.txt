@@ -58,7 +58,7 @@ code src\prep\prep.py
 # Open step 2, training, to explain it (5 models compared, best one saved - also runs in the cloud)
 code src\train\train.py
 
-# Open the pipeline: prep -> train, each step on its own CLOUD VM (serverless compute)
+# Open the pipeline: prep -> train, both steps on the shared olist-course-cpu cluster
 code pipelines\delivery-time-pipeline.yml
 
 # Send the pipeline to Azure ML: cloud VMs run prep, then train, then are deleted (8-12 minutes)

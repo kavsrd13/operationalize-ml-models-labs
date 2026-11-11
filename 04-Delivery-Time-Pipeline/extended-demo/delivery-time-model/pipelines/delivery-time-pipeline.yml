@@ -5,10 +5,10 @@
 #
 #      olist-ecommerce-raw:1 ──► [ prep ] ──features──► [ train ] ──► trained_model
 #
-#  * Each step is a command job with its own code folder, environment and VM size.
+#  * Each step is a command job with its own code folder and environment.
 #  * ${{parent.jobs.prep.outputs.features}} wires the output of "prep" into "train":
 #    Azure ML stores it in the workspace storage and runs "train" after "prep".
-#  * settings.default_compute = serverless: VMs are created per step and deleted afterwards.
+#  * Both steps reuse the shared olist-course-cpu cluster.
 #  * The pipeline output "trained_model" is what scripts/register-model.ps1 registers.
 #  Schema: https://learn.microsoft.com/azure/machine-learning/reference-yaml-job-pipeline
 # =====================================================================================
@@ -21,7 +21,7 @@ description: >-
   known at checkout. Step 1 builds one row per order; step 2 trains and compares models.
 
 settings:
-  default_compute: azureml:serverless
+  default_compute: azureml:olist-course-cpu
 
 inputs:
   raw_data:
@@ -48,8 +48,6 @@ jobs:
     outputs:
       features:
         type: uri_folder
-    resources:
-      instance_type: Standard_E4ds_v4
 
   train:
     type: command
@@ -66,5 +64,3 @@ jobs:
       test_start: ${{parent.inputs.test_start}}
     outputs:
       model_output: ${{parent.outputs.trained_model}}
-    resources:
-      instance_type: Standard_E4ds_v4

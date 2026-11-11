@@ -6,8 +6,7 @@
 #  code         -> the ../src folder is uploaded and becomes the working directory
 #  inputs       -> the registered data asset is MOUNTED (read-only) into the job
 #  environment  -> Microsoft's curated scikit-learn image (pinned version = reproducible)
-#  resources    -> no "compute:" line, so Azure ML uses SERVERLESS compute: it creates a
-#                  VM for this job and deletes it afterwards. You pay only while it runs.
+#  compute      -> shared scale-to-zero cluster used by the current course labs.
 #  Schema: https://learn.microsoft.com/azure/machine-learning/reference-yaml-job-command
 # =====================================================================================
 $schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
@@ -37,10 +36,7 @@ inputs:
   max_iter: 600
 
 environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
-
-resources:
-  instance_type: Standard_E4ds_v4   # 4 vCPU / 32 GB - uses the EDSv4 quota (20 vCPUs available)
-  instance_count: 1
+compute: azureml:olist-course-cpu
 
 tags:
   dataset: olist-ecommerce-raw:1
