@@ -1,0 +1,31 @@
+# =====================================================================================
+#  Azure ML DATA ASSET definition (CLI v2 YAML)
+# -------------------------------------------------------------------------------------
+#  A data asset is a NAMED, VERSIONED reference to data in Azure. Jobs and notebooks
+#  refer to it by name instead of by a storage URL:   azureml:olist-ecommerce-raw:1
+#
+#  type: uri_folder -> the asset points to a whole folder (our 9 CSV files)
+#        uri_file   -> a single file
+#        mltable    -> a folder + an MLTable file that describes how to read it as a table
+#
+#  path: a LOCAL path (relative to this YAML file). `az ml data create` uploads it to the
+#        workspace's default datastore (workspaceblobstore) and registers the asset.
+#        scripts/03-upload-data.ps1 first copies ONLY the Olist CSVs into ./olist-raw.
+#
+#  Versions are IMMUTABLE: version 1 can never change. New data -> new version.
+#  Schema reference: https://learn.microsoft.com/azure/machine-learning/reference-yaml-data
+# =====================================================================================
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: olist-ecommerce-raw
+version: "1"
+type: uri_folder
+path: ./olist-raw
+description: >-
+  Raw Olist Brazilian e-commerce dataset (Kaggle: olistbr/brazilian-ecommerce):
+  9 CSV files with ~99k orders placed between 2016 and 2018 - orders, order items,
+  payments, reviews, customers, sellers, products, geolocation and category translations.
+tags:
+  source: kaggle/olistbr/brazilian-ecommerce
+  format: csv
+  stage: raw
+  license: CC BY-NC-SA 4.0

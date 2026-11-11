@@ -1,0 +1,120 @@
+# =====================================================================================
+#  GitHub Actions - CI/CD for the Azure ML infrastructure   (OPTIONAL / advanced module)
+# -------------------------------------------------------------------------------------
+#  Pull request to main -> lint + build + WHAT-IF  (reviewers see the planned changes)
+#  Push to main         -> DEPLOY  (add "required reviewers" on the GitHub environment
+#                                   to get a manual approval gate)
+#  Manual run           -> choose dev / test / prod
+#
+#  Authentication: OpenID Connect (OIDC) - GitHub gets a short-lived token from Entra ID,
+#  so NO client secret is stored anywhere. One-time setup: README.md -> "CI/CD".
+#
+#  Required repository secrets : AZURE_CLIENT_ID, AZURE_TENANT_ID, AZURE_SUBSCRIPTION_ID
+#  Required repository variable: AML_USER_OBJECT_ID  (object ID of the data scientist)
+#  Optional repository variables: AML_PROJECT_NAME (default olist), AZURE_LOCATION (eastus)
+#
+#  NOTE: this folder (azure-ml-infra) must be the ROOT of the GitHub repository.
+#  The dataset upload stays a manual step (scripts/03-upload-data.ps1): CSVs do not
+#  belong in git, and a data asset version should be registered on purpose.
+# =====================================================================================
+name: deploy-azureml-infra
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/deploy-azureml-infra.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        type: choice
+        options: [dev, test, prod]
+        default: dev
+
+permissions:
+  id-token: write   # lets the job request an OIDC token for azure/login
+  contents: read
+
+# main.bicepparam reads these with readEnvironmentVariable(...)
+env:
+  AML_PROJECT_NAME: ${{ vars.AML_PROJECT_NAME || 'olist' }}
+  AML_ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  AML_USER_OBJECT_ID: ${{ vars.AML_USER_OBJECT_ID }}
+  # Compute instances cannot be re-deployed safely, so the pipeline manages the platform
+  # only. Create the compute instance once with scripts/02-deploy-infra.ps1.
+  AML_DEPLOY_COMPUTE_INSTANCE: 'false'
+
+jobs:
+  validate:
+    name: Lint, build and what-if
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check required variables
+        run: |
+          if [ -z "$AML_USER_OBJECT_ID" ]; then
+            echo "::error::Set the repository variable AML_USER_OBJECT_ID (object ID of the data scientist)."
+            exit 1
+          fi
+
+      - name: Lint and build Bicep
+        run: |
+          az bicep install
+          az bicep lint --file infra/main.bicep
+          az bicep build --file infra/main.bicep --stdout > /dev/null
+          az bicep build-params --file infra/main.bicepparam --stdout > /dev/null
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: What-if
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: whatIf
+          scope: subscription
+          name: aml-${{ env.AML_PROJECT_NAME }}-${{ env.AML_ENVIRONMENT }}-${{ env.AZURE_LOCATION }}
+          location: ${{ env.AZURE_LOCATION }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          template-file: infra/main.bicep
+          parameters-file: infra/main.bicepparam
+
+  deploy:
+    name: Deploy
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment || 'dev' }}   # approval gates live here
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy Bicep
+        uses: azure/bicep-deploy@v2
+        with:
+          type: deployment
+          operation: create
+          scope: subscription
+          name: aml-${{ env.AML_PROJECT_NAME }}-${{ env.AML_ENVIRONMENT }}-${{ env.AZURE_LOCATION }}
+          location: ${{ env.AZURE_LOCATION }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          template-file: infra/main.bicep
+          parameters-file: infra/main.bicepparam

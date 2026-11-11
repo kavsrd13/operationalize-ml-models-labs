@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 02: Delivery-demand hotspots | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 02: Delivery-demand hotspots</h1>
+<h2>Goal</h2>
+<p>Aggregate orders by location and explore geographic clusters. The result describes demand concentrations and does not determine optimal warehouse sites.</p>
+<h2>Run</h2>
+<ol start="1">
+<li>Complete the local setup in exercise 00 (<code>--skip-azure</code> is sufficient for this lab) and select <strong>Python (Olist Azure ML)</strong>.</li>
+<li>Open <code>../olist-delivery-demand-hotspots.ipynb</code> and run cells in order.</li>
+<li>Inspect ZIP-prefix coordinate cleaning. Count records before and after removing invalid coordinates.</li>
+<li>Aggregate orders by location and inspect demand counts. Compare a high-demand and low-demand area.</li>
+<li>Run clustering and view the static plot. Explain how cluster count changes the map; the result describes demand, not optimal warehouse placement.</li>
+<li>If internet is available, display the Folium map. Its background tiles require network access; the static plots work offline.</li>
+</ol>
+<p>See <code>ORIGINAL_README.md</code> for the source note.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

@@ -1,0 +1,8 @@
+mlflow==3.15.0
+backports-tempfile==1.0
+backports-zstd==1.7.0
+cloudpickle==3.1.2
+jaraco-text==4.0.0
+pandas==2.2.3
+psutil==5.8.0
+scikit-learn==1.5.2

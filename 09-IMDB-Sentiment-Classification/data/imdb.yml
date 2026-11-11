@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: course-imdb-data
+version: '1'
+type: uri_file
+path: ../IMDB Dataset.csv
+description: IMDB reviews used by exercise 09.

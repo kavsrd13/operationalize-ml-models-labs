@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 03: Train a freight regression model | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 03: Train a freight regression model</h1>
+<h2>Goal</h2>
+<p>Predict item freight cost from checkout-time features, compare a median baseline, Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.</p>
+<h2>Steps</h2>
+<ol start="1">
+<li>Complete exercise 00. At the collection root in PowerShell set <code>$RG = &#x27;YOUR_RESOURCE_GROUP&#x27;</code> and <code>$WS = &#x27;YOUR_WORKSPACE&#x27;</code>.</li>
+<li>Confirm the shared resources:</li>
+</ol>
+<pre><code>   az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
+   az ml compute show -n olist-course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
+<ol start="3">
+<li>Read <code>../src/train.py</code> in execution order: input CSVs, joins, checkout-time features, time split, baseline, fitted models, and metrics. Find the <code>--data</code> argument and <code>outputs/model</code> artifact.</li>
+<li>Open <code>../freight-cost-local.ipynb</code> with the Olist kernel. Run every cell; record baseline MAE and fitted-model MAE.</li>
+<li>Review <code>../jobs/train-job.yml</code>. It points to the shared data asset and compute.</li>
+<li>Preview and submit one Azure ML job:</li>
+</ol>
+<pre><code>   python .\00-Shared-Setup-and-Data\scripts\submit.py freight --dry-run
+   python .\00-Shared-Setup-and-Data\scripts\submit.py freight</code></pre>
+<ol start="7">
+<li>Copy the returned job name. Stream logs and check final status:</li>
+</ol>
+<pre><code>   az ml job stream -n YOUR_JOB_NAME -g $RG -w $WS
+   az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv</code></pre>
+<ol start="8">
+<li>In Studio compare MAE against the median baseline, inspect the prediction plot and <code>outputs/model</code>, and identify the held-out time period. The model output is used by exercise 08.</li>
+</ol>
+<p>The <code>../extended-demo/</code> folder is supplemental source material with older paths.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

@@ -1,0 +1,4 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: replace-with-unique-delhi-endpoint
+auth_mode: key
+description: Delhi temperature prediction demo.

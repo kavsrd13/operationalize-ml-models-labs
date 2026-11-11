@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 08: Online model serving | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 08: Online model serving</h1>
+<h2>Goal</h2>
+<p>Deploy the freight model to a managed online endpoint, validate requests, invoke the endpoint, and test a small Gradio client.</p>
+<h2>Run</h2>
+<ol start="1">
+<li>Wait for exercise 03&#x27;s job status to become <code>Completed</code>. Register that job&#x27;s <code>outputs/model</code> folder as an MLflow model. Use its returned version, not a version number copied from another workspace.</li>
+</ol>
+<pre><code>   az ml model create -n olist-freight-cost --type mlflow_model `
+     --path &#x27;azureml://jobs/YOUR_TRAIN_JOB/outputs/artifacts/paths/outputs/model/&#x27; `
+     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<ol start="2">
+<li>Pick one globally unique endpoint name and use it in <strong>both</strong> endpoint and deployment definitions. The checked-in YAML names are placeholders.</li>
+<li>Review the inference VM size and quota. From the collection root, create and test:</li>
+</ol>
+<pre><code>   az ml online-endpoint create --file .\08-Online-Model-Serving\deploy\endpoint.yml `
+     --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+   az ml online-deployment create --file .\08-Online-Model-Serving\deploy\deployment.yml `
+     --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:olist-freight-cost:YOUR_MODEL_VERSION `
+     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+   az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
+     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+   az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+     --request-file .\08-Online-Model-Serving\deploy\sample-request.json `
+     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<ol start="4">
+<li>Invoke <code>../deploy/sample-invalid-request.json</code> with the same endpoint command; verify that scoring reports a useful validation error.</li>
+<li>In <code>../app/.env</code>, set <code>FREIGHT_ENDPOINT_URL</code> from <code>az ml online-endpoint show -n YOUR_UNIQUE_ENDPOINT --query scoring_uri</code> and <code>FREIGHT_ENDPOINT_KEY</code> from <code>az ml online-endpoint get-credentials -n YOUR_UNIQUE_ENDPOINT --query primaryKey</code>. Keep this file untracked. Install <code>../app/requirements.txt</code>, run <code>python .\08-Online-Model-Serving\app\app.py</code>, and submit sample fields.</li>
+<li>Delete only your own endpoint immediately after the demo:</li>
+</ol>
+<pre><code>   az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
+     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<p>Never copy endpoint keys into source files or instructional screenshots.</p>
+<p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. See the endpoint validation report.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

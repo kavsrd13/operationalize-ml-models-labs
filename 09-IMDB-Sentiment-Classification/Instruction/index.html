@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 09: IMDB sentiment classification | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 09: IMDB sentiment classification</h1>
+<h2>Goal</h2>
+<p>Train and track a text sentiment classifier locally, then repeat the lifecycle with an Azure ML data asset, model registration, managed deployment, and invocation.</p>
+<h2>Local route</h2>
+<ol start="1">
+<li>Open <code>../train_imdb_sentiment_local.ipynb</code>.</li>
+<li>Start the local MLflow server as instructed.</li>
+<li>Load <code>../IMDB Dataset.csv</code>, train the classifier, and inspect logged results.</li>
+</ol>
+<h2>Azure route</h2>
+<p>Use the same Azure ML workspace and <code>olist-course-cpu</code> cluster as exercises 03–08. From the collection root, register the CSV once as a named asset, then submit the command job. The <code>../src/train.py</code> source has the same TF-IDF and logistic regression flow as the local notebook.</p>
+<pre><code>az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
+  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE
+az ml data show -n course-imdb-data -v 1 -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+az ml job create --file .\09-IMDB-Sentiment-Classification\jobs\train.yml `
+  --resource-group YOUR_RESOURCE_GROUP --workspace-name YOUR_WORKSPACE</code></pre>
+<p>Use <code>az ml job stream -n YOUR_COMPLETED_JOB -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code> and wait for <code>Completed</code>. Inspect <code>test_accuracy</code> and <code>outputs/model</code>, then register that artifact as a new version of <code>course-imdb-sentiment-model</code> before deployment:</p>
+<pre><code>az ml model create -n course-imdb-sentiment-model --type mlflow_model `
+  --path &quot;azureml://jobs/YOUR_COMPLETED_JOB/outputs/artifacts/paths/outputs/model/&quot; `
+  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<p>The older <code>../train_imdb_sentiment_azureml.ipynb</code> shows an interactive route, but its asset and workspace setup assumptions require manual adaptation. Use the command job as the reproducible student path.</p>
+<p>For serving, replace the endpoint name and model version below with values from your workspace. From the collection root:</p>
+<pre><code>az ml online-endpoint create -f .\09-IMDB-Sentiment-Classification\deploy\endpoint.yml `
+  --set name=YOUR_UNIQUE_ENDPOINT -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+az ml online-deployment create -f .\09-IMDB-Sentiment-Classification\deploy\deployment.yml `
+  --set endpoint_name=YOUR_UNIQUE_ENDPOINT model=azureml:course-imdb-sentiment-model:YOUR_MODEL_VERSION `
+  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+az ml online-endpoint update -n YOUR_UNIQUE_ENDPOINT --traffic blue=100 `
+  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+az ml online-endpoint invoke -n YOUR_UNIQUE_ENDPOINT `
+  --request-file .\09-IMDB-Sentiment-Classification\deploy\sample-request.json `
+  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
+az ml online-endpoint delete -n YOUR_UNIQUE_ENDPOINT --yes `
+  -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+<p>Endpoint creation succeeded in a temporary East US workspace, but Azure&#x27;s generated MLflow scoring image failed its health checks. This folder now supplies an explicit scoring script and inference environment; their live deployment and invocation remain unverified. See the endpoint validation report before teaching this serving step.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: course-delhi-test
+version: '1'
+type: uri_file
+path: ../DailyDelhiClimateTest.csv
+description: Delhi daily climate held-out observations for exercise 10.

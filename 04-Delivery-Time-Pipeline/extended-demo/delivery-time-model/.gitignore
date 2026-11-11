@@ -1,0 +1,8 @@
+# Local run artefacts
+mlflow.db
+mlruns/
+outputs/
+local-run/
+.last-pipeline-job
+__pycache__/
+.venv/

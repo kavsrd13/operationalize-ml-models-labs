@@ -1,0 +1,9 @@
+**/.env
+**/config.json
+**/.venv/
+**/__pycache__/
+**/.ipynb_checkpoints/
+**/.freight-run-ids.json
+**/.sweep-run-id.json
+**/.mlflow/
+/datasets/olist/Ecommerce Dataset/

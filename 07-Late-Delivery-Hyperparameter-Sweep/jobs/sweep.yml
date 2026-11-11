@@ -1,0 +1,35 @@
+$schema: https://azuremlschemas.azureedge.net/latest/sweepJob.schema.json
+type: sweep
+experiment_name: olist-late-delivery-sweep
+display_name: olist-late-ap-sweep-300min
+sampling_algorithm: random
+search_space:
+  c:
+    type: choice
+    values: [0.01, 0.1, 1.0, 10.0]
+  positive_weight:
+    type: choice
+    values: [1.0, 3.0, 5.0, 10.0]
+objective:
+  primary_metric: validation_average_precision
+  goal: maximize
+limits:
+  max_total_trials: 8
+  max_concurrent_trials: 1
+  timeout: 18000
+  trial_timeout: 1800
+compute: azureml:olist-course-cpu
+inputs:
+  training_data:
+    type: mltable
+    path: azureml:olist-late-sweep-train:1
+  validation_data:
+    type: mltable
+    path: azureml:olist-late-sweep-validation:1
+trial:
+  code: ../src
+  command: >-
+    python sweep_train.py --train ${{inputs.training_data}}
+    --validation ${{inputs.validation_data}}
+    --c ${{search_space.c}} --positive-weight ${{search_space.positive_weight}}
+  environment: azureml:olist-sweep-env:2

@@ -1,0 +1,4 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: replace-with-unique-imdb-endpoint
+auth_mode: key
+description: IMDB sentiment classifier demo.

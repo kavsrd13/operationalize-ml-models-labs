@@ -1,0 +1,6 @@
+{
+  "input_data": {
+    "columns": ["review"],
+    "data": [["This movie was fantastic."], ["The plot was dull and confusing."]]
+  }
+}

@@ -1,0 +1,11 @@
+name: course-sklearn-inference
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - pip:
+      - scikit-learn==1.5.2
+      - pandas==2.2.3
+      - cloudpickle==3.1.2
+      - azureml-inference-server-http

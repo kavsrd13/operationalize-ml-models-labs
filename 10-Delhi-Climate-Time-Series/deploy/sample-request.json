@@ -1,0 +1,6 @@
+{
+  "input_data": {
+    "columns": ["meantemp_lag1", "humidity_lag1", "wind_speed_lag1", "meanpressure_lag1"],
+    "data": [[20.0, 60.0, 8.0, 1010.0]]
+  }
+}

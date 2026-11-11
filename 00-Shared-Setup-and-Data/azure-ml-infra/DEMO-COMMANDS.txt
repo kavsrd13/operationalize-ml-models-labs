@@ -1,0 +1,85 @@
+# Go to the project folder
+cd "C:\Users\kvsrd\OneDrive\Desktop\Operationalize Machine Learning Models\Machine learning\azure-ml-infra"
+
+# Allow scripts to run in this terminal only
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Unblock files downloaded from the internet or OneDrive
+Get-ChildItem -Recurse | Unblock-File
+
+# Sign in to Azure with your own account
+az login
+
+# Check we are in the right subscription
+az account show --query "{subscription:name, user:user.name}" -o table
+
+# Check the Azure CLI and Bicep versions
+az version
+az bicep version
+
+# Choose a NEW name for this demo: 3-10 lowercase letters or digits (e.g. demo01). Every resource is named after it
+$name = Read-Host "Enter a name for your resources"
+
+# Build the resource group and workspace names from it
+$rg = "rg-$name-ml-dev"
+$ws = "mlw-$name-dev"
+
+# Check the name is not used yet (should print false)
+az group exists --name $rg
+
+# Open the main Bicep file (then Ctrl+Shift+P > "Bicep: Open Visualizer")
+code infra\main.bicep
+
+# Open the settings file (project name, region, VM size)
+code infra\main.bicepparam
+
+# Show that Bicep compiles to an ARM JSON template
+az bicep build --file infra\main.bicep --stdout | Select-Object -First 20
+
+# Check tools, login, permissions and VM quota before deploying
+.\scripts\00-check-prerequisites.ps1 -Location eastus
+
+# Validate the code and preview what will be created (creates nothing)
+.\scripts\01-validate-infra.ps1 -ProjectName $name -Location eastus
+
+# Deploy NEW resources with Bicep (takes 10-15 minutes, billing starts)
+.\scripts\02-deploy-infra.ps1 -ProjectName $name -Location eastus
+
+# List the resources that were created
+az resource list --resource-group $rg --query "[].{name:name, resourceType:type}" -o table
+
+# Upload the dataset and register it as a data asset
+.\scripts\03-upload-data.ps1
+
+# Verify the workspace, compute instance, data asset and roles
+.\scripts\04-verify-deployment.ps1
+
+# Show the data asset and its version
+az ml data list --name olist-ecommerce-raw -g $rg -w $ws -o table
+
+# Show the workspace's connections to storage
+az ml datastore list -g $rg -w $ws -o table
+
+# Preview again: nothing new to create (only "no change" and a few harmless "modify" lines)
+.\scripts\01-validate-infra.ps1 -ProjectName $name -Location eastus
+
+# Deploy again into the SAME resources: nothing is duplicated (idempotent)
+.\scripts\02-deploy-infra.ps1 -ProjectName $name -Location eastus -UpdateExisting
+
+# Upload again: version 1 already exists, nothing is uploaded
+.\scripts\03-upload-data.ps1
+
+# Get the compute instance name
+$ci = (Get-Content .\.deployment-outputs.json -Raw | ConvertFrom-Json).computeInstanceName
+
+# Stop the compute instance to save cost
+az ml compute stop --name $ci --resource-group $rg --workspace-name $ws
+
+# Start the compute instance again
+az ml compute start --name $ci --resource-group $rg --workspace-name $ws
+
+# Delete everything at the end of the demo
+.\scripts\99-cleanup.ps1 -ProjectName $name
+
+# Confirm the resource group is gone (should print false)
+az group exists --name $rg

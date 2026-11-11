@@ -1,0 +1,1576 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Azure ML Training Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@87..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: blueprint-grid hero with the end-to-end pipeline, then a lab manual: sticky step rail
+   on the left, one reading column; dark terminal blocks = commands to RUN, light code blocks =
+   code to READ, dashed blocks = output you should SEE. */
+:root {
+  --paper: #f4f6fb;
+  --surface: #ffffff;
+  --grid: #e8ecf6;
+  --ink: #141a2d;
+  --muted: #586079;
+  --rule: #dce1ec;
+  --accent: #2b49cf;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7ebfd;
+  --bar-muted: #b7c0d6;
+  --term-bg: #111830;
+  --term-fg: #e2e7fb;
+  --term-muted: #8e98b9;
+  --term-rule: #27314f;
+  --term-var: #ffd479;
+  --ok: #16774a;
+  --ok-soft: #e2f3e9;
+  --warn: #8a5500;
+  --warn-soft: #fbefd9;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --font-display: "Archivo", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0c1120; --surface: #131a2e; --grid: #18213a; --ink: #e6e9f4; --muted: #9ca4bd; --rule: #252e4a;
+    --accent: #93a6ff; --accent-ink: #0c1120; --accent-soft: #1c2552; --bar-muted: #3a4566;
+    --term-bg: #070b17; --term-fg: #dfe5fb; --term-muted: #7f8ab0; --term-rule: #1e2744;
+    --ok: #5fd39a; --ok-soft: #0f2e1e; --warn: #f2b85b; --warn-soft: #33260c; --bad: #ff8b80; --bad-soft: #3a1513;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0c1120; --surface: #131a2e; --grid: #18213a; --ink: #e6e9f4; --muted: #9ca4bd; --rule: #252e4a;
+  --accent: #93a6ff; --accent-ink: #0c1120; --accent-soft: #1c2552; --bar-muted: #3a4566;
+  --term-bg: #070b17; --term-fg: #dfe5fb; --term-muted: #7f8ab0; --term-rule: #1e2744;
+  --ok: #5fd39a; --ok-soft: #0f2e1e; --warn: #f2b85b; --warn-soft: #33260c; --bad: #ff8b80; --bad-soft: #3a1513;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 1rem/1.65 var(--font-body); -webkit-text-size-adjust: 100%; }
+a { color: var(--accent); text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code, kbd, pre { font-family: var(--font-mono); }
+p code, li code, td code, dd code, summary code, h3 code, h4 code {
+  font-size: 0.88em; background: var(--accent-soft); padding: 0.08em 0.35em; border-radius: 4px; overflow-wrap: anywhere;
+}
+kbd { font-size: 0.85em; padding: 0.05em 0.4em; border: 1px solid var(--rule); border-bottom-width: 2px; border-radius: 4px; background: var(--surface); }
+h1, h2, h3, h4 { font-family: var(--font-display); font-stretch: 88%; line-height: 1.15; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.55rem, 3vw, 2rem); font-weight: 750; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; font-weight: 700; }
+h4 { font-size: 1.06rem; font-weight: 700; font-stretch: 92%; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3rem; }
+li + li { margin-top: 0.3rem; }
+
+.wrap { max-width: 78rem; margin: 0 auto; padding-inline: max(16px, 3vw); }
+.eyebrow { font: 600 0.75rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); }
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 64ch; }
+.muted { color: var(--muted); }
+.prose { max-width: 70ch; }
+
+/* ---------- Hero ---------- */
+.hero {
+  border-bottom: 1px solid var(--rule);
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+.hero .wrap { padding-block: 3rem 2.5rem; display: flex; flex-direction: column; gap: 1.1rem; }
+.hero h1 { font-size: clamp(2.2rem, 5.4vw, 3.8rem); font-weight: 780; letter-spacing: -0.015em; max-width: 19ch; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.pipeline { list-style: none; padding: 0; margin: 0.75rem 0 0; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: stretch; }
+.pipeline li { margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+.pipeline a { display: flex; flex-direction: column; gap: 0.1rem; text-decoration: none; color: var(--ink); background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 0.55rem 0.85rem; min-width: 8rem; }
+.pipeline a:hover { border-color: var(--accent); }
+.pipeline .stage { font: 600 0.68rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.pipeline b { font-family: var(--font-display); font-stretch: 92%; font-size: 1.02rem; }
+.pipeline small { font: 500 0.75rem/1.3 var(--font-mono); color: var(--accent); }
+.pipeline .arrow { color: var(--muted); font-family: var(--font-mono); }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.75rem 2rem; margin-top: 0.75rem; padding: 0; list-style: none; }
+.facts li { margin: 0; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.facts .k { font: 600 0.72rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.facts .v { font-weight: 500; }
+
+/* ---------- Layout ---------- */
+.layout { display: grid; gap: 2.5rem; padding-block: 2.5rem 4rem; }
+@media (min-width: 64rem) {
+  .layout { grid-template-columns: 15.5rem minmax(0, 1fr); align-items: start; }
+  .rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.25rem); max-height: calc(100vh - 2.5rem); overflow-y: auto; }
+}
+main { display: flex; flex-direction: column; gap: 3.5rem; min-width: 0; }
+section { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; scroll-margin-top: 1.5rem; }
+.section-head { display: flex; flex-direction: column; gap: 0.4rem; }
+.part-head { display: flex; flex-direction: column; gap: 0.35rem; padding-bottom: 0.9rem; border-bottom: 2px solid var(--ink); }
+.part-head .part-label { font: 700 0.8rem/1 var(--font-mono); color: var(--accent); letter-spacing: 0.06em; }
+
+/* ---------- Rail ---------- */
+.rail { display: flex; flex-direction: column; gap: 1.25rem; font-size: 0.92rem; }
+.progress-card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.progress-count { font: 700 1.5rem/1 var(--font-display); font-stretch: 88%; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--rule); border-radius: 99px; overflow: hidden; }
+.bar > span { display: block; height: 100%; width: 0; background: var(--ok); border-radius: 99px; transition: width 0.3s ease; }
+@media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+.rail nav { display: flex; flex-direction: column; gap: 0.15rem; }
+.rail .group-label { font: 600 0.7rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0.7rem 0 0.25rem; }
+.rail a { color: var(--ink); text-decoration: none; padding: 0.22rem 0.5rem; border-radius: 6px; display: flex; gap: 0.5rem; align-items: baseline; }
+.rail a:hover { background: var(--accent-soft); }
+.rail a .n { font: 500 0.78rem/1 var(--font-mono); color: var(--muted); min-width: 1.4rem; font-variant-numeric: tabular-nums; }
+.rail a.is-done { color: var(--muted); }
+.rail a.is-done .n { color: var(--ok); }
+.rail a.is-done .n::before { content: "\2713"; }
+.rail a.is-done .n span { display: none; }
+.reset { align-self: flex-start; font: 500 0.8rem var(--font-body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* ---------- Settings ---------- */
+.settings { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.field label { font-weight: 600; font-size: 0.92rem; }
+.field input, .field select { font: 500 0.95rem var(--font-mono); color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%; }
+.field input[aria-invalid="true"] { border-color: var(--bad); }
+.field .hint { font-size: 0.8rem; color: var(--muted); }
+.field .err { font-size: 0.8rem; color: var(--bad); }
+.derived { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.88rem; color: var(--muted); }
+.derived code { color: var(--ink); background: var(--accent-soft); padding: 0.05em 0.35em; border-radius: 4px; }
+.var-sample { color: var(--term-var); background: var(--term-bg); font-family: var(--font-mono); font-size: 0.88em; padding: 0.08em 0.4em; border-radius: 4px; }
+
+/* ---------- Commands (run), code (read), output (see) ---------- */
+.term { background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+.term-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem 0.45rem 1rem; border-bottom: 1px solid var(--term-rule); }
+.term-head span { font: 500 0.72rem/1.3 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--term-muted); }
+.copy { flex: none; font: 600 0.78rem/1 var(--font-body); color: var(--term-fg); background: transparent; border: 1px solid var(--term-rule); border-radius: 6px; padding: 0.4rem 0.7rem; cursor: pointer; }
+.copy:hover { border-color: var(--term-muted); }
+.term pre { margin: 0; padding: 0.9rem 1rem 1rem; overflow-x: auto; font-size: 0.86rem; line-height: 1.6; }
+.term .c { color: var(--term-muted); }
+.term [data-v] { color: var(--term-var); }
+.code { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); overflow: hidden; min-width: 0; }
+.code-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; padding: 0.45rem 1rem; border-bottom: 1px solid var(--rule); background: var(--paper); font: 500 0.78rem/1.4 var(--font-mono); color: var(--muted); }
+.code-head b { color: var(--ink); font-weight: 600; }
+.code pre { margin: 0; padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.6; color: var(--ink); }
+.code .c { color: var(--muted); font-style: italic; }
+.out { border: 1px dashed var(--rule); border-radius: var(--radius); background: var(--surface); overflow: hidden; min-width: 0; }
+.out-head { padding: 0.45rem 1rem; border-bottom: 1px dashed var(--rule); font: 600 0.72rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--ok); }
+.out-head.neutral { color: var(--muted); }
+.out pre { margin: 0; padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; color: var(--ink); }
+.out .ok { color: var(--ok); font-weight: 500; }
+.out .dim { color: var(--muted); }
+.legend-row { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.85rem; color: var(--muted); }
+.legend-row span { display: inline-flex; align-items: center; gap: 0.45rem; }
+.swatch { width: 1.6rem; height: 0.95rem; border-radius: 4px; display: inline-block; }
+.swatch.run { background: var(--term-bg); }
+.swatch.read { background: var(--surface); border: 1px solid var(--rule); }
+.swatch.see { background: var(--surface); border: 1px dashed var(--muted); }
+
+/* ---------- Callouts ---------- */
+.callout { border-radius: var(--radius); padding: 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.callout .tag { font: 600 0.7rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; }
+.callout.tip { background: var(--accent-soft); } .callout.tip .tag { color: var(--accent); }
+.callout.warn { background: var(--warn-soft); } .callout.warn .tag { color: var(--warn); }
+.callout.cost { background: var(--ok-soft); } .callout.cost .tag { color: var(--ok); }
+.callout.secret { background: var(--bad-soft); } .callout.secret .tag { color: var(--bad); }
+.callout ul { padding-left: 1.2rem; }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 0.75rem/1.3 var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--paper); }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr.kept td { font-weight: 600; }
+
+/* ---------- Cards ---------- */
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; }
+.idea { display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem 1.1rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.idea p { font-size: 0.94rem; }
+.idea .term-word { font: 500 0.78rem var(--font-mono); color: var(--accent); }
+.checklist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.checklist li { margin: 0; padding-left: 1.6rem; position: relative; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 0.35em; width: 0.95rem; height: 0.95rem; border: 1.5px solid var(--muted); border-radius: 3px; }
+.tree { margin: 0; font-size: 0.84rem; line-height: 1.6; }
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.flow .node { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 0.35rem 0.65rem; font: 500 0.8rem var(--font-mono); }
+.flow .node.out { border-color: var(--accent); color: var(--accent); }
+.flow .arrow { color: var(--muted); font-family: var(--font-mono); }
+
+/* ---------- Code walkthrough ---------- */
+.walk { display: flex; flex-direction: column; gap: 1.6rem; counter-reset: walk; }
+.walk-item { display: grid; grid-template-columns: 2rem minmax(0, 1fr); gap: 0 0.9rem; }
+.walk-num { counter-increment: walk; width: 1.9rem; height: 1.9rem; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font: 700 0.9rem/1.9rem var(--font-mono); text-align: center; }
+.walk-num::before { content: counter(walk); }
+.walk-body { display: flex; flex-direction: column; gap: 0.65rem; min-width: 0; }
+.walk-body > p, .walk-body > ul { max-width: 70ch; }
+
+/* ---------- Charts (HTML bars on one linear scale per chart) ---------- */
+.chart { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.1rem 1.2rem 1rem; display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; margin: 0; }
+.chart-title { font-family: var(--font-display); font-stretch: 92%; font-weight: 700; font-size: 1.05rem; }
+.chart-sub { font-size: 0.85rem; color: var(--muted); }
+.bars { display: flex; flex-direction: column; gap: 0.45rem; }
+.bar-row { display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) 4.2rem; gap: 0.75rem; align-items: center; font-size: 0.88rem; border-radius: 6px; }
+.bar-row:hover { background: var(--paper); }
+.bar-row .label { color: var(--ink); overflow-wrap: anywhere; }
+.bar-row .label code { background: none; padding: 0; font-size: 0.85rem; }
+.bar-row .track { position: relative; height: 0.85rem; background-image: linear-gradient(90deg, var(--rule) 1px, transparent 1px); background-size: 25% 100%; }
+.bar-row .fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--bar-muted); border-radius: 0 4px 4px 0; }
+.bar-row.hi .fill { background: var(--accent); }
+.bar-row .value { text-align: right; font: 500 0.82rem var(--font-mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+.axis { display: grid; grid-template-columns: minmax(7rem, 11rem) minmax(0, 1fr) 4.2rem; gap: 0.75rem; font: 500 0.72rem var(--font-mono); color: var(--muted); }
+.axis .ticks { display: flex; justify-content: space-between; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); gap: 1rem; }
+@media (max-width: 30rem) {
+  .bar-row, .axis { grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr) 3.4rem; gap: 0.5rem; }
+}
+
+/* ---------- Gradio app sketch ---------- */
+.app-mock { border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+.app-mock-bar { display: flex; align-items: center; gap: 0.5rem; padding: 0.45rem 0.9rem; background: var(--paper); border-bottom: 1px solid var(--rule); font: 500 0.78rem var(--font-mono); color: var(--muted); }
+.app-mock-bar i { width: 0.6rem; height: 0.6rem; border-radius: 50%; background: var(--rule); display: inline-block; }
+.app-mock-body { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1rem; padding: 1rem; }
+@media (max-width: 40rem) { .app-mock-body { grid-template-columns: minmax(0, 1fr); } }
+.app-mock h4 { font-size: 1.1rem; }
+.mock-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.mock-field { border: 1px solid var(--rule); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.75rem; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.mock-field b { display: block; font: 500 0.82rem var(--font-mono); color: var(--ink); }
+.mock-field.wide { grid-column: 1 / -1; }
+.mock-button { grid-column: 1 / -1; text-align: center; background: var(--accent); color: var(--accent-ink); border-radius: 6px; padding: 0.45rem; font-weight: 600; font-size: 0.85rem; }
+.mock-result { border: 1px solid var(--rule); border-radius: 8px; padding: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.mock-result .price { font: 750 2rem/1 var(--font-display); font-stretch: 88%; color: var(--ink); }
+.mock-result small { color: var(--muted); font-size: 0.8rem; }
+.mock-acc { border: 1px solid var(--rule); border-radius: 6px; padding: 0.35rem 0.6rem; font-size: 0.78rem; color: var(--muted); }
+
+/* ---------- Steps ---------- */
+.steps { display: flex; flex-direction: column; gap: 3rem; }
+.step { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 0 1.25rem; scroll-margin-top: 1.5rem; }
+.step-num { font: 800 2.6rem/1 var(--font-display); font-stretch: 87%; color: var(--accent); font-variant-numeric: tabular-nums; padding-top: 0.15rem; }
+.step-body { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.step-body > h3 { font-size: 1.45rem; }
+.step-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.85rem; color: var(--muted); }
+.step-meta .opt { color: var(--warn); font-weight: 600; }
+.behind { border-left: 0; background: var(--paper); border: 1px solid var(--rule); border-radius: var(--radius); padding: 0.8rem 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.behind .tag { font: 600 0.7rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.behind ul, .behind ol { font-size: 0.92rem; }
+.done-toggle { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; font-weight: 600; font-size: 0.92rem; cursor: pointer; padding: 0.5rem 0.85rem; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+.done-toggle input { width: 1.05rem; height: 1.05rem; accent-color: var(--ok); margin: 0; }
+.done-toggle:has(input:checked) { border-color: var(--ok); color: var(--ok); }
+@media (max-width: 34rem) {
+  .step { grid-template-columns: minmax(0, 1fr); }
+  .step-num { font-size: 2rem; margin-bottom: 0.5rem; }
+  .walk-item { grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+}
+
+/* ---------- Quiz, glossary, footer ---------- */
+details { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 0.85rem 1.1rem; }
+details + details { margin-top: 0.6rem; }
+summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 0.5rem; }
+details p { color: var(--muted); }
+.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.75rem 1.5rem; margin: 0; }
+.glossary div { min-width: 0; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.92rem; }
+footer { border-top: 1px solid var(--rule); background: var(--surface); }
+footer .wrap { padding-block: 1.75rem; font-size: 0.88rem; color: var(--muted); display: flex; flex-direction: column; gap: 0.5rem; }
+@media print {
+  .rail, .copy, .done-toggle, .settings .fields { display: none !important; }
+  .layout { display: block; }
+  body, .hero { background: #fff; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Operationalize Machine Learning Models · End-to-end lab</span>
+    <h1>Train, deploy and test a model on <em>Azure&nbsp;ML</em>, all from code</h1>
+    <p class="lede">Starting from the Olist e-commerce dataset your instructor gives you, you will build the Azure infrastructure with Bicep, upload the data, train a model that predicts shipping cost, publish it as a live web API, and test it in your own Gradio web app.</p>
+    <ol class="pipeline" aria-label="The pipeline you will build">
+      <li><a href="#step-1"><span class="stage">Part A</span><b>Your dataset</b><small>9 CSV files</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-4"><span class="stage">Part B</span><b>Infrastructure</b><small>Bicep</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-7"><span class="stage">Part B</span><b>Data asset</b><small>olist-ecommerce-raw:1</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-12"><span class="stage">Part C</span><b>Training job</b><small>train.py</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-14"><span class="stage">Part C</span><b>Registered model</b><small>olist-freight-cost:1</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-15"><span class="stage">Part D</span><b>Live endpoint</b><small>HTTPS + your key</small></a><span class="arrow" aria-hidden="true">&rarr;</span></li>
+      <li><a href="#step-17"><span class="stage">Part D</span><b>Gradio app</b><small>localhost:7860</small></a></li>
+    </ol>
+    <ul class="facts">
+      <li><span class="k">Time</span><span class="v">About 3 hours</span></li>
+      <li><span class="k">Cost</span><span class="v">A few US dollars if you clean up the same day</span></li>
+      <li><span class="k">You need</span><span class="v">Azure subscription, VS Code, Azure CLI, Python</span></li>
+      <li><span class="k">Result</span><span class="v">A model that prices shipping within R$5 for 3 in 4 items</span></li>
+    </ul>
+  </div>
+</header>
+
+<div class="wrap layout">
+
+  <aside class="rail" aria-label="Lab contents and progress">
+    <div class="progress-card">
+      <div class="progress-top">
+        <span class="eyebrow" style="color: var(--muted)">Your progress</span>
+        <span class="progress-count" id="progress-count">0/18</span>
+      </div>
+      <div class="bar" role="progressbar" aria-label="Steps finished" aria-valuemin="0" aria-valuemax="18" aria-valuenow="0" id="progress-bar"><span></span></div>
+      <button type="button" class="reset" id="reset-progress">Reset progress</button>
+    </div>
+    <nav aria-label="Sections">
+      <a href="#settings"><span class="n">&middot;</span>Your settings</a>
+      <a href="#concepts"><span class="n">&middot;</span>Key ideas</a>
+      <span class="group-label">A · Get ready</span>
+      <a href="#step-1" data-rail="1"><span class="n"><span>1</span></span>Get the course files</a>
+      <a href="#step-2" data-rail="2"><span class="n"><span>2</span></span>Install the tools</a>
+      <a href="#step-3" data-rail="3"><span class="n"><span>3</span></span>Open a terminal, sign in</a>
+      <span class="group-label">B · Build the infrastructure</span>
+      <a href="#step-4" data-rail="4"><span class="n"><span>4</span></span>Check prerequisites</a>
+      <a href="#step-5" data-rail="5"><span class="n"><span>5</span></span>Validate and preview</a>
+      <a href="#step-6" data-rail="6"><span class="n"><span>6</span></span>Deploy with Bicep</a>
+      <a href="#step-7" data-rail="7"><span class="n"><span>7</span></span>Upload the dataset</a>
+      <a href="#step-8" data-rail="8"><span class="n"><span>8</span></span>Verify</a>
+      <span class="group-label">C · Train the model</span>
+      <a href="#step-9" data-rail="9"><span class="n"><span>9</span></span>Understand the problem</a>
+      <a href="#step-10" data-rail="10"><span class="n"><span>10</span></span>Read the training script</a>
+      <a href="#step-11" data-rail="11"><span class="n"><span>11</span></span>Try it locally</a>
+      <a href="#step-12" data-rail="12"><span class="n"><span>12</span></span>Train on Azure ML</a>
+      <a href="#step-13" data-rail="13"><span class="n"><span>13</span></span>Review the results</a>
+      <a href="#step-14" data-rail="14"><span class="n"><span>14</span></span>Register the model</a>
+      <span class="group-label">D · Serve, test, clean up</span>
+      <a href="#step-15" data-rail="15"><span class="n"><span>15</span></span>Deploy the endpoint</a>
+      <a href="#step-16" data-rail="16"><span class="n"><span>16</span></span>Your URL and key</a>
+      <a href="#step-17" data-rail="17"><span class="n"><span>17</span></span>Test with Gradio</a>
+      <a href="#step-18" data-rail="18"><span class="n"><span>18</span></span>Clean up</a>
+      <span class="group-label">Help</span>
+      <a href="#trouble"><span class="n">&middot;</span>Troubleshooting</a>
+      <a href="#quiz"><span class="n">&middot;</span>Check your understanding</a>
+      <a href="#glossary"><span class="n">&middot;</span>Glossary</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <section id="settings">
+      <div class="section-head">
+        <span class="eyebrow">Start here</span>
+        <h2>Your settings</h2>
+      </div>
+      <p class="prose">Fill these in once. Every command in this guide updates to use your values, highlighted like <span class="var-sample">this</span>. Your browser remembers them.</p>
+      <div class="settings">
+        <div class="fields">
+          <div class="field">
+            <label for="set-project">Project name</label>
+            <input id="set-project" type="text" value="olist" maxlength="10" autocomplete="off" spellcheck="false" aria-describedby="project-hint project-err">
+            <span class="hint" id="project-hint">3–10 lowercase letters or digits. Sharing a subscription? Add your name, e.g. <code>olistanna</code>.</span>
+            <span class="err" id="project-err" hidden>Use 3–10 lowercase letters or digits only.</span>
+          </div>
+          <div class="field">
+            <label for="set-location">Azure region</label>
+            <select id="set-location">
+              <option value="eastus">eastus (East US)</option>
+              <option value="eastus2">eastus2 (East US 2)</option>
+              <option value="westus2">westus2 (West US 2)</option>
+              <option value="centralindia">centralindia (Central India)</option>
+              <option value="southindia">southindia (South India)</option>
+              <option value="westeurope">westeurope (West Europe)</option>
+              <option value="northeurope">northeurope (North Europe)</option>
+              <option value="uksouth">uksouth (UK South)</option>
+              <option value="southeastasia">southeastasia (Southeast Asia)</option>
+              <option value="australiaeast">australiaeast (Australia East)</option>
+            </select>
+            <span class="hint">Closest to you. Step 4 checks it works for your subscription.</span>
+          </div>
+          <div class="field">
+            <label for="set-endpoint">Endpoint name</label>
+            <input id="set-endpoint" type="text" value="freight-olist" maxlength="32" autocomplete="off" spellcheck="false" aria-describedby="endpoint-hint endpoint-err">
+            <span class="hint" id="endpoint-hint">You choose it. It must be unique in the whole region; if Step 15 says it is taken, add your initials.</span>
+            <span class="err" id="endpoint-err" hidden>3–32 characters: start with a letter; letters, digits and hyphens only.</span>
+          </div>
+        </div>
+        <div class="derived" aria-live="polite">
+          <span>Resource group: <code data-v="rg">rg-olist-ml-dev</code></span>
+          <span>Workspace: <code data-v="ws">mlw-olist-dev</code></span>
+          <span>Endpoint: <code data-v="ep">freight-olist</code></span>
+        </div>
+      </div>
+
+      <div class="callout secret">
+        <span class="tag">No credentials in this guide</span>
+        <ul>
+          <li>Every name in the commands comes from <b>your settings</b> above. Nothing here belongs to a real account.</li>
+          <li>You sign in with <b>your own</b> Azure account in Step 3. Azure creates <b>your</b> endpoint key when you deploy in Step 15.</li>
+          <li>In Step 16 you fetch the key with your own login. A script writes it into <code>freight-cost-model/app/.env</code> on your computer, and the key is never shown on screen.</li>
+          <li>Never paste a key into code, chat, screenshots or git. If one leaks, regenerate it (Step 16 shows how).</li>
+        </ul>
+      </div>
+
+      <div class="legend-row" aria-label="How to read this guide">
+        <span><i class="swatch run"></i>Command to run</span>
+        <span><i class="swatch read"></i>Code to read</span>
+        <span><i class="swatch see"></i>Output you should see</span>
+      </div>
+    </section>
+
+    <!-- ===================== CONCEPTS ===================== -->
+    <section id="concepts">
+      <div class="section-head">
+        <span class="eyebrow">Read this first</span>
+        <h2>Key ideas in five minutes</h2>
+      </div>
+      <div class="ideas">
+        <div class="idea"><span class="term-word">Bicep</span><h3>Infrastructure as code</h3><p>You describe the Azure resources in text files. Azure creates exactly what the files say, and running them again changes nothing that is already correct.</p></div>
+        <div class="idea"><span class="term-word">workspace</span><h3>The Azure ML workspace</h3><p>The home of your ML project. It tracks data, training runs, models and endpoints, and links to storage, a key vault, monitoring and a container registry.</p></div>
+        <div class="idea"><span class="term-word">data asset</span><h3>Versioned data</h3><p>Your CSV files get a name and a version, <code>olist-ecommerce-raw:1</code>. A version never changes, so every training run records exactly which data it used.</p></div>
+        <div class="idea"><span class="term-word">command job</span><h3>Training in the cloud</h3><p>Azure ML copies your code to a VM it creates just for the job (serverless compute), runs it, keeps the results and deletes the VM.</p></div>
+        <div class="idea"><span class="term-word">MLflow</span><h3>Experiment tracking</h3><p>The training script logs settings, metrics, plots and the model with MLflow. Azure ML shows them in studio so you can compare runs.</p></div>
+        <div class="idea"><span class="term-word">online endpoint</span><h3>A model as a web API</h3><p>An HTTPS address protected by a key. Send it order details as JSON and it returns the predicted shipping cost in under a second.</p></div>
+      </div>
+    </section>
+
+    <!-- ===================== PART A ===================== -->
+    <section id="part-a">
+      <div class="part-head"><span class="part-label">PART A</span><h2>Get ready</h2></div>
+      <div class="steps">
+
+        <article class="step" id="step-1">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Get the course files and the dataset</h3>
+            <div class="step-meta"><span>5 minutes</span></div>
+            <p class="prose">Your instructor gives you the project folder and the dataset. Unzip both into <b>one course folder</b> so it looks exactly like this. The scripts find the dataset by looking for the <code>Ecommerce Dataset</code> folder above the project.</p>
+            <div class="out">
+              <div class="out-head neutral">Folder layout</div>
+<pre class="tree">Machine learning\                     ← your course folder (any name)
+├── Ecommerce Dataset\                ← the dataset from your instructor (9 Olist CSV files)
+└── project-1-freight-cost\           ← this project: open THIS folder in VS Code
+    ├── azure-ml-training-lab.html    ← this guide
+    ├── azure-ml-infra\               ← Part B: Bicep templates + deployment scripts
+    │   ├── infra\  main.bicep, main.bicepparam, modules\*.bicep
+    │   ├── data\   olist-data-asset.yml
+    │   └── scripts\ 00-check … 04-verify, 99-cleanup
+    └── freight-cost-model\           ← Parts C and D
+        ├── src\     train.py                    ← the training script
+        ├── jobs\    train-job.yml               ← the Azure ML job definition
+        ├── deploy\  score.py, deployment.yml…   ← the online endpoint
+        ├── app\     app.py, .env.example        ← the Gradio test app
+        └── scripts\ submit-training, register-model, deploy/test/delete-endpoint, create-app-env</pre>
+            </div>
+            <p class="prose">The dataset is the public <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Olist Brazilian E-Commerce</a> data: about 99,000 orders from 2016–2018 in nine linked tables (orders, items, customers, sellers, products, payments, reviews, geolocation, category names). Any other files in the dataset folder are ignored.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-1" data-step="1"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-2">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Install the tools</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Once per computer</span></div>
+            <ul class="checklist prose">
+              <li><b>An Azure subscription</b> where you are <b>Owner</b>, or <b>Contributor + Role Based Access Control Administrator</b>. The template creates role assignments, which plain Contributor cannot do.</li>
+              <li><b>Azure CLI 2.61 or newer.</b> On Windows: <code>winget install -e --id Microsoft.AzureCLI</code>, then reopen VS Code. Bicep and the Azure ML extension are added for you in Step 4.</li>
+              <li><b>Visual Studio Code</b> with the <b>Bicep</b> and <b>Python</b> extensions by Microsoft.</li>
+              <li><b>PowerShell</b>: Windows PowerShell 5.1 is built into Windows; PowerShell 7 works on macOS and Linux.</li>
+              <li><b>Python 3.10 or newer</b> for the Gradio app (Step 17) and the optional local run (Step 11). Check with <code>python --version</code>.</li>
+            </ul>
+            <label class="done-toggle"><input type="checkbox" id="done-2" data-step="2"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-3">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Open a terminal and sign in to Azure</h3>
+            <div class="step-meta"><span>3 minutes</span></div>
+            <p class="prose">In VS Code choose <b>File → Open Folder</b> and open the <b>project-1-freight-cost</b> folder. Then <b>Terminal → New Terminal</b>; the prompt should start with <code>PS</code> (PowerShell).</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code><span class="c"># Allow scripts in this terminal window, and unblock downloaded files</span>
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+Get-ChildItem -Recurse -Include *.ps1 | Unblock-File
+
+<span class="c"># Sign in with YOUR account (a browser opens), then check the subscription</span>
+az login
+az account show --query "{subscription:name, user:user.name}" -o table</code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What just happened</span>
+              <ul>
+                <li><code>Set-ExecutionPolicy -Scope Process</code> allows scripts only in this terminal window and only until you close it.</li>
+                <li><code>az login</code> stores a sign-in token on your computer. Every later command and script uses it, so you never type a password or key into a script.</li>
+              </ul>
+            </div>
+            <div class="callout tip">
+              <span class="tag">Wrong subscription?</span>
+              <p>List them with <code>az account list -o table</code> and switch with <code>az account set --subscription "&lt;name or id&gt;"</code>.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-3" data-step="3"> I finished this step</label>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== PART B ===================== -->
+    <section id="part-b">
+      <div class="part-head"><span class="part-label">PART B</span><h2>Build the infrastructure with Bicep</h2></div>
+      <p class="prose">One Bicep template, <code>azure-ml-infra/infra/main.bicep</code>, creates a resource group with storage, a key vault, monitoring, a container registry, the Azure ML workspace, a personal compute instance and your access roles. The numbered scripts run it for you.</p>
+      <div class="steps">
+
+        <article class="step" id="step-4">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Check the prerequisites</h3>
+            <div class="step-meta"><span>2 minutes</span><span>Free</span><span>Script 00</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>cd azure-ml-infra
+.\scripts\00-check-prerequisites.ps1 -Location <span data-v="location">eastus</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What the script checks</span>
+              <ol>
+                <li>Azure CLI version, and Bicep (installs Bicep if missing).</li>
+                <li>That you are signed in, and which subscription is active.</li>
+                <li>The Azure ML CLI extension <code>ml</code> (installs it if missing).</li>
+                <li>Resource providers such as <code>Microsoft.MachineLearningServices</code> (registers them if needed).</li>
+                <li>Your role: Owner, or Contributor + an RBAC role.</li>
+                <li><b>Quota</b>: whether you may run a 4-vCPU <code>Standard_E4ds_v4</code> machine in your region.</li>
+              </ol>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; 7. Azure ML quota for Standard_E4ds_v4 in <span data-v="location">eastus</span>
+    Family quota  : 0 of 20 vCPUs used (20 free)   <span class="dim">← your numbers may differ</span>
+    <span class="ok">[OK]</span>   Enough quota for one Standard_E4ds_v4 compute instance.
+
+==&gt; Summary
+    <span class="ok">[OK]</span>   Everything looks good. Next: .\scripts\01-validate-infra.ps1</pre>
+            </div>
+            <div class="callout warn">
+              <span class="tag">If the quota check fails</span>
+              <p>The script lists VM families that still have free quota. Add <code>-VmSize &lt;size&gt;</code> with a size from one of them to this command and to Steps 5 and 6, or choose another region.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-4" data-step="4"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-5">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Validate and preview</h3>
+            <div class="step-meta"><span>3 minutes</span><span>Free, creates nothing</span><span>Script 01</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\01-validate-infra.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">Five checks, cheapest first</span>
+              <ol>
+                <li><code>az bicep lint</code>: best-practice rules.</li>
+                <li><code>az bicep build</code>: syntax and wrong property names.</li>
+                <li><code>az bicep build-params</code>: your parameter file.</li>
+                <li><code>az deployment sub validate</code>: Azure's preflight (names, policies, permissions).</li>
+                <li><code>az deployment sub what-if</code>: the exact list of what would be created.</li>
+              </ol>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see (end of the output)</div>
+<pre>  + Microsoft.MachineLearningServices/workspaces/<span data-v="ws">mlw-olist-dev</span>
+  + Microsoft.Storage/storageAccounts/st<span data-v="project">olist</span>dev&lt;suffix&gt;
+  …
+Resource changes: <span class="ok">11 to create</span>.</pre>
+            </div>
+            <p class="muted">Symbols: <b>+</b> create, <b>~</b> modify, <b>-</b> delete, <b>=</b> no change. <code>&lt;suffix&gt;</code> is a short code Bicep generates so your names are unique.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-5" data-step="5"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-6">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h3>Deploy with Bicep</h3>
+            <div class="step-meta"><span>10–15 minutes</span><span>Billing starts</span><span>Script 02</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\02-deploy-infra.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What happens</span>
+              <ul>
+                <li><code>az deployment sub create</code> sends <code>main.bicep</code> to Azure. It creates the resource group, then seven modules: monitoring, storage, key vault, registry, workspace, compute instance and role assignments.</li>
+                <li>The script saves the resource names to <code>azure-ml-infra/.deployment-outputs.json</code>, which Steps 7–8 read. This file describes <b>your</b> subscription, so keep it to yourself.</li>
+              </ul>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; Deploying 'aml-<span data-v="project">olist</span>-dev-<span data-v="location">eastus</span>' to subscription scope (region: <span data-v="location">eastus</span>)
+    <span class="ok">[OK]</span>   Deployment succeeded in 11.8 minutes
+
+==&gt; Deployed resources
+    Resource group     : <span data-v="rg">rg-olist-ml-dev</span>
+    ML workspace       : <span data-v="ws">mlw-olist-dev</span>
+    Compute instance   : ci-<span data-v="project">olist</span>-dev&lt;suffix&gt;
+    Azure ML studio    : https://ml.azure.com/?wsid=&lt;your workspace&gt;</pre>
+            </div>
+            <div class="callout tip">
+              <span class="tag">Watch it happen</span>
+              <p>Azure portal → <b>Subscriptions</b> → your subscription → <b>Deployments</b>. Each Bicep module appears as its own deployment.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-6" data-step="6"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-7">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <h3>Upload the dataset</h3>
+            <div class="step-meta"><span>3 minutes</span><span>Script 03</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\03-upload-data.ps1</code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What happens</span>
+              <ul>
+                <li>Bicep runs inside Azure and cannot read files on your laptop. So data goes up with the Azure ML CLI: Bicep is the <b>control plane</b> (resources), the CLI is the <b>data plane</b> (content).</li>
+                <li>The script copies only the nine Olist files into <code>data/olist-raw</code>, then runs <code>az ml data create --file data/olist-data-asset.yml</code>.</li>
+                <li>That command uploads the folder to the workspace's default storage and registers it as <code>olist-ecommerce-raw</code>, version <code>1</code>.</li>
+              </ul>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>    <span class="ok">[OK]</span>   9 files, 120.3 MB staged in …\azure-ml-infra\data\olist-raw
+    <span class="ok">[OK]</span>   Version is free
+<span class="dim">Your file exceeds 100 MB … AzCopy …            ← harmless notice, ignore it</span>
+    <span class="ok">[OK]</span>   Registered olist-ecommerce-raw:1</pre>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-7" data-step="7"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-8">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <h3>Verify the environment</h3>
+            <div class="step-meta"><span>1 minute</span><span>Read-only</span><span>Script 04</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\04-verify-deployment.ps1</code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; 2. Compute instance: ci-<span data-v="project">olist</span>-dev&lt;suffix&gt;
+    <span class="ok">[OK]</span>   State: Running   Size: Standard_E4ds_v4
+==&gt; 4. Data asset: olist-ecommerce-raw
+olist-ecommerce-raw  1
+==&gt; 5. Role assignments for the data scientist
+    <span class="ok">[OK]</span>   <span data-v="ws">mlw-olist-dev</span>    AzureML Data Scientist
+    <span class="ok">[OK]</span>   st<span data-v="project">olist</span>dev…     Storage Blob Data Contributor, Storage File Data Privileged Contributor</pre>
+            </div>
+            <p class="prose">Open the studio link at the end of the output, then <b>Data → olist-ecommerce-raw → Explore</b> to preview your files in the cloud.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-8" data-step="8"> I finished this step</label>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== PART C ===================== -->
+    <section id="part-c">
+      <div class="part-head"><span class="part-label">PART C</span><h2>Train the model</h2></div>
+      <div class="steps">
+
+        <article class="step" id="step-9">
+          <div class="step-num">9</div>
+          <div class="step-body">
+            <h3>Understand the problem</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Reading</span></div>
+            <p class="prose"><b>Goal:</b> when a customer checks out, predict the <b>shipping cost</b> (<code>freight_value</code>, in Brazilian reais) of each item. The answer is a number, so this is a <b>regression</b> problem. Every feature must be known <i>at checkout</i>: using anything known only after delivery would be cheating (data leakage).</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Feature</th><th>Where it comes from</th><th>Why it helps</th></tr></thead>
+                <tbody>
+                  <tr><td><code>distance_km</code></td><td>Seller and customer zip codes → coordinates (geolocation table)</td><td>Longer trips cost more</td></tr>
+                  <tr><td><code>product_weight_g</code>, dimensions, <code>volume_cm3</code></td><td>Products table</td><td>Heavier and bigger parcels cost more</td></tr>
+                  <tr><td><code>same_state</code>, seller and customer state</td><td>Sellers and customers tables</td><td>Shipping inside a state is cheaper</td></tr>
+                  <tr><td><code>price</code>, <code>product_category</code></td><td>Order items and products</td><td>Expensive or bulky goods ship differently</td></tr>
+                  <tr><td><code>items_in_order</code>, <code>items_from_seller</code></td><td>Order items</td><td>Freight is split across the items in one parcel</td></tr>
+                  <tr><td><code>purchase_month</code></td><td>Orders</td><td>Possible seasonal effects</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <ul class="prose">
+              <li><b>Time-based split.</b> Train on orders before <b>1 June 2018</b> (91,231 items), test on June–August 2018 (21,419 items), just as a real model predicts future orders.</li>
+              <li><b>Log target.</b> A few shipments cost up to R$410 while the median is R$16, so the model learns <code>log(1 + freight)</code> and converts its answer back to reais.</li>
+              <li><b>Three models</b> are compared: a baseline that always predicts the median, linear (ridge) regression, and gradient boosting.</li>
+            </ul>
+            <label class="done-toggle"><input type="checkbox" id="done-9" data-step="9"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 10: WALKTHROUGH OF train.py -->
+        <article class="step" id="step-10">
+          <div class="step-num">10</div>
+          <div class="step-body">
+            <h3>Read the training script, block by block</h3>
+            <div class="step-meta"><span>25 minutes</span><span>Reading</span><span>freight-cost-model/src/train.py</span></div>
+            <p class="prose">Open <code>freight-cost-model/src/train.py</code> in VS Code next to this guide. The same file runs on your laptop (Step 11) and in Azure (Step 12). Here is what each part does.</p>
+
+            <div class="walk">
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>The feature contract</h4>
+                  <p>Three lists define exactly which columns the model uses. The endpoint's scoring script (Step 15) repeats the same lists, so a request must contain these features and nothing else matters.</p>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 44–59 (condensed)</span></div>
+<pre>TARGET = "freight_value"
+CATEGORICAL = ["seller_state", "customer_state", "product_category"]
+NUMERIC = [
+    "price", "product_weight_g", "product_length_cm", "product_height_cm", "product_width_cm",
+    "volume_cm3", "distance_km", "same_state", "items_in_order", "items_from_seller", "purchase_month",
+]
+FEATURES = CATEGORICAL + NUMERIC</pre>
+                  </div>
+                </div>
+              </div>
+
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Load and join seven tables: <code>build_dataset()</code></h4>
+                  <p>The Olist data is spread over linked tables. Starting from <b>order items</b> (one row per item sold), the script adds the purchase date, the customer's and seller's zip codes and states, the product's size and weight, and the English category name.</p>
+                  <div class="flow" aria-label="Table joins">
+                    <span class="node">order_items</span><span class="arrow">+</span>
+                    <span class="node">orders</span><span class="arrow">+</span>
+                    <span class="node">customers</span><span class="arrow">+</span>
+                    <span class="node">sellers</span><span class="arrow">+</span>
+                    <span class="node">products</span><span class="arrow">+</span>
+                    <span class="node">category names</span><span class="arrow">+</span>
+                    <span class="node">geolocation</span><span class="arrow">&rarr;</span>
+                    <span class="node out">1 row per item</span>
+                  </div>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 85–96</span></div>
+<pre><span class="c"># The geolocation table has many rows per zip-code prefix -&gt; average them.</span>
+zip_coords = geolocation.groupby("geolocation_zip_code_prefix")[["geolocation_lat", "geolocation_lng"]].mean()
+
+df = (
+    items.merge(orders[["order_id", "customer_id", "order_purchase_timestamp"]], on="order_id")
+    .merge(customers[["customer_id", "customer_zip_code_prefix", "customer_state"]], on="customer_id")
+    .merge(sellers[["seller_id", "seller_zip_code_prefix", "seller_state"]], on="seller_id")
+    .merge(products, on="product_id", how="left")
+    .merge(translation, on="product_category_name", how="left")
+)
+df = df.join(zip_coords.add_prefix("customer_"), on="customer_zip_code_prefix")
+df = df.join(zip_coords.add_prefix("seller_"), on="seller_zip_code_prefix")</pre>
+                  </div>
+                  <ul>
+                    <li><code>merge(..., on="order_id")</code> works like a SQL <b>JOIN</b>. <code>how="left"</code> keeps an item even if its product has no category.</li>
+                    <li>The geolocation table has about a million rows, many per zip code, so the script <b>averages</b> them first. It then attaches the coordinates twice: once for the customer and once for the seller.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Engineer the features</h4>
+                  <p>Raw columns become signals the model can learn from.</p>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 99–117 (condensed)</span></div>
+<pre>df["distance_km"] = haversine_km(
+    df["seller_geolocation_lat"], df["seller_geolocation_lng"],
+    df["customer_geolocation_lat"], df["customer_geolocation_lng"],
+)
+df["volume_cm3"] = df["product_length_cm"] * df["product_height_cm"] * df["product_width_cm"]
+df["same_state"] = (df["seller_state"] == df["customer_state"]).astype(int)
+<span class="c"># Freight is charged per seller shipment and split across its items, so the cart matters.</span>
+df["items_in_order"] = df.groupby("order_id")["order_item_id"].transform("size")
+df["items_from_seller"] = df.groupby(["order_id", "seller_id"])["order_item_id"].transform("size")
+df["purchase_month"] = df["purchase_timestamp"].dt.month
+df[NUMERIC] = df[NUMERIC].astype("float64")</pre>
+                  </div>
+                  <ul>
+                    <li><b>Haversine distance</b> is the straight-line distance between two points on a sphere (the Earth, radius 6,371 km). It is the strongest feature of all.</li>
+                    <li><code>groupby(...).transform("size")</code> counts how many items share an order, or a seller within an order, and writes the count on every row.</li>
+                    <li>Missing categories become <code>"unknown"</code>. All numbers are stored as floats, so missing values (NaN) are allowed when the model is called from the endpoint later.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Build three models</h4>
+                  <p>Each model is a scikit-learn <b>pipeline</b>: preprocessing and model are saved together, so the endpoint gets one object that accepts raw features.</p>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 125–155 (condensed, comments added)</span></div>
+<pre>def log_target(regressor):
+    <span class="c">"""Train on log(1 + freight) because freight is very skewed; predictions come back in R$."""</span>
+    return TransformedTargetRegressor(regressor=regressor, func=np.log1p, inverse_func=np.expm1)
+
+def make_boosting_model(args):
+    preprocess = ColumnTransformer([
+        ("categorical", OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1), CATEGORICAL),
+        ("numeric", "passthrough", NUMERIC),
+    ])
+    model = HistGradientBoostingRegressor(
+        learning_rate=args.learning_rate,        <span class="c"># 0.05: how big each correction step is</span>
+        max_iter=args.max_iter,                  <span class="c"># up to 600 trees</span>
+        max_leaf_nodes=args.max_leaf_nodes,      <span class="c"># 63 leaves per tree</span>
+        min_samples_leaf=args.min_samples_leaf,  <span class="c"># at least 40 items per leaf</span>
+        categorical_features=list(range(len(CATEGORICAL))),
+        early_stopping=True,                     <span class="c"># stop when 10% held-out data stops improving</span>
+        validation_fraction=0.1,
+        random_state=42,                         <span class="c"># same result every run</span>
+    )
+    return log_target(Pipeline([("preprocess", preprocess), ("model", model)]))</pre>
+                  </div>
+                  <ul>
+                    <li><code>TransformedTargetRegressor</code> applies <code>log1p</code> to the target before training and <code>expm1</code> to every prediction, so you always get reais back.</li>
+                    <li><b>Gradient boosting</b> builds hundreds of small decision trees, each one correcting the errors of the trees before it. <code>OrdinalEncoder</code> turns state and category names into numbers that the trees split on directly.</li>
+                    <li>The <b>linear</b> model (<code>make_linear_model</code>) one-hot encodes the categories, fills missing numbers with the median, scales them, and fits a <code>Ridge</code> regression. The <b>baseline</b> is <code>DummyRegressor(strategy="median")</code>.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Split by time, train, compare: <code>main()</code></h4>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 215–239 (condensed)</span></div>
+<pre>with mlflow.start_run():
+    mlflow.log_params({k: v for k, v in vars(args).items() if k not in ("data", "output_dir")})
+
+    df = build_dataset(args.data)
+    cutoff = pd.Timestamp(args.test_start)                    <span class="c"># 2018-06-01</span>
+    train, test = df[df["purchase_timestamp"] &lt; cutoff], df[df["purchase_timestamp"] &gt;= cutoff]
+
+    candidates = {
+        "baseline": DummyRegressor(strategy="median"),
+        "linear": make_linear_model(args.ridge_alpha),
+        "boosting": make_boosting_model(args),
+    }
+    for name, model in candidates.items():
+        model.fit(X_train, y_train)
+        results[name] = evaluate(y_test.to_numpy(), model.predict(X_test))
+        mlflow.log_metrics({f"{name}_{metric}": value for metric, value in results[name].items()})</pre>
+                  </div>
+                  <ul>
+                    <li><code>mlflow.start_run()</code> opens a tracked run. In Azure ML it attaches to your job automatically, so every <code>log_param</code> and <code>log_metric</code> appears in studio.</li>
+                    <li><code>evaluate()</code> computes <b>MAE</b> (average error in R$), <b>RMSE</b> (punishes big misses), <b>R²</b> (share of variation explained) and <b>within_5_brl</b> (share of predictions within R$5).</li>
+                    <li>Metric names get the model as prefix, e.g. <code>boosting_mae</code>, so all three models can be compared side by side.</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Explain and save the model</h4>
+                  <div class="code">
+                    <div class="code-head"><b>src/train.py</b><span>lines 247–272 (condensed)</span></div>
+<pre>predictions = best.predict(X_test)
+mlflow.log_figure(plot_predictions(y_test.to_numpy(), predictions), "plots/predicted_vs_actual.png")
+importance_fig, importances = plot_importance(best, X_test, y_test)
+mlflow.log_figure(importance_fig, "plots/feature_importance.png")
+
+model_dir = os.path.join(args.output_dir, "model")              <span class="c"># ./outputs/model</span>
+signature = infer_signature(X_test.head(100), predictions[:100])
+mlflow.sklearn.save_model(
+    best, model_dir,
+    signature=signature,
+    input_example=X_test.head(3),
+    serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
+)</pre>
+                  </div>
+                  <ul>
+                    <li><b>Permutation importance</b> shuffles one feature at a time and measures how much worse the MAE gets. A big increase means the feature matters.</li>
+                    <li><code>save_model</code> writes an <b>MLflow model folder</b> (<code>MLmodel</code>, <code>model.pkl</code>, environment files) into <code>./outputs/model</code>. Azure ML uploads everything in <code>./outputs</code> when the job ends, and Step 14 registers it from there.</li>
+                    <li>The <b>signature</b> records the expected input columns and types. The <b>cloudpickle</b> format works with the packages in Microsoft's ready-made environment.</li>
+                    <li>Hyperparameters come from command-line arguments (<code>parse_args</code>), so you can change them without editing code: <code>--learning-rate 0.1 --max-iter 300</code>.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-10" data-step="10"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-11">
+          <div class="step-num">11</div>
+          <div class="step-body">
+            <h3>Try it locally first</h3>
+            <div class="step-meta"><span class="opt">Optional</span><span>5 minutes</span><span>Free</span></div>
+            <p class="prose">Professionals test on their laptop before paying for cloud compute. The script runs unchanged; only MLflow needs to be told where to store the run.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>cd ..\freight-cost-model
+pip install pandas scikit-learn mlflow matplotlib cloudpickle
+
+<span class="c"># Store MLflow runs in a local SQLite file</span>
+$env:MLFLOW_TRACKING_URI = "sqlite:///mlflow.db"
+python src\train.py --data "..\..\Ecommerce Dataset"</code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see (after about a minute)</div>
+<pre>Rows: train=91,231 (before 2018-06-01), test=21,419
+baseline  MAE R$9.77  RMSE R$19.87  R2 -0.093  within R$5: 49.5%
+linear    MAE R$6.12  RMSE R$12.79  R2 0.547  within R$5: 72.8%
+boosting  MAE R$5.49  RMSE R$11.91  R2 0.607  within R$5: 73.6%
+Gradient boosting reduces MAE by 43.9% compared with the baseline.
+Done. MLflow model saved to outputs\model</pre>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-11" data-step="11"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-12">
+          <div class="step-num">12</div>
+          <div class="step-body">
+            <h3>Train on Azure ML</h3>
+            <div class="step-meta"><span>8–12 minutes</span><span>Serverless VM, billed only while running</span></div>
+            <p class="prose">The job definition tells Azure ML what to run, on which data, in which environment and on which machine:</p>
+            <div class="code">
+              <div class="code-head"><b>jobs/train-job.yml</b><span>condensed, comments added</span></div>
+<pre>code: ../src                                  <span class="c"># this folder is uploaded; train.py runs from it</span>
+command: &gt;-
+  python train.py
+  --data ${{inputs.olist_data}}
+  --test-start ${{inputs.test_start}}
+  --learning-rate ${{inputs.learning_rate}}
+  --max-iter ${{inputs.max_iter}}
+inputs:
+  olist_data:
+    type: uri_folder
+    path: azureml:olist-ecommerce-raw:1       <span class="c"># your data asset from Step 7</span>
+    mode: ro_mount                            <span class="c"># mounted read-only, not copied</span>
+environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
+resources:
+  instance_type: Standard_E4ds_v4             <span class="c"># no "compute:" line = serverless VM</span></pre>
+            </div>
+            <ul class="prose">
+              <li><code>${{inputs.olist_data}}</code> becomes the folder path where Azure ML mounts your data, and it is passed to <code>--data</code>.</li>
+              <li>The <b>environment</b> is Microsoft's curated scikit-learn 1.5 image (Python 3.10). Pinning version <code>54</code> makes every run use exactly the same packages.</li>
+            </ul>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>cd ..\freight-cost-model     <span class="c"># skip if you are already in freight-cost-model</span>
+.\scripts\submit-training.ps1 -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What the script does</span>
+              <ol>
+                <li><code>az ml job create --file jobs/train-job.yml</code> uploads <code>src/</code> and queues the job. Azure gives it a random name.</li>
+                <li>It saves that name in <code>.last-training-job</code>, so Step 14 can find it without copy-pasting.</li>
+                <li>It streams the logs, then checks the status every 20 seconds until the job finishes.</li>
+              </ol>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; Submitting …\freight-cost-model\jobs\train-job.yml
+    Job    : &lt;your-job-name&gt;              <span class="dim">← random, e.g. two words and a code</span>
+    Studio : https://ml.azure.com/runs/&lt;your-job-name&gt;?wsid=…
+==&gt; Streaming logs (Ctrl+C stops watching; the job keeps running)
+    status: Finalizing - checking again in 20 s
+==&gt; Job &lt;your-job-name&gt; <span class="ok">completed</span>
+    Next: check the metrics in studio, then run .\scripts\register-model.ps1 -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></pre>
+            </div>
+            <div class="callout warn">
+              <span class="tag">Do not panic</span>
+              <p>The job waits a few minutes in <b>Queued</b> while Azure starts the VM. The log stream may print <code>ERROR: Met error &lt;class 'binascii.Error'&gt;</code>. That is a known Azure CLI display glitch: the script keeps checking until the job really finishes.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-12" data-step="12"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-13">
+          <div class="step-num">13</div>
+          <div class="step-body">
+            <h3>Review the results in studio</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Azure ML studio</span></div>
+            <p class="prose">Open the studio link from Step 12, or <b>Jobs → olist-freight-cost</b> → your job. The <b>Metrics</b> tab shows what <code>log_metrics</code> recorded, <b>Images</b> shows the plots, and <b>Outputs + logs</b> holds <code>outputs/model</code> and <code>user_logs/std_log.txt</code> (everything <code>print</code> wrote). Your run should show these numbers:</p>
+
+            <div class="charts">
+              <figure class="chart">
+                <figcaption><div class="chart-title">Average error per item (MAE)</div><div class="chart-sub">Test set, June–August 2018. Lower is better.</div></figcaption>
+                <div class="bars" role="list">
+                  <div class="bar-row" role="listitem" title="Baseline: MAE R$9.77"><span class="label">Baseline (median)</span><span class="track"><span class="fill" style="width: 97.7%"></span></span><span class="value">R$9.77</span></div>
+                  <div class="bar-row" role="listitem" title="Linear: MAE R$6.12"><span class="label">Linear (ridge)</span><span class="track"><span class="fill" style="width: 61.2%"></span></span><span class="value">R$6.12</span></div>
+                  <div class="bar-row hi" role="listitem" title="Gradient boosting: MAE R$5.49 (kept)"><span class="label"><b>Gradient boosting</b></span><span class="track"><span class="fill" style="width: 54.9%"></span></span><span class="value">R$5.49</span></div>
+                </div>
+                <div class="axis" aria-hidden="true"><span></span><span class="ticks"><span>R$0</span><span>R$2.5</span><span>R$5</span><span>R$7.5</span><span>R$10</span></span><span></span></div>
+              </figure>
+
+              <figure class="chart">
+                <figcaption><div class="chart-title">What drives shipping cost</div><div class="chart-sub">Extra error (R$) when a feature is shuffled. Longer = more important.</div></figcaption>
+                <div class="bars" role="list">
+                  <div class="bar-row hi" role="listitem" title="distance_km: +R$1.59"><span class="label"><code>distance_km</code></span><span class="track"><span class="fill" style="width: 99.5%"></span></span><span class="value">1.59</span></div>
+                  <div class="bar-row hi" role="listitem" title="product_weight_g: +R$1.47"><span class="label"><code>product_weight_g</code></span><span class="track"><span class="fill" style="width: 91.8%"></span></span><span class="value">1.47</span></div>
+                  <div class="bar-row hi" role="listitem" title="same_state: +R$1.46"><span class="label"><code>same_state</code></span><span class="track"><span class="fill" style="width: 91.4%"></span></span><span class="value">1.46</span></div>
+                  <div class="bar-row" role="listitem" title="price: +R$0.89"><span class="label"><code>price</code></span><span class="track"><span class="fill" style="width: 55.7%"></span></span><span class="value">0.89</span></div>
+                  <div class="bar-row" role="listitem" title="volume_cm3: +R$0.79"><span class="label"><code>volume_cm3</code></span><span class="track"><span class="fill" style="width: 49.6%"></span></span><span class="value">0.79</span></div>
+                  <div class="bar-row" role="listitem" title="items_in_order: +R$0.35"><span class="label"><code>items_in_order</code></span><span class="track"><span class="fill" style="width: 21.9%"></span></span><span class="value">0.35</span></div>
+                  <div class="bar-row" role="listitem" title="seller_state: +R$0.28"><span class="label"><code>seller_state</code></span><span class="track"><span class="fill" style="width: 17.4%"></span></span><span class="value">0.28</span></div>
+                  <div class="bar-row" role="listitem" title="customer_state: +R$0.27"><span class="label"><code>customer_state</code></span><span class="track"><span class="fill" style="width: 16.7%"></span></span><span class="value">0.27</span></div>
+                  <div class="bar-row" role="listitem" title="items_from_seller: +R$0.26"><span class="label"><code>items_from_seller</code></span><span class="track"><span class="fill" style="width: 16.1%"></span></span><span class="value">0.26</span></div>
+                  <div class="bar-row" role="listitem" title="product_category: +R$0.17"><span class="label"><code>product_category</code></span><span class="track"><span class="fill" style="width: 10.9%"></span></span><span class="value">0.17</span></div>
+                  <div class="bar-row" role="listitem" title="product_length_cm: +R$0.13"><span class="label"><code>product_length_cm</code></span><span class="track"><span class="fill" style="width: 7.9%"></span></span><span class="value">0.13</span></div>
+                  <div class="bar-row" role="listitem" title="product_height_cm: +R$0.07"><span class="label"><code>product_height_cm</code></span><span class="track"><span class="fill" style="width: 4.3%"></span></span><span class="value">0.07</span></div>
+                  <div class="bar-row" role="listitem" title="product_width_cm: +R$0.01"><span class="label"><code>product_width_cm</code></span><span class="track"><span class="fill" style="width: 0.6%"></span></span><span class="value">0.01</span></div>
+                  <div class="bar-row" role="listitem" title="purchase_month: +R$0.01"><span class="label"><code>purchase_month</code></span><span class="track"><span class="fill" style="width: 0.6%"></span></span><span class="value">0.01</span></div>
+                </div>
+                <div class="axis" aria-hidden="true"><span></span><span class="ticks"><span>0</span><span>0.4</span><span>0.8</span><span>1.2</span><span>1.6</span></span><span></span></div>
+              </figure>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Model</th><th class="num">MAE</th><th class="num">RMSE</th><th class="num">R²</th><th class="num">Within R$5</th></tr></thead>
+                <tbody>
+                  <tr><td>Baseline (always the median)</td><td class="num">R$9.77</td><td class="num">R$19.87</td><td class="num">−0.09</td><td class="num">49.5%</td></tr>
+                  <tr><td>Linear (ridge)</td><td class="num">R$6.12</td><td class="num">R$12.79</td><td class="num">0.55</td><td class="num">72.7%</td></tr>
+                  <tr class="kept"><td>Gradient boosting (kept)</td><td class="num">R$5.49</td><td class="num">R$11.91</td><td class="num">0.61</td><td class="num">73.6%</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <ul class="prose">
+              <li>On average the prediction is <b>R$5.49</b> away from the real freight, 44% better than always guessing the median. About three in four items are within R$5.</li>
+              <li>Open <b>Images → plots/predicted_vs_actual.png</b>: items that really cost more than about R$40 are mostly predicted too low. The log target pulls predictions toward typical prices. How could you fix that?</li>
+            </ul>
+            <label class="done-toggle"><input type="checkbox" id="done-13" data-step="13"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-14">
+          <div class="step-num">14</div>
+          <div class="step-body">
+            <h3>Register the model</h3>
+            <div class="step-meta"><span>1 minute</span></div>
+            <p class="prose">Registering gives the trained model a name and a version, <code>olist-freight-cost:1</code>, linked to the job, code and data that produced it (<b>lineage</b>). Only register a model after checking its metrics.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\register-model.ps1 -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What happens</span>
+              <ul>
+                <li>The script reads your job name from <code>.last-training-job</code> and checks that the job <b>Completed</b>.</li>
+                <li>It runs <code>az ml model create --type mlflow_model --path azureml://jobs/&lt;job&gt;/outputs/artifacts/paths/outputs/model/</code>, the folder <code>save_model</code> wrote in Step 10.</li>
+                <li>Running it again creates version 2, 3 and so on. Old versions stay available.</li>
+              </ul>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>    Using the last submitted job: &lt;your-job-name&gt;
+==&gt; Registering olist-freight-cost from job &lt;your-job-name&gt;
+    <span class="ok">[OK] Registered olist-freight-cost:1</span></pre>
+            </div>
+            <p class="prose">In studio open <b>Models → olist-freight-cost → Artifacts</b> to see <code>MLmodel</code>, <code>model.pkl</code> and the input signature.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-14" data-step="14"> I finished this step</label>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== PART D ===================== -->
+    <section id="part-d">
+      <div class="part-head"><span class="part-label">PART D</span><h2>Serve the model, test it, clean up</h2></div>
+      <div class="steps">
+
+        <article class="step" id="step-15">
+          <div class="step-num">15</div>
+          <div class="step-body">
+            <h3>Deploy the model as an online endpoint</h3>
+            <div class="step-meta"><span>15–20 minutes</span><span>Billed every hour while it exists</span></div>
+            <p class="prose">An <b>endpoint</b> is the HTTPS address and its keys. Behind it runs a <b>deployment</b> called <code>blue</code>: a VM that loads your registered model and answers requests through a <b>scoring script</b>.</p>
+
+            <div class="code">
+              <div class="code-head"><b>deploy/score.py</b><span>condensed</span></div>
+<pre>def init():                                   <span class="c"># runs once, when the container starts</span>
+    global model
+    path = _find_model_file(os.environ.get("AZUREML_MODEL_DIR", "."))
+    with open(path, "rb") as f:
+        model = cloudpickle.load(f)
+
+def run(raw_data):                            <span class="c"># runs for every request</span>
+    try:
+        body = json.loads(raw_data)
+        records = body.get("input_data", body) if isinstance(body, dict) else body
+        features = _prepare(records)          <span class="c"># checks required fields, fills in defaults</span>
+    except (ValueError, TypeError, json.JSONDecodeError) as error:
+        return {"error": str(error)}
+    predictions = model.predict(features)
+    return {"freight_value_brl": [round(float(p), 2) for p in predictions], "model": "olist-freight-cost"}</pre>
+            </div>
+            <ul class="prose">
+              <li><code>AZUREML_MODEL_DIR</code> is set by Azure ML to the folder where your registered model is mounted.</li>
+              <li><code>_prepare()</code> uses the same feature lists as <code>train.py</code>. It requires eight fields and fills in the others: volume from the dimensions, same state from the two states, item counts = 1, current month.</li>
+              <li>Bad input returns a helpful <code>{"error": …}</code> message instead of crashing.</li>
+            </ul>
+            <div class="code">
+              <div class="code-head"><b>deploy/deployment.yml</b><span>condensed</span></div>
+<pre>name: blue
+model: azureml:olist-freight-cost:1          <span class="c"># the version you registered in Step 14</span>
+code_configuration:
+  code: .
+  scoring_script: score.py
+environment:
+  image: mcr.microsoft.com/azureml/minimal-ubuntu22.04-py39-cpu-inference:latest
+  conda_file: conda.yaml                     <span class="c"># Python 3.10 + scikit-learn 1.5.2, same as training</span>
+instance_type: Standard_D2ds_v5              <span class="c"># 2 vCPU / 8 GB</span>
+instance_count: 1</pre>
+            </div>
+            <p class="prose">A pickled model must be loaded with the same scikit-learn version that saved it, so <code>conda.yaml</code> pins <b>1.5.2</b>, the version of the training environment.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\deploy-endpoint.ps1 -EndpointName <span data-v="ep">freight-olist</span> -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="behind">
+              <span class="tag">What the script does</span>
+              <ol>
+                <li><code>az ml online-endpoint create</code> creates your endpoint with key authentication. Azure generates two secret keys for it at this moment.</li>
+                <li><code>az ml online-deployment create --all-traffic</code> builds the container image, starts the VM, loads the model and routes 100% of requests to <code>blue</code>.</li>
+                <li>If anything fails, it prints the container logs.</li>
+              </ol>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; 1. Endpoint <span data-v="ep">freight-olist</span>
+    <span class="ok">[OK]</span> Endpoint created
+==&gt; 2. Deployment "blue" (image build + VM start: ~15-20 minutes the first time)
+    <span class="ok">[OK]</span> Deployment is live and receives 100% of traffic
+==&gt; 3. Endpoint details
+    Scoring URL : https://<span data-v="ep">freight-olist</span>.<span data-v="location">eastus</span>.inference.ml.azure.com/score</pre>
+            </div>
+            <div class="callout cost">
+              <span class="tag">Cost</span>
+              <p>Unlike the training job, the endpoint VM runs around the clock until you delete it in Step 18.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-15" data-step="15"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-16">
+          <div class="step-num">16</div>
+          <div class="step-body">
+            <h3>Get your URL and key, and call the endpoint</h3>
+            <div class="step-meta"><span>5 minutes</span></div>
+            <p class="prose">Your endpoint has <b>two things a caller needs</b>: the scoring URL (public, not secret) and a key (secret). You fetch both live with your own Azure login.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell · 1. call it with the three sample orders</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\test-endpoint.ps1 -EndpointName <span data-v="ep">freight-olist</span> -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see (your numbers should match closely)</div>
+<pre>==&gt; POST https://<span data-v="ep">freight-olist</span>.<span data-v="location">eastus</span>.inference.ml.azure.com/score
+SP -&gt; SP,    800 g,    25 km  =&gt;  R$ 10.23
+SP -&gt; RJ,   9500 g,   360 km  =&gt;  R$ 58.89
+SP -&gt; AM,   1500 g,  2700 km  =&gt;  R$ 31.55</pre>
+            </div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell · 2. save your URL and key for the Gradio app</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\create-app-env.ps1 -EndpointName <span data-v="ep">freight-olist</span> -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre><span class="ok">[OK]</span> Wrote …\freight-cost-model\app\.env
+     URL : https://<span data-v="ep">freight-olist</span>.<span data-v="location">eastus</span>.inference.ml.azure.com/score
+     Key : (hidden - stored only in the .env file)</pre>
+            </div>
+            <div class="behind">
+              <span class="tag">Where your credentials live</span>
+              <ul>
+                <li>The script runs <code>az ml online-endpoint get-credentials</code> with <b>your</b> login and writes the key straight into <code>app/.env</code>. The key never appears on screen.</li>
+                <li><code>app/.env.example</code> is the empty template that ships with the course. <code>app/.env</code> is your private copy and is listed in <code>.gitignore</code>.</li>
+              </ul>
+            </div>
+            <div class="code">
+              <div class="code-head"><b>app/.env.example</b><span>template, no real values</span></div>
+<pre>FREIGHT_ENDPOINT_URL=https://&lt;your-endpoint-name&gt;.&lt;your-region&gt;.inference.ml.azure.com/score
+FREIGHT_ENDPOINT_KEY=&lt;your-endpoint-primary-key&gt;</pre>
+            </div>
+            <p class="prose">To call the endpoint from any other program, send a <code>POST</code> to your URL with the headers <code>Authorization: Bearer &lt;your key&gt;</code> and <code>Content-Type: application/json</code>, and this body:</p>
+            <div class="code">
+              <div class="code-head"><b>Request body</b><span>JSON</span></div>
+<pre>{ "input_data": [ {
+    "seller_state": "SP", "customer_state": "RJ", "product_category": "furniture_decor",
+    "price": 249.0, "product_weight_g": 9500,
+    "product_length_cm": 60, "product_height_cm": 40, "product_width_cm": 40,
+    "distance_km": 360
+} ] }
+<span class="c">→ {"freight_value_brl": [58.89], "model": "olist-freight-cost"}</span></pre>
+            </div>
+            <div class="callout secret">
+              <span class="tag">Keep the key secret</span>
+              <p>Anyone with the key can call your endpoint, and you pay for it. Never commit <code>.env</code>, never paste the key in chat or screenshots. If it leaks, create a new one and rerun <code>create-app-env.ps1</code>:</p>
+              <p><code>az ml online-endpoint regenerate-keys -n <span data-v="ep">freight-olist</span> --key-type primary -g <span data-v="rg">rg-olist-ml-dev</span> -w <span data-v="ws">mlw-olist-dev</span></code></p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-16" data-step="16"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-17">
+          <div class="step-num">17</div>
+          <div class="step-body">
+            <h3>Test your endpoint with the Gradio app</h3>
+            <div class="step-meta"><span>15 minutes</span><span>Runs on your computer</span><span>freight-cost-model/app/app.py</span></div>
+            <p class="prose"><b>Gradio</b> turns a Python function into a web page with input fields and buttons. The app is a small "shop" front end: you describe an item, it calls <b>your</b> endpoint and shows the predicted shipping cost.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>pip install -r app\requirements.txt      <span class="c"># gradio, requests, python-dotenv</span>
+python app\app.py                         <span class="c"># then open http://127.0.0.1:7860</span></code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>* Running on local URL:  http://127.0.0.1:7860</pre>
+            </div>
+
+            <figure class="app-mock" aria-label="Sketch of the Gradio app layout" style="margin: 0">
+              <div class="app-mock-bar"><i></i><i></i><i></i><span>127.0.0.1:7860 · Olist freight-cost tester</span></div>
+              <div class="app-mock-body">
+                <div class="mock-fields">
+                  <div class="mock-field">Seller state<b>SP</b></div>
+                  <div class="mock-field">Customer state<b>RJ</b></div>
+                  <div class="mock-field">Distance (km)<b>360</b></div>
+                  <div class="mock-field wide">Product category<b>furniture_decor</b></div>
+                  <div class="mock-field">Price (R$)<b>249</b></div>
+                  <div class="mock-field">Weight (g)<b>9500</b></div>
+                  <div class="mock-field">Items in the parcel<b>1</b></div>
+                  <div class="mock-field">Length (cm)<b>60</b></div>
+                  <div class="mock-field">Height (cm)<b>40</b></div>
+                  <div class="mock-field">Width (cm)<b>40</b></div>
+                  <div class="mock-button">Predict shipping cost</div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; min-width: 0">
+                  <div class="mock-result"><span class="price">R$ 58.89</span><small>Predicted shipping cost for a 9,500 g item, SP → RJ, about 360 km.</small></div>
+                  <div class="mock-acc">▸ Request and response (JSON)</div>
+                  <div class="mock-acc">▸ Connection</div>
+                  <div class="mock-acc">Example orders (click one, then press Predict)</div>
+                </div>
+              </div>
+            </figure>
+
+            <ol class="prose">
+              <li>Click the second example order (SP → RJ furniture) and press <b>Predict shipping cost</b>. You should get about <b>R$ 58.89</b>.</li>
+              <li>Change the customer state: the distance fills in automatically. Predict again and compare.</li>
+              <li>Open <b>Request and response (JSON)</b> to see the exact JSON your browser app sent and received.</li>
+              <li>Try unusual inputs: a 30,000 g item (does the price still make sense?), then clear the price field and press Predict to see how the app explains a missing value.</li>
+              <li>Stop the app with <kbd>Ctrl</kbd>+<kbd>C</kbd> in the terminal.</li>
+            </ol>
+
+            <h4>How <code>app.py</code> works</h4>
+            <div class="walk">
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Read the credentials from <code>.env</code>, never from code</h4>
+                  <div class="code">
+                    <div class="code-head"><b>app/app.py</b><span>condensed</span></div>
+<pre>load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+ENV_URL = os.environ.get("FREIGHT_ENDPOINT_URL", "").strip()
+ENV_KEY = os.environ.get("FREIGHT_ENDPOINT_KEY", "").strip()</pre>
+                  </div>
+                  <p><code>python-dotenv</code> loads your <code>.env</code> file into environment variables. Without a <code>.env</code> the app opens its <b>Connection</b> panel, where you can paste the URL and key for that browser session only.</p>
+                </div>
+              </div>
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Estimate the distance from the two states</h4>
+                  <div class="code">
+                    <div class="code-head"><b>app/app.py</b><span>condensed</span></div>
+<pre>def estimate_distance(seller_state, customer_state):
+    if seller_state == customer_state:
+        return WITHIN_STATE_KM.get(seller_state, DEFAULT_WITHIN_STATE_KM)
+    return round(haversine_km(STATE_CENTROIDS[seller_state], STATE_CENTROIDS[customer_state]))</pre>
+                  </div>
+                  <p>The state centre coordinates and typical within-state distances were computed from the Olist geolocation and order data. The estimate is close (typically within about 76 km of the true distance between real zip codes), and you can always type your own value.</p>
+                </div>
+              </div>
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Call the endpoint and explain errors</h4>
+                  <div class="code">
+                    <div class="code-head"><b>app/app.py</b><span>condensed</span></div>
+<pre>payload = {"input_data": [{"seller_state": seller_state, "customer_state": customer_state, ...}]}
+response = requests.post(url, json=payload, headers={"Authorization": f"Bearer {key}"}, timeout=30)
+if response.status_code in (401, 403):   <span class="c"># wrong key</span>
+    ...
+if response.status_code == 404:          <span class="c"># wrong URL</span>
+    ...
+price_brl = response.json()["freight_value_brl"][0]</pre>
+                  </div>
+                  <p>This is exactly what a real web shop would do: build the JSON, send it with the key in the <code>Authorization</code> header, and read the price from the response.</p>
+                </div>
+              </div>
+              <div class="walk-item">
+                <div class="walk-num" aria-hidden="true"></div>
+                <div class="walk-body">
+                  <h4>Wire the user interface</h4>
+                  <div class="code">
+                    <div class="code-head"><b>app/app.py</b><span>condensed</span></div>
+<pre>button.click(predict, inputs=inputs, outputs=[result, request_json, response_json])
+seller_state.change(estimate_distance, [seller_state, customer_state], distance_km)
+customer_state.change(estimate_distance, [seller_state, customer_state], distance_km)</pre>
+                  </div>
+                  <p>Gradio connects <b>events</b> (a click, a changed dropdown) to Python functions: their inputs are the component values and their return values fill the output components.</p>
+                </div>
+              </div>
+            </div>
+            <div class="callout warn">
+              <span class="tag">Keep it on your computer</span>
+              <p>The app runs at <code>127.0.0.1</code>, so only you can open it. Do not add <code>share=True</code> to <code>demo.launch()</code>: that would publish a public link that spends your endpoint key.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-17" data-step="17"> I finished this step</label>
+          </div>
+        </article>
+
+        <article class="step" id="step-18">
+          <div class="step-num">18</div>
+          <div class="step-body">
+            <h3>Clean up</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Stops all costs</span></div>
+            <p class="prose"><b>Always delete the endpoint</b> when you are done. That also makes your key useless. Then either keep the workspace for the next lab (and stop the compute instance), or delete everything.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell · 1. delete the endpoint and your local key file</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\delete-endpoint.ps1 -EndpointName <span data-v="ep">freight-olist</span> -ResourceGroup <span data-v="rg">rg-olist-ml-dev</span> -Workspace <span data-v="ws">mlw-olist-dev</span>
+Remove-Item app\.env</code></pre>
+            </div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell · 2a. keep the workspace, stop the compute instance</span><button type="button" class="copy">Copy</button></div>
+<pre><code>cd ..\azure-ml-infra
+$ci = (Get-Content .\.deployment-outputs.json -Raw | ConvertFrom-Json).computeInstanceName
+az ml compute stop --name $ci --resource-group <span data-v="rg">rg-olist-ml-dev</span> --workspace-name <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell · 2b. or delete everything</span><button type="button" class="copy">Copy</button></div>
+<pre><code>cd ..\azure-ml-infra
+.\scripts\99-cleanup.ps1 -ProjectName <span data-v="project">olist</span>      <span class="c"># asks you to type the resource group name</span></code></pre>
+            </div>
+            <p class="muted">The registered model stays in the workspace (option 2a), so you can redeploy it later with Step 15.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-18" data-step="18"> I finished this step</label>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ===================== TROUBLESHOOTING ===================== -->
+    <section id="trouble">
+      <div class="section-head"><span class="eyebrow">When something goes wrong</span><h2>Troubleshooting</h2></div>
+      <p class="prose">Read the red error from the bottom up; the cause is usually on the last lines.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>You see</th><th>What it means</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td><code>running scripts is disabled</code></td><td>Windows blocks scripts by default</td><td>Run the first two lines of Step 3 again in this terminal</td></tr>
+            <tr><td><code>Please run 'az login'</code></td><td>Your sign-in expired</td><td><code>az login</code></td></tr>
+            <tr><td><code>QuotaExceeded</code></td><td>No vCPU quota for that VM size in the region</td><td>Step 4 lists sizes with quota. Training: edit <code>instance_type</code> in <code>jobs/train-job.yml</code>. Endpoint: edit it in <code>deploy/deployment.yml</code></td></tr>
+            <tr><td><code>AuthorizationFailed … roleAssignments/write</code></td><td>You cannot create role assignments</td><td>Ask for Owner, or Contributor + Role Based Access Control Administrator</td></tr>
+            <tr><td><code>VaultAlreadyExists</code> / "deleted state"</td><td>A soft-deleted key vault still holds the name</td><td><code>az keyvault purge --name &lt;name&gt;</code></td></tr>
+            <tr><td><code>binascii.Error</code> while streaming</td><td>Azure CLI display glitch</td><td>Ignore it; the script keeps checking the job status</td></tr>
+            <tr><td>Training job <b>Failed</b></td><td>The Python script raised an error</td><td>Studio → your job → <b>Outputs + logs</b> → <code>user_logs/std_log.txt</code>; read the last lines</td></tr>
+            <tr><td><code>No -JobName given and no .last-training-job</code></td><td>Step 12 has not run in this folder</td><td>Run Step 12, or pass <code>-JobName &lt;your-job-name&gt;</code> from studio</td></tr>
+            <tr><td>Endpoint name already in use</td><td>Endpoint names are unique per region</td><td>Change <b>Endpoint name</b> in <a href="#settings">Your settings</a> and rerun Step 15</td></tr>
+            <tr><td>Deployment failed in Step 15</td><td>Image build or container start problem</td><td>The script prints the container logs; or run <code>az ml online-deployment get-logs -n blue -e <span data-v="ep">freight-olist</span> -g <span data-v="rg">rg-olist-ml-dev</span> -w <span data-v="ws">mlw-olist-dev</span></code></td></tr>
+            <tr><td><code>{"error": "Missing required field(s) …"}</code></td><td>Your request is missing a feature</td><td>Compare it with <code>deploy/sample-request.json</code></td></tr>
+            <tr><td><code>ModuleNotFoundError: gradio</code></td><td>The app's packages are not installed</td><td><code>pip install -r app\requirements.txt</code></td></tr>
+            <tr><td>App says <b>Not connected</b></td><td>No <code>app/.env</code> file</td><td>Run the second command of Step 16</td></tr>
+            <tr><td>App says <b>Key rejected (HTTP 401/403)</b></td><td>The key is wrong or was regenerated</td><td>Rerun <code>create-app-env.ps1</code> (Step 16), then restart the app</td></tr>
+            <tr><td>Port 7860 already in use</td><td>Another app (or an old copy) is running</td><td>Close it, or start with <code>$env:GRADIO_SERVER_PORT = "7861"; python app\app.py</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== QUIZ ===================== -->
+    <section id="quiz">
+      <div class="section-head"><span class="eyebrow">Self-check</span><h2>Check your understanding</h2></div>
+      <div>
+        <details><summary>1. Why is the dataset uploaded by a script and not by Bicep?</summary><p>Bicep runs inside Azure Resource Manager and cannot read files on your laptop. Bicep creates resources (control plane); the Azure ML CLI puts content into them (data plane).</p></details>
+        <details><summary>2. Why split train and test by date instead of at random?</summary><p>In real use the model predicts future orders. A random split lets the model see orders from the same weeks as the test set, which makes the score look better than it will be in production.</p></details>
+        <details><summary>3. Why does <code>train.py</code> train on <code>log(1 + freight)</code>?</summary><p>Freight is very skewed: most items cost around R$16 but a few cost hundreds. On a log scale the errors of cheap and expensive items are more comparable, which makes training more stable. The downside: predictions for expensive items are pulled down.</p></details>
+        <details><summary>4. Why compare against a baseline that always predicts the median?</summary><p>A metric on its own means little. The baseline shows how much the model actually learned: here, a 44% lower error.</p></details>
+        <details><summary>5. Why does <code>score.py</code> use the same feature lists as <code>train.py</code>?</summary><p>The model only understands the columns it was trained on, in the same format. If the endpoint built different features, predictions would be wrong without any error message (training/serving skew).</p></details>
+        <details><summary>6. Where does your endpoint key come from, and where should it live?</summary><p>Azure generates it when you create your endpoint. You fetch it with your own login (<code>get-credentials</code>) and keep it only in <code>app/.env</code> on your computer: never in code, git, chat or screenshots.</p></details>
+        <details><summary>7. The training VM is deleted after the job. Why is the endpoint VM not?</summary><p>Training is a one-off batch task. An endpoint must answer requests at any moment, so its VM runs all the time, and you pay for it until you delete the endpoint.</p></details>
+      </div>
+    </section>
+
+    <!-- ===================== GLOSSARY ===================== -->
+    <section id="glossary">
+      <div class="section-head"><span class="eyebrow">Words used in this lab</span><h2>Glossary</h2></div>
+      <dl class="glossary">
+        <div><dt>Resource group</dt><dd>A folder for related Azure resources. Delete it and its contents go with it.</dd></div>
+        <div><dt>Bicep / what-if</dt><dd>Azure's infrastructure language, and its preview of the changes a deployment would make.</dd></div>
+        <div><dt>Compute instance</dt><dd>Your personal cloud workstation with Jupyter and VS Code.</dd></div>
+        <div><dt>Serverless compute</dt><dd>A VM Azure ML creates for one job and deletes afterwards.</dd></div>
+        <div><dt>Data asset</dt><dd>A named, versioned reference to data, e.g. <code>olist-ecommerce-raw:1</code>.</dd></div>
+        <div><dt>Pipeline (scikit-learn)</dt><dd>Preprocessing steps and a model chained into one object that is trained and saved together.</dd></div>
+        <div><dt>Gradient boosting</dt><dd>Many small decision trees, each one correcting the errors of the previous ones.</dd></div>
+        <div><dt>MAE / RMSE / R²</dt><dd>Average error, error that punishes big misses more, and share of variation explained.</dd></div>
+        <div><dt>MLflow</dt><dd>Open-source tool for logging runs and packaging models; built into Azure ML.</dd></div>
+        <div><dt>Model registry</dt><dd>Where trained models get names and versions in the workspace.</dd></div>
+        <div><dt>Online endpoint / deployment</dt><dd>The HTTPS address with keys, and the VM running one model version behind it.</dd></div>
+        <div><dt>Scoring script</dt><dd><code>score.py</code>: <code>init()</code> loads the model, <code>run()</code> answers each request.</dd></div>
+        <div><dt>Gradio</dt><dd>A Python library that turns functions into a small web app.</dd></div>
+        <div><dt><code>.env</code> file</dt><dd>A private, local file of settings and secrets, loaded as environment variables and never committed to git.</dd></div>
+      </dl>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Microsoft Learn:
+      <a href="https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview" target="_blank" rel="noopener">Bicep</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-create-data-assets" target="_blank" rel="noopener">Data assets</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-train-model" target="_blank" rel="noopener">Training jobs</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-use-serverless-compute" target="_blank" rel="noopener">Serverless compute</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-deploy-online-endpoints" target="_blank" rel="noopener">Online endpoints</a> ·
+      <a href="https://www.gradio.app/docs" target="_blank" rel="noopener">Gradio docs</a>
+    </p>
+    <p>Dataset: <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Olist Brazilian E-Commerce</a>, CC BY-NC-SA 4.0. Reference docs: <code>azure-ml-infra/README.md</code> and <code>freight-cost-model/README.md</code>.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var KEY_SETTINGS = 'amlTrainingLab.settings';
+  var KEY_PROGRESS = 'amlTrainingLab.v2.progress';
+  var TOTAL_STEPS = 18;
+
+  function load(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable: page still works */ }
+  }
+
+  /* ---------- Settings ---------- */
+  var PROJECT_RE = /^[a-z0-9]{3,10}$/;
+  var ENDPOINT_RE = /^[a-zA-Z][a-zA-Z0-9-]{1,30}[a-zA-Z0-9]$/;
+  var state = { project: 'olist', location: 'eastus', endpoint: 'freight-olist', endpointEdited: false };
+  var saved = load(KEY_SETTINGS, {}) || {};
+  if (PROJECT_RE.test(saved.project || '')) state.project = saved.project;
+  if (saved.location) state.location = saved.location;
+  if (ENDPOINT_RE.test(saved.endpoint || '')) { state.endpoint = saved.endpoint; state.endpointEdited = !!saved.endpointEdited; }
+
+  var projectInput = document.getElementById('set-project');
+  var locationSelect = document.getElementById('set-location');
+  var endpointInput = document.getElementById('set-endpoint');
+  var projectErr = document.getElementById('project-err');
+  var endpointErr = document.getElementById('endpoint-err');
+
+  var hasLocation = false;
+  for (var i = 0; i < locationSelect.options.length; i++) { if (locationSelect.options[i].value === state.location) hasLocation = true; }
+  if (!hasLocation) state.location = 'eastus';
+  if (!state.endpointEdited) state.endpoint = 'freight-' + state.project;
+
+  projectInput.value = state.project;
+  locationSelect.value = state.location;
+  endpointInput.value = state.endpoint;
+
+  function render() {
+    var values = {
+      project: state.project,
+      location: state.location,
+      ep: state.endpoint,
+      rg: 'rg-' + state.project + '-ml-dev',
+      ws: 'mlw-' + state.project + '-dev'
+    };
+    var nodes = document.querySelectorAll('[data-v]');
+    for (var n = 0; n < nodes.length; n++) {
+      var key = nodes[n].getAttribute('data-v');
+      if (values[key] !== undefined) nodes[n].textContent = values[key];
+    }
+  }
+
+  projectInput.addEventListener('input', function () {
+    var value = projectInput.value.trim();
+    var valid = PROJECT_RE.test(value);
+    projectErr.hidden = valid;
+    projectInput.setAttribute('aria-invalid', valid ? 'false' : 'true');
+    if (!valid) return;
+    state.project = value;
+    if (!state.endpointEdited) { state.endpoint = 'freight-' + value; endpointInput.value = state.endpoint; }
+    save(KEY_SETTINGS, state); render();
+  });
+  endpointInput.addEventListener('input', function () {
+    var value = endpointInput.value.trim();
+    var valid = ENDPOINT_RE.test(value);
+    endpointErr.hidden = valid;
+    endpointInput.setAttribute('aria-invalid', valid ? 'false' : 'true');
+    if (!valid) return;
+    state.endpoint = value; state.endpointEdited = true;
+    save(KEY_SETTINGS, state); render();
+  });
+  locationSelect.addEventListener('change', function () { state.location = locationSelect.value; save(KEY_SETTINGS, state); render(); });
+  render();
+
+  /* ---------- Copy buttons ---------- */
+  function selectText(el) {
+    try { var r = document.createRange(); r.selectNodeContents(el); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); } catch (e) { /* ignore */ }
+  }
+  var blocks = document.querySelectorAll('.term');
+  for (var b = 0; b < blocks.length; b++) {
+    (function (block) {
+      var button = block.querySelector('.copy');
+      var code = block.querySelector('code');
+      if (!button || !code) return;
+      button.addEventListener('click', function () {
+        var text = code.innerText.replace(/\s+$/, '');
+        var done = function (label) { button.textContent = label; setTimeout(function () { button.textContent = 'Copy'; }, 1600); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { selectText(code); done('Press Ctrl+C'); });
+        } else { selectText(code); done('Press Ctrl+C'); }
+      });
+    })(blocks[b]);
+  }
+
+  /* ---------- Progress ---------- */
+  var progress = load(KEY_PROGRESS, {}) || {};
+  var boxes = document.querySelectorAll('input[data-step]');
+  var countEl = document.getElementById('progress-count');
+  var barEl = document.getElementById('progress-bar');
+  function renderProgress() {
+    var done = 0;
+    for (var k = 0; k < boxes.length; k++) {
+      var step = boxes[k].getAttribute('data-step');
+      var checked = !!progress[step];
+      boxes[k].checked = checked;
+      var link = document.querySelector('.rail a[data-rail="' + step + '"]');
+      if (link) link.classList.toggle('is-done', checked);
+      if (checked) done++;
+    }
+    countEl.textContent = done + '/' + TOTAL_STEPS;
+    barEl.setAttribute('aria-valuenow', String(done));
+    barEl.firstElementChild.style.width = (done / TOTAL_STEPS * 100) + '%';
+  }
+  for (var j = 0; j < boxes.length; j++) {
+    boxes[j].addEventListener('change', function (event) {
+      progress[event.target.getAttribute('data-step')] = event.target.checked;
+      save(KEY_PROGRESS, progress); renderProgress();
+    });
+  }
+  document.getElementById('reset-progress').addEventListener('click', function () { progress = {}; save(KEY_PROGRESS, progress); renderProgress(); });
+  renderProgress();
+})();
+</script>
+</body>
+</html>

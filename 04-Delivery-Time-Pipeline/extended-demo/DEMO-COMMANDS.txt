@@ -1,0 +1,95 @@
+# ============ PROJECT 2 - DELIVERY-TIME MODEL: DATA PROCESSING + TRAINING PIPELINE IN AZURE ML ============
+
+# Go to the project folder
+cd "C:\Users\kvsrd\OneDrive\Desktop\Operationalize Machine Learning Models\Machine learning\project-2-delivery-time"
+
+# Allow scripts to run in this terminal only
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Unblock files downloaded from the internet or OneDrive
+Get-ChildItem -Recurse | Unblock-File
+
+# Sign in to Azure with your own account
+az login
+
+# Check we are in the right subscription
+az account show --query "{subscription:name, user:user.name}" -o table
+
+# Choose a NEW name for this demo: 3-10 lowercase letters or digits (e.g. demo02). Every resource is named after it
+$name = Read-Host "Enter a name for your resources"
+
+# Build the resource group and workspace names from it
+$rg = "rg-$name-ml-dev"
+$ws = "mlw-$name-dev"
+
+# Check the name is not used yet (should print false)
+az group exists --name $rg
+
+
+# ---------------- PART 1: CREATE THE INFRASTRUCTURE AND UPLOAD THE DATA ----------------
+
+# Go to the infrastructure folder
+cd azure-ml-infra
+
+# Check tools, login, permissions and VM quota
+.\scripts\00-check-prerequisites.ps1 -Location eastus
+
+# Preview what will be created (creates nothing)
+.\scripts\01-validate-infra.ps1 -ProjectName $name -Location eastus
+
+# Create the workspace and all resources with Bicep (10-15 minutes)
+.\scripts\02-deploy-infra.ps1 -ProjectName $name -Location eastus
+
+# Upload the 9 Olist CSV files as the data asset olist-ecommerce-raw:1
+.\scripts\03-upload-data.ps1
+
+# Verify the workspace, compute, data asset and roles
+.\scripts\04-verify-deployment.ps1
+
+
+# ---------------- PART 2: RUN THE PIPELINE IN THE CLOUD (DATA PROCESSING + TRAINING) ----------------
+
+# Go to the model folder
+cd ..\delivery-time-model
+
+# Open step 1, data processing, to explain it (we only OPEN it - it runs in the cloud)
+code src\prep\prep.py
+
+# Open step 2, training, to explain it (5 models compared, best one saved - also runs in the cloud)
+code src\train\train.py
+
+# Open the pipeline: prep -> train, each step on its own CLOUD VM (serverless compute)
+code pipelines\delivery-time-pipeline.yml
+
+# Send the pipeline to Azure ML: cloud VMs run prep, then train, then are deleted (8-12 minutes)
+.\scripts\submit-pipeline.ps1 -ResourceGroup $rg -Workspace $ws
+
+# Prove the pipeline ran in the cloud: status and the studio link to the pipeline graph
+az ml job show --name (Get-Content .last-pipeline-job) -g $rg -w $ws --query "{pipeline:name, status:status, studio:services.Studio.endpoint}" -o table
+
+# Open studio > Jobs > olist-delivery-time to show the pipeline graph, metrics and plots, then register the model
+.\scripts\register-model.ps1 -ResourceGroup $rg -Workspace $ws
+
+# Show the registered model and its version
+az ml model list --name olist-delivery-time -g $rg -w $ws -o table
+
+# Show the pipeline's two cloud steps and their status
+az ml job list --parent-job-name (Get-Content .last-pipeline-job) -g $rg -w $ws --query "[].{step:display_name, status:status}" -o table
+
+
+# ---------------- PART 3: CLEAN UP ----------------
+
+# Go back to the infrastructure folder
+cd ..\azure-ml-infra
+
+# Delete all resources of this demo
+.\scripts\99-cleanup.ps1 -ProjectName $name
+
+# Confirm the resource group is gone (should print false)
+az group exists --name $rg
+
+
+# ---------------- OPTIONAL: TRAIN ON THIS LAPTOP INSTEAD OF THE CLOUD (no Azure, no cost) ----------------
+
+# Open the local notebook, choose Run All; the last cell opens a Gradio app (expected days + safe promise)
+code ..\delivery-time-local.ipynb

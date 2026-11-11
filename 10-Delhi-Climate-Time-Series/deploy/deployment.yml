@@ -1,0 +1,13 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+name: blue
+endpoint_name: replace-with-unique-delhi-endpoint
+model: azureml:course-delhi-climate-model:1
+code_configuration:
+  code: .
+  scoring_script: score.py
+environment:
+  name: course-sklearn-inference
+  image: mcr.microsoft.com/azureml/minimal-ubuntu22.04-py39-cpu-inference:latest
+  conda_file: conda.yaml
+instance_type: Standard_D2ds_v5
+instance_count: 1

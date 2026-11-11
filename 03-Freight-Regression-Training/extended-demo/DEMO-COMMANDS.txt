@@ -1,0 +1,131 @@
+# ============ PROJECT 1 - SHIPPING-COST MODEL: TRAIN IN AZURE ML, TEST WITH SAMPLE JSON ============
+
+# Go to the project folder
+cd "C:\Users\kvsrd\OneDrive\Desktop\Operationalize Machine Learning Models\Machine learning\project-1-freight-cost"
+
+# Allow scripts to run in this terminal only
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+# Unblock files downloaded from the internet or OneDrive
+Get-ChildItem -Recurse | Unblock-File
+
+# Sign in to Azure with your own account
+az login
+
+# Check we are in the right subscription
+az account show --query "{subscription:name, user:user.name}" -o table
+
+# Choose a NEW name for this demo: 3-10 lowercase letters or digits (e.g. demo01). Every resource is named after it
+$name = Read-Host "Enter a name for your resources"
+
+# Build the resource group, workspace and endpoint names from it
+$rg = "rg-$name-ml-dev"
+$ws = "mlw-$name-dev"
+$ep = "freight-$name"
+
+# Check the name is not used yet (should print false)
+az group exists --name $rg
+
+
+# ---------------- PART 1: CREATE THE INFRASTRUCTURE AND UPLOAD THE DATA ----------------
+
+# Go to the infrastructure folder
+cd azure-ml-infra
+
+# Check tools, login, permissions and VM quota
+.\scripts\00-check-prerequisites.ps1 -Location eastus
+
+# Preview what will be created (creates nothing)
+.\scripts\01-validate-infra.ps1 -ProjectName $name -Location eastus
+
+# Create the workspace and all resources with Bicep (10-15 minutes)
+.\scripts\02-deploy-infra.ps1 -ProjectName $name -Location eastus
+
+# Upload the 9 Olist CSV files as the data asset olist-ecommerce-raw:1
+.\scripts\03-upload-data.ps1
+
+# Verify the workspace, compute, data asset and roles
+.\scripts\04-verify-deployment.ps1
+
+
+# ---------------- PART 2: TRAIN THE MODEL IN THE CLOUD (AZURE ML) ----------------
+
+# Go to the model folder
+cd ..\freight-cost-model
+
+# Open the training script to explain it (we only OPEN it - it runs in the cloud, not on this laptop)
+code src\train.py
+
+# Open the job definition: which code, which data, which environment, which CLOUD VM size
+code jobs\train-job.yml
+
+# Send the job to Azure ML: Azure creates a cloud VM, runs train.py there, then deletes the VM (8-12 minutes)
+.\scripts\submit-training.ps1 -ResourceGroup $rg -Workspace $ws
+
+# Prove the training ran in the cloud: job status, the cloud VM size and the studio link
+az ml job show --name (Get-Content .last-training-job) -g $rg -w $ws --query "{job:name, status:status, cloudVM:resources.instance_type, studio:services.Studio.endpoint}" -o table
+
+# Open studio > Jobs > olist-freight-cost to show the metrics and plots, then register the model
+.\scripts\register-model.ps1 -ResourceGroup $rg -Workspace $ws
+
+# Show the registered model and its version
+az ml model list --name olist-freight-cost -g $rg -w $ws -o table
+
+
+# ---------------- PART 3: DEPLOY THE MODEL AND TEST IT WITH SAMPLE JSON ----------------
+
+# Show the scoring script that answers every request
+code deploy\score.py
+
+# Deploy the model as an online endpoint (15-20 minutes, billed every hour while it exists)
+.\scripts\deploy-endpoint.ps1 -EndpointName $ep -ResourceGroup $rg -Workspace $ws
+
+# Show the sample JSON input (3 orders)
+Get-Content deploy\sample-request.json
+
+# Test the endpoint with the sample JSON using the Azure CLI
+az ml online-endpoint invoke --name $ep --request-file deploy\sample-request.json -g $rg -w $ws
+
+# Test the endpoint the way a real app would: HTTPS POST with the key
+.\scripts\test-endpoint.ps1 -EndpointName $ep -ResourceGroup $rg -Workspace $ws
+
+# Show the endpoint URL (the key stays secret - never show it on screen)
+az ml online-endpoint show -n $ep -g $rg -w $ws --query scoring_uri -o tsv
+
+# Also test in the browser: studio > Endpoints > your endpoint > Test tab > paste the JSON from deploy\sample-request.json
+
+
+# ---------------- PART 4: TEST WITH THE GRADIO APP ----------------
+
+# Save your endpoint URL and key into app\.env (the key is never printed)
+.\scripts\create-app-env.ps1 -EndpointName $ep -ResourceGroup $rg -Workspace $ws
+
+# Install the app's packages
+pip install -r app\requirements.txt
+
+# Start the app, then open http://127.0.0.1:7860 (stop with Ctrl+C)
+python app\app.py
+
+
+# ---------------- PART 5: CLEAN UP ----------------
+
+# Delete the endpoint to stop the hourly cost
+.\scripts\delete-endpoint.ps1 -EndpointName $ep -ResourceGroup $rg -Workspace $ws
+
+# Delete the local file that holds the key
+Remove-Item app\.env
+
+# Go back to the infrastructure folder
+cd ..\azure-ml-infra
+
+# Delete all resources of this demo
+.\scripts\99-cleanup.ps1 -ProjectName $name
+
+# Confirm the resource group is gone (should print false)
+az group exists --name $rg
+
+
+# ---------------- OPTIONAL: TRAIN ON THIS LAPTOP INSTEAD OF THE CLOUD (no Azure, no cost) ----------------
+
+# Open the local notebook, choose Run All; the last cell opens a Gradio app
+code ..\freight-cost-local.ipynb

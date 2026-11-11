@@ -1,0 +1,16 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+experiment_name: course-delhi-climate
+display_name: course-delhi-train
+code: ../src
+command: >-
+  python train.py --train ${{inputs.train}} --test ${{inputs.test}}
+inputs:
+  train:
+    type: uri_file
+    path: azureml:course-delhi-train:1
+  test:
+    type: uri_file
+    path: azureml:course-delhi-test:1
+environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
+compute: azureml:olist-course-cpu

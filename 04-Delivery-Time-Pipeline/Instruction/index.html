@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 04: Train through an Azure ML pipeline | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 04: Train through an Azure ML pipeline</h1>
+<h2>Goal</h2>
+<p>Prepare order-level checkout features in one step, pass them to a training step, and inspect the model produced by the pipeline.</p>
+<h2>Steps</h2>
+<ol start="1">
+<li>Complete exercise 00 and set <code>$RG</code> and <code>$WS</code> in PowerShell as shown there. Confirm <code>olist-ecommerce-raw:1</code> and <code>olist-course-cpu</code> exist.</li>
+<li>Open <code>../delivery-time-local.ipynb</code> with the Olist kernel. Run every cell and identify which fields are known at checkout.</li>
+<li>Read <code>../src/prep/prep.py</code> and <code>../src/train/train.py</code>. Trace the feature folder from preparation into training.</li>
+<li>Read <code>../pipelines/delivery-time-pipeline.yml</code>. Find its raw input, default compute, <code>prep</code> output, <code>train</code> input, and <code>trained_model</code> output.</li>
+<li>Preview and submit the pipeline from the collection root:</li>
+</ol>
+<pre><code>   python .\00-Shared-Setup-and-Data\scripts\submit.py delivery --dry-run
+   python .\00-Shared-Setup-and-Data\scripts\submit.py delivery</code></pre>
+<ol start="6">
+<li>Copy the pipeline job name, then wait and check it:</li>
+</ol>
+<pre><code>   az ml job stream -n YOUR_PIPELINE_JOB -g $RG -w $WS
+   az ml job show -n YOUR_PIPELINE_JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<ol start="7">
+<li>In Studio inspect both child jobs, their logs, metrics, and <code>trained_model</code>. Explain why <code>train</code> cannot start before <code>prep</code> finishes.</li>
+</ol>
+<p>The <code>../extended-demo/</code> folder is supplemental source material with older paths.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

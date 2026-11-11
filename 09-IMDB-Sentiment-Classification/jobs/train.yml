@@ -1,0 +1,12 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+experiment_name: course-imdb-sentiment
+display_name: course-imdb-train
+code: ../src
+command: python train.py --data "${{inputs.data}}"
+inputs:
+  data:
+    type: uri_file
+    path: azureml:course-imdb-data:1
+environment: azureml://registries/azureml/environments/sklearn-1.5/versions/54
+compute: azureml:olist-course-cpu

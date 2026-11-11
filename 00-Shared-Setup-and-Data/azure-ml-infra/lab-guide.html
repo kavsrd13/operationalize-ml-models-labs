@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Azure ML Infrastructure Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@87..100,500..800&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: lab manual. A sticky step rail on the left tracks progress, one reading column on the right,
+   commands sit in dark terminal blocks, and "You should see" blocks show the expected output. */
+:root {
+  --paper: #f4f6fb;
+  --surface: #ffffff;
+  --ink: #141a2d;
+  --muted: #586079;
+  --rule: #dce1ec;
+  --accent: #2b49cf;
+  --accent-ink: #ffffff;
+  --accent-soft: #e7ebfd;
+  --term-bg: #111830;
+  --term-fg: #e2e7fb;
+  --term-muted: #8e98b9;
+  --term-rule: #27314f;
+  --term-var: #ffd479; /* your personal values inside the (always dark) terminal blocks */
+  --ok: #16774a;
+  --ok-soft: #e2f3e9;
+  --warn: #8a5500;
+  --warn-soft: #fbefd9;
+  --bad: #b3261e;
+  --bad-soft: #fbe6e4;
+  --font-display: "Archivo", "Arial Narrow", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", "Cascadia Code", Consolas, ui-monospace, monospace;
+  --radius: 10px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0c1120; --surface: #131a2e; --ink: #e6e9f4; --muted: #9ca4bd; --rule: #252e4a;
+    --accent: #93a6ff; --accent-ink: #0c1120; --accent-soft: #1c2552;
+    --term-bg: #070b17; --term-fg: #dfe5fb; --term-muted: #7f8ab0; --term-rule: #1e2744;
+    --ok: #5fd39a; --ok-soft: #0f2e1e; --warn: #f2b85b; --warn-soft: #33260c; --bad: #ff8b80; --bad-soft: #3a1513;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0c1120; --surface: #131a2e; --ink: #e6e9f4; --muted: #9ca4bd; --rule: #252e4a;
+  --accent: #93a6ff; --accent-ink: #0c1120; --accent-soft: #1c2552;
+  --term-bg: #070b17; --term-fg: #dfe5fb; --term-muted: #7f8ab0; --term-rule: #1e2744;
+  --ok: #5fd39a; --ok-soft: #0f2e1e; --warn: #f2b85b; --warn-soft: #33260c; --bad: #ff8b80; --bad-soft: #3a1513;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 1.5rem; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.65 var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+a { color: var(--accent); text-underline-offset: 0.18em; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+code, kbd, pre { font-family: var(--font-mono); }
+p code, li code, td code, dd code, .inline-code {
+  font-size: 0.88em;
+  background: var(--accent-soft);
+  padding: 0.08em 0.35em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+kbd {
+  font-size: 0.85em; padding: 0.05em 0.4em; border: 1px solid var(--rule);
+  border-bottom-width: 2px; border-radius: 4px; background: var(--surface);
+}
+h1, h2, h3 { font-family: var(--font-display); font-stretch: 88%; line-height: 1.15; text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(1.55rem, 3vw, 2rem); font-weight: 750; letter-spacing: -0.01em; }
+h3 { font-size: 1.2rem; font-weight: 700; }
+p { margin: 0; }
+ul, ol { margin: 0; padding-left: 1.3rem; }
+li + li { margin-top: 0.3rem; }
+
+.wrap { max-width: 78rem; margin: 0 auto; padding-inline: max(16px, 3vw); }
+.eyebrow {
+  font: 600 0.75rem/1.2 var(--font-body);
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent);
+}
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+.stack { display: flex; flex-direction: column; gap: 1rem; }
+.prose { max-width: 68ch; }
+
+/* ---------- Hero ---------- */
+.hero { border-bottom: 1px solid var(--rule); background: var(--surface); }
+.hero .wrap { padding-block: 2.75rem 2.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.hero h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); font-weight: 780; letter-spacing: -0.015em; max-width: 20ch; }
+.facts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 0.75rem 2rem; margin-top: 0.75rem; padding: 0; list-style: none;
+}
+.facts li { margin: 0; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.facts dt, .facts .k { font: 600 0.72rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.facts .v { font-weight: 500; }
+
+/* ---------- Page layout ---------- */
+.layout { display: grid; gap: 2.5rem; padding-block: 2.5rem 4rem; }
+@media (min-width: 64rem) {
+  .layout { grid-template-columns: 15.5rem minmax(0, 1fr); align-items: start; }
+  .rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 1.25rem); max-height: calc(100vh - 2.5rem); overflow-y: auto; }
+}
+main { display: flex; flex-direction: column; gap: 3.5rem; min-width: 0; }
+section { display: flex; flex-direction: column; gap: 1.1rem; min-width: 0; scroll-margin-top: 1.5rem; }
+.section-head { display: flex; flex-direction: column; gap: 0.4rem; }
+
+/* ---------- Rail ---------- */
+.rail { display: flex; flex-direction: column; gap: 1.25rem; font-size: 0.92rem; }
+.progress-card { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.progress-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.progress-count { font: 700 1.5rem/1 var(--font-display); font-stretch: 88%; font-variant-numeric: tabular-nums; }
+.bar { height: 6px; background: var(--rule); border-radius: 99px; overflow: hidden; }
+.bar > span { display: block; height: 100%; width: 0; background: var(--ok); border-radius: 99px; transition: width 0.3s ease; }
+@media (prefers-reduced-motion: reduce) { .bar > span { transition: none; } }
+.rail nav { display: flex; flex-direction: column; gap: 0.2rem; }
+.rail .group-label { font: 600 0.7rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); margin: 0.6rem 0 0.25rem; }
+.rail a { color: var(--ink); text-decoration: none; padding: 0.22rem 0.5rem; border-radius: 6px; display: flex; gap: 0.5rem; align-items: baseline; }
+.rail a:hover { background: var(--accent-soft); }
+.rail a .n { font: 500 0.78rem/1 var(--font-mono); color: var(--muted); min-width: 1.4rem; font-variant-numeric: tabular-nums; }
+.rail a.is-done { color: var(--muted); }
+.rail a.is-done .n { color: var(--ok); }
+.rail a.is-done .n::before { content: "✓"; }
+.rail a.is-done .n span { display: none; }
+.reset { align-self: flex-start; font: 500 0.8rem var(--font-body); color: var(--muted); background: none; border: 0; padding: 0; cursor: pointer; text-decoration: underline; text-underline-offset: 0.2em; }
+
+/* ---------- Settings ---------- */
+.settings { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1rem; }
+.field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.field label { font-weight: 600; font-size: 0.92rem; }
+.field input, .field select {
+  font: 500 0.95rem var(--font-mono); color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 0.55rem 0.7rem; width: 100%;
+}
+.field input[aria-invalid="true"] { border-color: var(--bad); }
+.field .hint { font-size: 0.8rem; color: var(--muted); }
+.field .err { font-size: 0.8rem; color: var(--bad); }
+.derived { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-size: 0.88rem; color: var(--muted); }
+.derived code { color: var(--ink); }
+
+/* ---------- Terminal + output blocks ---------- */
+.term { background: var(--term-bg); color: var(--term-fg); border-radius: var(--radius); overflow: hidden; min-width: 0; }
+.term-head { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; padding: 0.45rem 0.6rem 0.45rem 1rem; border-bottom: 1px solid var(--term-rule); }
+.term-head span { font: 500 0.72rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--term-muted); }
+.copy {
+  font: 600 0.78rem/1 var(--font-body); color: var(--term-fg); background: transparent;
+  border: 1px solid var(--term-rule); border-radius: 6px; padding: 0.4rem 0.7rem; cursor: pointer;
+}
+.copy:hover { border-color: var(--term-muted); }
+.term pre { margin: 0; padding: 0.9rem 1rem 1rem; overflow-x: auto; font-size: 0.86rem; line-height: 1.6; }
+.term .c { color: var(--term-muted); }
+.term [data-v], .var-sample { color: var(--term-var); }
+.var-sample { background: var(--term-bg); font-family: var(--font-mono); font-size: 0.88em; padding: 0.08em 0.4em; border-radius: 4px; }
+.out { border: 1px dashed var(--rule); border-radius: var(--radius); background: var(--surface); overflow: hidden; min-width: 0; }
+.out-head { padding: 0.45rem 1rem; border-bottom: 1px dashed var(--rule); font: 600 0.72rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--ok); }
+.out pre { margin: 0; padding: 0.8rem 1rem; overflow-x: auto; font-size: 0.82rem; line-height: 1.55; color: var(--ink); }
+.out .ok { color: var(--ok); font-weight: 500; }
+.out .dim { color: var(--muted); }
+
+/* ---------- Callouts ---------- */
+.callout { border-radius: var(--radius); padding: 0.9rem 1.1rem; display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.callout .tag { font: 600 0.7rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; }
+.callout.tip { background: var(--accent-soft); }
+.callout.tip .tag { color: var(--accent); }
+.callout.warn { background: var(--warn-soft); }
+.callout.warn .tag { color: var(--warn); }
+.callout.cost { background: var(--ok-soft); }
+.callout.cost .tag { color: var(--ok); }
+
+/* ---------- Tables ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+th, td { text-align: left; padding: 0.6rem 0.9rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font: 600 0.75rem/1.3 var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); background: var(--paper); }
+tr:last-child td { border-bottom: 0; }
+
+/* ---------- Architecture diagram ---------- */
+.arch { border: 1.5px dashed var(--muted); border-radius: 14px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.arch-label { font: 600 0.72rem/1.2 var(--font-body); text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+.arch-rg { border: 1.5px solid var(--accent); border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; background: var(--surface); }
+.arch-rg > .arch-label { color: var(--accent); }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr)); gap: 0.75rem; }
+.tile { border: 1px solid var(--rule); border-radius: 10px; padding: 0.75rem 0.85rem; display: flex; flex-direction: column; gap: 0.25rem; background: var(--paper); min-width: 0; }
+.tile b { font-family: var(--font-display); font-stretch: 92%; font-size: 1.02rem; }
+.tile code { font-size: 0.8rem; color: var(--accent); overflow-wrap: anywhere; }
+.tile p { font-size: 0.86rem; color: var(--muted); }
+.tile.ws { grid-column: 1 / -1; border-color: var(--accent); background: var(--accent-soft); }
+.ws-children { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 0.35rem; }
+.ws-children div { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 0.5rem 0.7rem; font-size: 0.86rem; min-width: 0; }
+.ws-children code { display: block; }
+.arch-roles { font-size: 0.86rem; color: var(--muted); }
+
+/* ---------- Flow chips ---------- */
+.flow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.flow span.node { background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 0.4rem 0.7rem; font-size: 0.88rem; }
+.flow span.node code { background: none; padding: 0; }
+.flow span.arrow { color: var(--muted); font-family: var(--font-mono); }
+
+/* ---------- Idea cards ---------- */
+.ideas { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem; }
+.idea { display: flex; flex-direction: column; gap: 0.4rem; padding: 1rem 1.1rem; border: 1px solid var(--rule); border-radius: var(--radius); background: var(--surface); min-width: 0; }
+.idea p { font-size: 0.94rem; }
+
+/* ---------- Name decoder ---------- */
+.decoder { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: stretch; }
+.seg { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; }
+.seg code { font-size: 1.05rem; padding: 0.35rem 0.6rem; border-radius: 6px; background: var(--surface); border: 1px solid var(--rule); }
+.seg small { font-size: 0.75rem; color: var(--muted); text-align: center; }
+.seg.s1 code { color: var(--accent); }
+.seg.s2 code { color: var(--ok); }
+.seg.s3 code { color: var(--warn); }
+.seg.s4 code { color: var(--bad); }
+
+/* ---------- What-if legend ---------- */
+.legend { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.legend span { font-size: 0.86rem; padding: 0.3rem 0.65rem; border-radius: 99px; border: 1px solid var(--rule); background: var(--surface); }
+.legend b { font-family: var(--font-mono); margin-right: 0.3rem; }
+.legend .c { color: var(--ok); } .legend .m { color: var(--warn); } .legend .d { color: var(--bad); } .legend .n { color: var(--muted); }
+
+/* ---------- Checklist ---------- */
+.checklist { list-style: none; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
+.checklist li { margin: 0; padding-left: 1.6rem; position: relative; }
+.checklist li::before { content: ""; position: absolute; left: 0; top: 0.35em; width: 0.95rem; height: 0.95rem; border: 1.5px solid var(--muted); border-radius: 3px; }
+
+/* ---------- Files ---------- */
+.folder { display: flex; flex-direction: column; gap: 0.75rem; }
+.folder-name { font: 500 0.95rem var(--font-mono); color: var(--muted); display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+.folder-name b { color: var(--ink); font-weight: 500; }
+.files { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.85rem; }
+.file { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.file-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+.file-top code { font-size: 0.92rem; font-weight: 500; background: none; padding: 0; overflow-wrap: anywhere; }
+.badge { flex: none; font: 600 0.68rem/1 var(--font-body); text-transform: uppercase; letter-spacing: 0.08em; padding: 0.3rem 0.5rem; border-radius: 99px; white-space: nowrap; }
+.badge.edit { background: var(--warn-soft); color: var(--warn); }
+.badge.run { background: var(--ok-soft); color: var(--ok); }
+.badge.read { background: var(--paper); color: var(--muted); border: 1px solid var(--rule); }
+.file p { font-size: 0.93rem; }
+.file ul { font-size: 0.88rem; color: var(--muted); }
+.tree { margin: 0; font-size: 0.84rem; line-height: 1.6; }
+
+/* ---------- Steps ---------- */
+.steps { display: flex; flex-direction: column; gap: 3rem; }
+.step { display: grid; grid-template-columns: 3.4rem minmax(0, 1fr); gap: 0 1.25rem; scroll-margin-top: 1.5rem; }
+.step-num { font: 800 2.6rem/1 var(--font-display); font-stretch: 87%; color: var(--accent); font-variant-numeric: tabular-nums; padding-top: 0.15rem; }
+.step-body { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+.step-body h3 { font-size: 1.45rem; }
+.step-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; font-size: 0.85rem; color: var(--muted); }
+.done-toggle { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; font-weight: 600; font-size: 0.92rem; cursor: pointer; padding: 0.5rem 0.85rem; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface); }
+.done-toggle input { width: 1.05rem; height: 1.05rem; accent-color: var(--ok); margin: 0; }
+.done-toggle:has(input:checked) { border-color: var(--ok); color: var(--ok); }
+@media (max-width: 34rem) {
+  .step { grid-template-columns: minmax(0, 1fr); }
+  .step-num { font-size: 2rem; margin-bottom: 0.5rem; }
+}
+
+/* ---------- Quiz + glossary ---------- */
+details { background: var(--surface); border: 1px solid var(--rule); border-radius: var(--radius); padding: 0.85rem 1.1rem; }
+details + details { margin-top: 0.6rem; }
+summary { cursor: pointer; font-weight: 600; }
+details[open] summary { margin-bottom: 0.5rem; }
+details p { color: var(--muted); }
+.glossary { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.75rem 1.5rem; margin: 0; }
+.glossary div { min-width: 0; }
+.glossary dt { font-weight: 600; }
+.glossary dd { margin: 0.1rem 0 0; color: var(--muted); font-size: 0.92rem; }
+
+footer { border-top: 1px solid var(--rule); background: var(--surface); }
+footer .wrap { padding-block: 1.75rem; font-size: 0.88rem; color: var(--muted); display: flex; flex-direction: column; gap: 0.5rem; }
+
+@media print {
+  .rail, .copy, .done-toggle, .settings .fields { display: none !important; }
+  .layout { display: block; }
+  body { background: #fff; }
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <span class="eyebrow">Operationalize Machine Learning Models · Lab 1</span>
+    <h1>Build your Azure ML environment from code</h1>
+    <p class="lede">You will create a complete Azure Machine Learning workspace with one Bicep template, upload the Olist e-commerce dataset, and open it in a cloud notebook. Every click you would normally make in the Azure portal is replaced by code you can read, rerun and share.</p>
+    <ul class="facts">
+      <li><span class="k">Time</span><span class="v">About 90 minutes</span></li>
+      <li><span class="k">Cost</span><span class="v">Usually under US$2 if you clean up at the end</span></li>
+      <li><span class="k">You need</span><span class="v">Azure subscription, VS Code, Azure CLI</span></li>
+      <li><span class="k">You will learn</span><span class="v">Bicep, what-if, idempotent deploys, data assets</span></li>
+    </ul>
+  </div>
+</header>
+
+<div class="wrap layout">
+
+  <!-- ===================== RAIL ===================== -->
+  <aside class="rail" aria-label="Lab contents and progress">
+    <div class="progress-card">
+      <div class="progress-top">
+        <span class="eyebrow" style="color: var(--muted)">Your progress</span>
+        <span class="progress-count" id="progress-count">0/11</span>
+      </div>
+      <div class="bar" role="progressbar" aria-label="Steps finished" aria-valuemin="0" aria-valuemax="11" aria-valuenow="0" id="progress-bar"><span></span></div>
+      <button type="button" class="reset" id="reset-progress">Reset progress</button>
+    </div>
+    <nav aria-label="Sections">
+      <span class="group-label">Understand</span>
+      <a href="#settings"><span class="n">·</span>Your settings</a>
+      <a href="#build"><span class="n">·</span>What you will build</a>
+      <a href="#ideas"><span class="n">·</span>Key ideas</a>
+      <a href="#before"><span class="n">·</span>Before you start</a>
+      <a href="#files"><span class="n">·</span>The project files</a>
+      <span class="group-label">Do the exercise</span>
+      <a href="#step-1" data-rail="1"><span class="n"><span>1</span></span>Open the project</a>
+      <a href="#step-2" data-rail="2"><span class="n"><span>2</span></span>Sign in to Azure</a>
+      <a href="#step-3" data-rail="3"><span class="n"><span>3</span></span>Check prerequisites</a>
+      <a href="#step-4" data-rail="4"><span class="n"><span>4</span></span>Validate and preview</a>
+      <a href="#step-5" data-rail="5"><span class="n"><span>5</span></span>Deploy</a>
+      <a href="#step-6" data-rail="6"><span class="n"><span>6</span></span>Explore the portal</a>
+      <a href="#step-7" data-rail="7"><span class="n"><span>7</span></span>Upload the dataset</a>
+      <a href="#step-8" data-rail="8"><span class="n"><span>8</span></span>Verify</a>
+      <a href="#step-9" data-rail="9"><span class="n"><span>9</span></span>Use the data</a>
+      <a href="#step-10" data-rail="10"><span class="n"><span>10</span></span>Prove it is repeatable</a>
+      <a href="#step-11" data-rail="11"><span class="n"><span>11</span></span>Clean up</a>
+      <span class="group-label">Help and practice</span>
+      <a href="#trouble"><span class="n">·</span>Troubleshooting</a>
+      <a href="#quiz"><span class="n">·</span>Check your understanding</a>
+      <a href="#challenges"><span class="n">·</span>Bonus challenges</a>
+      <a href="#glossary"><span class="n">·</span>Glossary</a>
+    </nav>
+  </aside>
+
+  <main>
+
+    <!-- ===================== SETTINGS ===================== -->
+    <section id="settings">
+      <div class="section-head">
+        <span class="eyebrow">Start here</span>
+        <h2>Your settings</h2>
+      </div>
+      <p class="prose">Fill these in once. Every command in this guide updates to use your values, highlighted like <span class="var-sample">this</span> inside the command boxes. Your browser remembers them.</p>
+      <div class="settings">
+        <div class="fields">
+          <div class="field">
+            <label for="set-project">Project name</label>
+            <input id="set-project" type="text" value="olist" maxlength="10" autocomplete="off" spellcheck="false" aria-describedby="project-hint project-err">
+            <span class="hint" id="project-hint">3–10 lowercase letters or digits. Sharing a subscription with classmates? Add your name, e.g. <code>olistanna</code>.</span>
+            <span class="err" id="project-err" hidden>Use 3–10 lowercase letters or digits only (no spaces, hyphens or capitals).</span>
+          </div>
+          <div class="field">
+            <label for="set-location">Azure region</label>
+            <select id="set-location">
+              <option value="eastus">eastus (East US)</option>
+              <option value="eastus2">eastus2 (East US 2)</option>
+              <option value="westus2">westus2 (West US 2)</option>
+              <option value="centralindia">centralindia (Central India)</option>
+              <option value="southindia">southindia (South India)</option>
+              <option value="westeurope">westeurope (West Europe)</option>
+              <option value="northeurope">northeurope (North Europe)</option>
+              <option value="uksouth">uksouth (UK South)</option>
+              <option value="southeastasia">southeastasia (Southeast Asia)</option>
+              <option value="australiaeast">australiaeast (Australia East)</option>
+            </select>
+            <span class="hint">Pick the region closest to you. Step 3 checks that it works for your subscription.</span>
+          </div>
+          <div class="field">
+            <label for="set-vm">Compute instance size</label>
+            <select id="set-vm">
+              <option value="Standard_E4ds_v4">Standard_E4ds_v4 (4 vCPU, 32 GB)</option>
+              <option value="Standard_E2ds_v4">Standard_E2ds_v4 (2 vCPU, 16 GB, cheaper)</option>
+              <option value="Standard_D4ds_v4">Standard_D4ds_v4 (4 vCPU, 16 GB)</option>
+            </select>
+            <span class="hint">Keep the default unless Step 3 says you have no quota for it.</span>
+          </div>
+        </div>
+        <div class="derived" aria-live="polite">
+          <span>Resource group: <code data-v="rg">rg-olist-ml-dev</code></span>
+          <span>Workspace: <code data-v="ws">mlw-olist-dev</code></span>
+          <span>Deployment: <code data-v="dep">aml-olist-dev-eastus</code></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== BUILD ===================== -->
+    <section id="build">
+      <div class="section-head">
+        <span class="eyebrow">The goal</span>
+        <h2>What you will build</h2>
+      </div>
+      <p class="prose">One template creates all of this inside a new resource group. The workspace is the center. It does not store anything itself; it links to the resources around it.</p>
+
+      <div class="arch" role="img" aria-label="Diagram: a subscription contains a resource group with monitoring, storage, key vault, container registry and the Azure ML workspace, which holds a compute instance and a data asset.">
+        <span class="arch-label">Your Azure subscription</span>
+        <div class="arch-rg">
+          <span class="arch-label">Resource group · <span data-v="rg">rg-olist-ml-dev</span></span>
+          <div class="tiles">
+            <div class="tile"><b>Log Analytics</b><code>log-<span data-v="project">olist</span>-dev</code><p>Central store for logs.</p></div>
+            <div class="tile"><b>Application Insights</b><code>appi-<span data-v="project">olist</span>-dev</code><p>Monitors jobs and deployed models.</p></div>
+            <div class="tile"><b>Storage account</b><code>st<span data-v="project">olist</span>dev&lt;suffix&gt;</code><p>Holds your data, job outputs and notebooks.</p></div>
+            <div class="tile"><b>Key Vault</b><code>kv-<span data-v="project">olist</span>-dev-&lt;suffix&gt;</code><p>Keeps secrets out of your code.</p></div>
+            <div class="tile"><b>Container Registry</b><code>cr<span data-v="project">olist</span>dev&lt;suffix&gt;</code><p>Stores Docker images for environments.</p></div>
+            <div class="tile ws">
+              <b>Azure Machine Learning workspace</b>
+              <code data-v="ws">mlw-olist-dev</code>
+              <p>Tracks everything you do in ML: data, experiments, models, endpoints. Linked to the five resources above.</p>
+              <div class="ws-children">
+                <div><b>Compute instance</b><code>ci-<span data-v="project">olist</span>-dev&lt;suffix&gt;</code>Your cloud workstation with Jupyter</div>
+                <div><b>Data asset</b><code>olist-ecommerce-raw:1</code>The 9 Olist CSV files</div>
+              </div>
+            </div>
+          </div>
+          <p class="arch-roles">Plus three role assignments that give you exactly the access you need, and no more.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== IDEAS ===================== -->
+    <section id="ideas">
+      <div class="section-head">
+        <span class="eyebrow">Read this first</span>
+        <h2>Key ideas in three minutes</h2>
+      </div>
+      <div class="ideas">
+        <div class="idea">
+          <h3>Infrastructure as code</h3>
+          <p>Instead of clicking in the portal, you describe the resources you want in a text file. The file can be reviewed, versioned in git and deployed again and again with the same result.</p>
+        </div>
+        <div class="idea">
+          <h3>Bicep</h3>
+          <p>Microsoft's own language for describing Azure resources. You write <code>.bicep</code> files; Azure Resource Manager reads them and creates the resources.</p>
+        </div>
+        <div class="idea">
+          <h3>Desired state</h3>
+          <p>Bicep describes what should exist, not the steps to get there. If a resource already matches, Azure leaves it alone. That is why rerunning a deployment is safe.</p>
+        </div>
+        <div class="idea">
+          <h3>Control plane vs data plane</h3>
+          <p>Bicep creates resources (control plane). Putting files into them (data plane) is a separate step with the Azure ML CLI, because Bicep runs inside Azure and cannot read your laptop.</p>
+        </div>
+      </div>
+
+      <h3>How the pieces connect</h3>
+      <div class="flow" aria-label="Flow of a deployment">
+        <span class="node">You run a script</span><span class="arrow">→</span>
+        <span class="node">It sets your settings</span><span class="arrow">→</span>
+        <span class="node"><code>main.bicepparam</code> reads them</span><span class="arrow">→</span>
+        <span class="node"><code>main.bicep</code> calls 7 modules</span><span class="arrow">→</span>
+        <span class="node">Azure creates resources</span><span class="arrow">→</span>
+        <span class="node">Names saved to <code>.deployment-outputs.json</code></span><span class="arrow">→</span>
+        <span class="node">Next scripts use them</span>
+      </div>
+
+      <h3>How resource names are built</h3>
+      <p class="prose">Every name follows Microsoft's naming abbreviations. Some names must be unique across all of Azure, so Bicep adds a short suffix from <code>uniqueString()</code>. The same inputs always produce the same suffix, so a second deployment finds the same resources instead of creating new ones.</p>
+      <div class="decoder" aria-label="Storage account name broken into parts">
+        <div class="seg s1"><code>st</code><small>type<br>(storage)</small></div>
+        <div class="seg s2"><code data-v="project">olist</code><small>your project</small></div>
+        <div class="seg s3"><code>dev</code><small>environment</small></div>
+        <div class="seg s4"><code>a1b2c3</code><small>unique suffix<br>(example)</small></div>
+      </div>
+    </section>
+
+    <!-- ===================== BEFORE ===================== -->
+    <section id="before">
+      <div class="section-head">
+        <span class="eyebrow">Preparation</span>
+        <h2>Before you start</h2>
+      </div>
+      <ul class="checklist prose">
+        <li><b>An Azure subscription</b> where you are <b>Owner</b>, or <b>Contributor + Role Based Access Control Administrator</b>. The template creates role assignments, which plain Contributor cannot do.</li>
+        <li><b>Visual Studio Code</b> with the <b>Bicep</b> extension by Microsoft (Extensions panel → search "Bicep"). It gives you colour, autocomplete and error checking in <code>.bicep</code> files.</li>
+        <li><b>Azure CLI 2.61 or newer.</b> Install on Windows with <code>winget install -e --id Microsoft.AzureCLI</code>, then reopen VS Code. Check with <code>az version</code>.</li>
+        <li><b>PowerShell.</b> Windows PowerShell 5.1 (built into Windows) or PowerShell 7 on Windows, macOS or Linux.</li>
+        <li><b>The dataset.</b> Download it from <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Kaggle: Brazilian E-Commerce by Olist</a> (free account needed), unzip it, and name the folder <code>Ecommerce Dataset</code>.</li>
+      </ul>
+      <p class="prose">Put the folders like this. The upload script searches the folders above the project for one named <code>Ecommerce Dataset</code>.</p>
+      <div class="out">
+        <div class="out-head" style="color: var(--muted)">Folder layout</div>
+<pre class="tree">Any parent folder\
+├── Ecommerce Dataset\                ← the 9 Olist CSV files
+│   ├── olist_orders_dataset.csv
+│   └── … 8 more files
+└── project-1-freight-cost\
+    └── azure-ml-infra\               ← this part of the project
+        ├── lab-guide.html            ← you are reading this
+        ├── README.md
+        ├── infra\
+        ├── data\
+        └── scripts\</pre>
+      </div>
+    </section>
+
+    <!-- ===================== FILES ===================== -->
+    <section id="files">
+      <div class="section-head">
+        <span class="eyebrow">Know your tools</span>
+        <h2>The project files</h2>
+      </div>
+      <p class="prose">Each file has one job. The badge tells you whether you will <b>run</b> it, <b>edit</b> it, or only <b>read</b> it. You do not need to change any file to finish this lab.</p>
+
+      <div class="folder">
+        <div class="folder-name"><b>infra/</b> What should exist in Azure (Bicep)</div>
+        <div class="files">
+          <article class="file">
+            <div class="file-top"><code>main.bicep</code><span class="badge read">Read</span></div>
+            <p>The entry point and master plan. It creates the resource group, builds every resource name, and calls the seven modules in the right order.</p>
+            <ul>
+              <li><code>targetScope = 'subscription'</code> lets it create the resource group itself.</li>
+              <li><code>param</code> lines are the inputs; <code>@allowed</code> and <code>@minLength</code> reject bad values early.</li>
+              <li><code>output</code> lines hand names and the studio link to the scripts.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>main.bicepparam</code><span class="badge edit">Edit</span></div>
+            <p>Your settings: project name, region, VM size, idle shutdown time. This is the file to change if you want different defaults.</p>
+            <ul>
+              <li>Each value reads an environment variable first, e.g. <code>AZURE_LOCATION</code>, then falls back to a default.</li>
+              <li>The scripts set those variables from the values you pass them.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>bicepconfig.json</code><span class="badge read">Read</span></div>
+            <p>Rules for the Bicep linter, a spell-checker for best practices. For example, it stops you from hard-coding a region or putting a secret in an output.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="folder">
+        <div class="folder-name"><b>infra/modules/</b> One small file per resource</div>
+        <div class="files">
+          <article class="file">
+            <div class="file-top"><code>ml-workspace.bicep</code><span class="badge read">Read</span></div>
+            <p>The Azure ML workspace, the most important resource. It links storage, Key Vault, Application Insights and the registry.</p>
+            <ul>
+              <li>Uses a <b>managed identity</b>, so it reaches the other resources without passwords.</li>
+              <li>Storage and Key Vault cannot be swapped after creation.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>compute-instance.bicep</code><span class="badge read">Read</span></div>
+            <p>Your personal cloud computer with Jupyter and VS Code. Only you can use it.</p>
+            <ul>
+              <li>Shuts down after 30 idle minutes, and every day at 19:00 UTC.</li>
+              <li>It cannot be safely redeployed, so the deploy script skips it if it already exists.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>storage-account.bicep</code><span class="badge read">Read</span></div>
+            <p>The workspace's default storage for datasets, outputs and notebooks.</p>
+            <ul>
+              <li>Data Lake mode is off (Azure ML requires that).</li>
+              <li>Account keys stay on, because compute instances need them.</li>
+              <li>No anonymous public access.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>key-vault.bicep</code><span class="badge read">Read</span></div>
+            <p>A safe for secrets. Azure ML stores keys and connection strings here so they never appear in code.</p>
+            <ul>
+              <li>Uses Azure role-based access (RBAC).</li>
+              <li>Deleted vaults are kept for 7 days, the shortest allowed.</li>
+            </ul>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>container-registry.bicep</code><span class="badge read">Read</span></div>
+            <p>Stores the Docker images Azure ML builds for environments and model deployments. Basic tier, with the shared admin password turned off.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>monitoring.bicep</code><span class="badge read">Read</span></div>
+            <p>Log Analytics (where logs live, kept 30 days) and Application Insights (monitoring for jobs and endpoints), connected together.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>role-assignments.bicep</code><span class="badge read">Read</span></div>
+            <p>Gives you three roles instead of full Owner rights: <b>AzureML Data Scientist</b> on the workspace, and two <b>Storage Data</b> roles to read data and open notebooks.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="folder">
+        <div class="folder-name"><b>data/</b> What goes into the workspace</div>
+        <div class="files">
+          <article class="file">
+            <div class="file-top"><code>olist-data-asset.yml</code><span class="badge read">Read</span></div>
+            <p>Defines the data asset <code>olist-ecommerce-raw</code>, version 1: a named, versioned link to your 9 CSV files in Azure.</p>
+            <ul>
+              <li>Versions never change. New data means a new version.</li>
+              <li>Jobs refer to it as <code>azureml:olist-ecommerce-raw:1</code>.</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+
+      <div class="folder">
+        <div class="folder-name"><b>scripts/</b> How and in what order (PowerShell)</div>
+        <div class="files">
+          <article class="file">
+            <div class="file-top"><code>00-check-prerequisites.ps1</code><span class="badge run">Run</span></div>
+            <p>Checks your tools, login, permissions and VM quota. Installs the Azure ML CLI extension if it is missing.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>01-validate-infra.ps1</code><span class="badge run">Run</span></div>
+            <p>Tests the Bicep files and shows a preview of every change. Creates nothing.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>02-deploy-infra.ps1</code><span class="badge run">Run</span></div>
+            <p>Deploys everything, then saves the resource names to <code>.deployment-outputs.json</code>.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>03-upload-data.ps1</code><span class="badge run">Run</span></div>
+            <p>Copies only the 9 Olist files, uploads them, and registers the data asset.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>04-verify-deployment.ps1</code><span class="badge run">Run</span></div>
+            <p>Read-only report: workspace, compute state, datastores, data asset, your roles.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>99-cleanup.ps1</code><span class="badge run">Run</span></div>
+            <p>Deletes everything, including the soft-deleted leftovers that would block your next deployment. Asks you to confirm first.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>deploy-all.ps1</code><span class="badge run">Run</span></div>
+            <p>Runs scripts 00 to 04 in one go. Use it after you have done the lab once step by step.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>common.ps1</code><span class="badge read">Read</span></div>
+            <p>Shared helpers used by every script: coloured messages, error checks and the naming rules. You never run it directly.</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="folder">
+        <div class="folder-name"><b>Other files</b></div>
+        <div class="files">
+          <article class="file">
+            <div class="file-top"><code>.github/workflows/deploy-azureml-infra.yml</code><span class="badge read">Optional</span></div>
+            <p>A GitHub Actions pipeline for later. It previews changes on every pull request and deploys on merge, which is how teams deploy in production.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>README.md</code><span class="badge read">Read</span></div>
+            <p>The full reference: design decisions, all parameters, CI/CD setup and Microsoft documentation links.</p>
+          </article>
+          <article class="file">
+            <div class="file-top"><code>.gitignore</code><span class="badge read">Read</span></div>
+            <p>Keeps the CSV data, compiled files and your outputs file out of git. Data belongs in Azure, not in a code repository.</p>
+          </article>
+        </div>
+      </div>
+      <div class="callout tip">
+        <span class="tag">Tip · see the template as a picture</span>
+        <p>Open <code>infra/main.bicep</code> in VS Code, press <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> and run <b>Bicep: Open Visualizer</b>. You will see every resource and how they depend on each other.</p>
+      </div>
+    </section>
+
+    <!-- ===================== STEPS ===================== -->
+    <section id="exercise">
+      <div class="section-head">
+        <span class="eyebrow">Hands-on</span>
+        <h2>The exercise</h2>
+      </div>
+      <p class="prose">Do the steps in order. Each one shows the command to run, what you should see, and what it teaches. Tick <b>I finished this step</b> as you go.</p>
+
+      <div class="steps">
+
+        <!-- STEP 1 -->
+        <article class="step" id="step-1">
+          <div class="step-num">1</div>
+          <div class="step-body">
+            <h3>Open the project and a terminal</h3>
+            <div class="step-meta"><span>2 minutes</span><span>Free</span></div>
+            <ol class="prose">
+              <li>In VS Code choose <b>File → Open Folder</b> and select the <code>azure-ml-infra</code> folder.</li>
+              <li>Open a terminal with <b>Terminal → New Terminal</b>. The prompt should start with <code>PS</code>, which means PowerShell.</li>
+              <li>Allow the scripts to run in this terminal session:</li>
+            </ol>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code><span class="c"># Allow scripts for this terminal window only</span>
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+
+<span class="c"># Files synced from OneDrive or downloaded from the internet can be blocked</span>
+Get-ChildItem -Recurse | Unblock-File</code></pre>
+            </div>
+            <p class="muted">No output means it worked.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-1" data-step="1"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 2 -->
+        <article class="step" id="step-2">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            <h3>Sign in to Azure</h3>
+            <div class="step-meta"><span>2 minutes</span><span>Free</span></div>
+            <p class="prose">A browser window opens. Sign in with the account that owns your Azure subscription.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>az login
+az account show --query "{subscription:name, user:user.name}" -o table</code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>Subscription                     User
+-------------------------------  ----------------------
+<span class="dim">Your subscription name</span>           <span class="dim">you@example.com</span></pre>
+            </div>
+            <div class="callout tip">
+              <span class="tag">Wrong subscription?</span>
+              <p>List them with <code>az account list -o table</code>, then switch with <code>az account set --subscription "&lt;name or id&gt;"</code>.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-2" data-step="2"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 3 -->
+        <article class="step" id="step-3">
+          <div class="step-num">3</div>
+          <div class="step-body">
+            <h3>Check the prerequisites</h3>
+            <div class="step-meta"><span>2 minutes</span><span>Free</span><span>Script 00</span></div>
+            <p class="prose">This script checks seven things before you spend any money: Azure CLI version, Bicep, your login, the Azure ML CLI extension, resource providers, your permissions, and your <b>VM quota</b>. If something small is missing, such as the <code>ml</code> extension, it installs it for you.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\00-check-prerequisites.ps1 -Location <span data-v="location">eastus</span> -VmSize <span data-v="vm">Standard_E4ds_v4</span></code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; 1. Azure CLI
+    <span class="ok">[OK]</span>   Azure CLI 2.xx.x
+…
+==&gt; 7. Azure ML quota for <span data-v="vm">Standard_E4ds_v4</span> in <span data-v="location">eastus</span>
+    Family quota  : 0 of 20 vCPUs used (20 free)   <span class="dim">← your numbers may differ</span>
+    <span class="ok">[OK]</span>   Enough quota for one <span data-v="vm">Standard_E4ds_v4</span> compute instance.
+
+==&gt; Summary
+    <span class="ok">[OK]</span>   Everything looks good. Next: .\scripts\01-validate-infra.ps1</pre>
+            </div>
+            <div class="callout warn">
+              <span class="tag">If check 7 fails</span>
+              <p><b>Quota</b> is the maximum number of virtual CPUs your subscription may run per VM family in a region. When it fails, the script lists the families that still have free quota. Choose a size from one of them in <a href="#settings">Your settings</a>, or try another region, then run this step again.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-3" data-step="3"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 4 -->
+        <article class="step" id="step-4">
+          <div class="step-num">4</div>
+          <div class="step-body">
+            <h3>Validate and preview, without creating anything</h3>
+            <div class="step-meta"><span>3 minutes</span><span>Free</span><span>Script 01</span></div>
+            <p class="prose">Professionals never deploy blind. This script tests the template in five layers, cheapest first:</p>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Layer</th><th>Command</th><th>Catches</th></tr></thead>
+                <tbody>
+                  <tr><td>Lint</td><td><code>az bicep lint</code></td><td>Best-practice mistakes</td></tr>
+                  <tr><td>Build</td><td><code>az bicep build</code></td><td>Typos and wrong property names</td></tr>
+                  <tr><td>Parameters</td><td><code>az bicep build-params</code></td><td>Mistakes in your settings file</td></tr>
+                  <tr><td>Preflight</td><td><code>az deployment sub validate</code></td><td>Names taken, policy blocks, missing permissions</td></tr>
+                  <tr><td>What-if</td><td><code>az deployment sub what-if</code></td><td>Shows exactly what would change</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\01-validate-infra.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span> -VmSize <span data-v="vm">Standard_E4ds_v4</span></code></pre>
+            </div>
+            <p class="prose">Read the what-if output. Each line starts with a symbol:</p>
+            <div class="legend">
+              <span><b class="c">+</b>Create</span>
+              <span><b class="m">~</b>Modify</span>
+              <span><b class="d">-</b>Delete</span>
+              <span><b class="n">=</b>No change</span>
+              <span><b class="n">*</b>Ignore</span>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see (end of the output)</div>
+<pre>  + Microsoft.MachineLearningServices/workspaces/<span data-v="ws">mlw-olist-dev</span>
+  + Microsoft.Storage/storageAccounts/st<span data-v="project">olist</span>dev&lt;suffix&gt;
+  …
+Resource changes: <span class="ok">11 to create</span>.
+
+==&gt; Validation complete</pre>
+            </div>
+            <p class="prose">The 11 resources are: the resource group, Log Analytics, Application Insights, storage, Key Vault, container registry, workspace, compute instance, and three role assignments.</p>
+            <div class="callout tip">
+              <span class="tag">Try this</span>
+              <p>Find your storage account name in the output and split it into its four parts, like the <a href="#ideas">name decoder</a>.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-4" data-step="4"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 5 -->
+        <article class="step" id="step-5">
+          <div class="step-num">5</div>
+          <div class="step-body">
+            <h3>Deploy the infrastructure</h3>
+            <div class="step-meta"><span>10–15 minutes</span><span>Billing starts here</span><span>Script 02</span></div>
+            <p class="prose">This creates everything you saw in the preview. The terminal can stay quiet for several minutes while Azure works. That is normal.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\02-deploy-infra.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span> -VmSize <span data-v="vm">Standard_E4ds_v4</span></code></pre>
+            </div>
+            <div class="callout tip">
+              <span class="tag">Watch it happen</span>
+              <p>In the <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure portal</a>, search for <b>Subscriptions</b> → your subscription → <b>Deployments</b> → <code data-v="dep">aml-olist-dev-eastus</code>. Each module appears as its own deployment.</p>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; Checking for an existing compute instance
+    A new compute instance will be created (takes ~5-10 minutes).
+
+==&gt; Deploying '<span data-v="dep">aml-olist-dev-eastus</span>' to subscription scope (region: <span data-v="location">eastus</span>)
+    <span class="ok">[OK]</span>   Deployment succeeded in 12.4 minutes
+
+==&gt; Deployed resources
+    Resource group     : <span data-v="rg">rg-olist-ml-dev</span>
+    ML workspace       : <span data-v="ws">mlw-olist-dev</span>
+    Storage account    : st<span data-v="project">olist</span>dev&lt;suffix&gt;
+    Compute instance   : ci-<span data-v="project">olist</span>-dev&lt;suffix&gt;
+    Azure ML studio    : https://ml.azure.com/?wsid=…
+    <span class="ok">[OK]</span>   Next: .\scripts\03-upload-data.ps1</pre>
+            </div>
+            <div class="callout cost">
+              <span class="tag">Cost</span>
+              <p>The compute instance is billed per hour while it runs. It stops itself after 30 idle minutes and every evening, but always finish with <a href="#step-11">Step 11</a>.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-5" data-step="5"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 6 -->
+        <article class="step" id="step-6">
+          <div class="step-num">6</div>
+          <div class="step-body">
+            <h3>Explore what you created</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Azure portal</span></div>
+            <p class="prose">Open the <a href="https://portal.azure.com" target="_blank" rel="noopener">Azure portal</a>, search for <code data-v="rg">rg-olist-ml-dev</code>, and find each of these:</p>
+            <ul class="checklist prose">
+              <li><b>The resources.</b> You should see the workspace, storage account, key vault, container registry, Log Analytics and Application Insights. The compute instance lives inside the workspace, not in this list.</li>
+              <li><b>Tags.</b> Open any resource and choose <b>Tags</b>. Every resource has <code>project</code>, <code>environment</code> and <code>managedBy: bicep</code>. Tags make cost reports and clean-up easy.</li>
+              <li><b>Passwordless access.</b> Open the key vault → <b>Access control (IAM)</b> → <b>Role assignments</b>. The workspace's managed identity has a role there.</li>
+              <li><b>Your own access.</b> Open the storage account → <b>Access control (IAM)</b>. You hold <b>Storage Blob Data Contributor</b>, granted by <code>role-assignments.bicep</code>.</li>
+              <li><b>Deployment history.</b> In the resource group choose <b>Deployments</b>. Each module has its own entry with inputs and outputs.</li>
+            </ul>
+            <label class="done-toggle"><input type="checkbox" id="done-6" data-step="6"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 7 -->
+        <article class="step" id="step-7">
+          <div class="step-num">7</div>
+          <div class="step-body">
+            <h3>Upload the Olist dataset</h3>
+            <div class="step-meta"><span>3 minutes</span><span>Script 03</span></div>
+            <p class="prose">The script copies only the 9 Olist files into <code>data/olist-raw</code>, uploads them to the workspace's default storage, and registers them as the data asset <code>olist-ecommerce-raw</code>, version 1. It finds your workspace by reading <code>.deployment-outputs.json</code> from Step 5.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\03-upload-data.ps1
+
+<span class="c"># Dataset somewhere else? Point to it:</span>
+<span class="c"># .\scripts\03-upload-data.ps1 -SourceFolder "D:\datasets\olist"</span></code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>==&gt; 1. Staging the Olist files from: …\Ecommerce Dataset
+    olist_customers_dataset.csv  …  (one line per file)
+    <span class="ok">[OK]</span>   9 files, about 120 MB staged
+
+==&gt; 2. Checking whether olist-ecommerce-raw version 1 already exists
+    <span class="ok">[OK]</span>   Version is free
+
+==&gt; 3. Uploading and registering olist-ecommerce-raw version 1
+    <span class="ok">[OK]</span>   Registered olist-ecommerce-raw:1
+    Use it in a job / notebook as:  azureml:olist-ecommerce-raw:1</pre>
+            </div>
+            <div class="callout tip">
+              <span class="tag">Why not Bicep?</span>
+              <p>A Bicep deployment runs inside Azure and cannot see files on your laptop. Creating resources is the <b>control plane</b>; putting data into them is the <b>data plane</b>, handled by the Azure ML CLI.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-7" data-step="7"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 8 -->
+        <article class="step" id="step-8">
+          <div class="step-num">8</div>
+          <div class="step-body">
+            <h3>Verify everything</h3>
+            <div class="step-meta"><span>1 minute</span><span>Read-only</span><span>Script 04</span></div>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\04-verify-deployment.ps1</code></pre>
+            </div>
+            <p class="prose">Check each section of the report:</p>
+            <ul class="checklist prose">
+              <li><b>Compute instance:</b> <code>State: Running</code>.</li>
+              <li><b>Datastores:</b> a table that includes <code>workspaceblobstore</code> (data) and <code>workspacefilestore</code> (notebooks).</li>
+              <li><b>Data asset:</b> <code>olist-ecommerce-raw</code> with version <code>1</code>, type <code>uri_folder</code>.</li>
+              <li><b>Roles:</b> <code>AzureML Data Scientist</code> on the workspace and two Storage roles on the storage account.</li>
+              <li><b>Studio link</b> at the end. Keep it for the next step.</li>
+            </ul>
+            <label class="done-toggle"><input type="checkbox" id="done-8" data-step="8"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 9 -->
+        <article class="step" id="step-9">
+          <div class="step-num">9</div>
+          <div class="step-body">
+            <h3>Use the data in a cloud notebook</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Azure ML studio</span></div>
+            <ol class="prose">
+              <li>Open the studio link from Step 8, or go to <a href="https://ml.azure.com" target="_blank" rel="noopener">ml.azure.com</a> and pick <code data-v="ws">mlw-olist-dev</code>.</li>
+              <li>Choose <b>Data</b> → <code>olist-ecommerce-raw</code> → <b>Explore</b> to preview the files.</li>
+              <li>Choose <b>Compute</b> → your compute instance → <b>JupyterLab</b>.</li>
+              <li>Create a notebook and pick the kernel <b>Python 3.10 - SDK v2</b> (any kernel with "SDK v2" in its name works).</li>
+              <li>Paste this into a cell and run it:</li>
+            </ol>
+            <div class="term">
+              <div class="term-head"><span>Python · Jupyter</span><button type="button" class="copy">Copy</button></div>
+<pre><code>%pip install azureml-fsspec -q
+
+from azure.ai.ml import MLClient
+from azure.identity import DefaultAzureCredential
+import pandas as pd
+
+<span class="c"># A compute instance already knows its workspace</span>
+ml_client = MLClient.from_config(credential=DefaultAzureCredential())
+
+<span class="c"># Look up the data asset by name and version, not by storage URL</span>
+asset = ml_client.data.get(name="olist-ecommerce-raw", version="1")
+
+orders = pd.read_csv(f"{asset.path}/olist_orders_dataset.csv")
+print(orders.shape)
+orders.head()</code></pre>
+            </div>
+            <div class="out">
+              <div class="out-head">You should see</div>
+<pre>(99441, 8)
+<span class="dim">…followed by the first five orders</span></pre>
+            </div>
+            <p class="prose">If you see <code>(99441, 8)</code>, the whole chain works: infrastructure, compute, access and data.</p>
+            <label class="done-toggle"><input type="checkbox" id="done-9" data-step="9"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 10 -->
+        <article class="step" id="step-10">
+          <div class="step-num">10</div>
+          <div class="step-body">
+            <h3>Prove that it is repeatable</h3>
+            <div class="step-meta"><span>5 minutes</span><span>The most important lesson</span></div>
+            <p class="prose">Good infrastructure code is <b>idempotent</b>: running it again changes nothing that is already correct. Run the scripts a second time and compare the results.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\01-validate-infra.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span> -VmSize <span data-v="vm">Standard_E4ds_v4</span>
+.\scripts\02-deploy-infra.ps1   -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span> -VmSize <span data-v="vm">Standard_E4ds_v4</span>
+.\scripts\03-upload-data.ps1</code></pre>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Script</th><th>First run</th><th>Second run</th></tr></thead>
+                <tbody>
+                  <tr><td><code>01</code> what-if</td><td>11 to create (<b>+</b>)</td><td>Mostly no change (<b>=</b>). A few <b>~</b> lines can appear; Azure warns that what-if shows some false alarms.</td></tr>
+                  <tr><td><code>02</code> deploy</td><td>Creates everything</td><td>Succeeds, and says the compute instance already exists and is skipped</td></tr>
+                  <tr><td><code>03</code> upload</td><td>Registers version 1</td><td>Says version 1 already exists and uploads nothing</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-10" data-step="10"> I finished this step</label>
+          </div>
+        </article>
+
+        <!-- STEP 11 -->
+        <article class="step" id="step-11">
+          <div class="step-num">11</div>
+          <div class="step-body">
+            <h3>Clean up</h3>
+            <div class="step-meta"><span>10 minutes</span><span>Stops all costs</span><span>Script 99</span></div>
+            <p class="prose">Choose one option.</p>
+            <h3 style="font-size: 1.05rem">Option A: keep it for the next lab, but stop the compute instance</h3>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code><span class="c"># Read your compute instance name from the outputs file, then stop it</span>
+$ci = (Get-Content .\.deployment-outputs.json -Raw | ConvertFrom-Json).computeInstanceName
+az ml compute stop --name $ci --resource-group <span data-v="rg">rg-olist-ml-dev</span> --workspace-name <span data-v="ws">mlw-olist-dev</span></code></pre>
+            </div>
+            <h3 style="font-size: 1.05rem">Option B: delete everything</h3>
+            <p class="prose">The script lists what it will delete and asks you to type the resource group name, <code data-v="rg">rg-olist-ml-dev</code>, to confirm.</p>
+            <div class="term">
+              <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
+<pre><code>.\scripts\99-cleanup.ps1 -ProjectName <span data-v="project">olist</span>
+
+<span class="c"># Afterwards this should print: false</span>
+az group exists --name <span data-v="rg">rg-olist-ml-dev</span></code></pre>
+            </div>
+            <div class="callout warn">
+              <span class="tag">Why not just delete the resource group?</span>
+              <p>The workspace, Log Analytics and Key Vault are <b>soft-deleted</b>: Azure keeps them hidden for 7–14 days and their names stay reserved. Your next deployment would then fail with "already exists". The cleanup script deletes them permanently.</p>
+            </div>
+            <label class="done-toggle"><input type="checkbox" id="done-11" data-step="11"> I finished this step</label>
+          </div>
+        </article>
+
+      </div>
+
+      <div class="callout tip">
+        <span class="tag">Next time, in one command</span>
+        <p>Once you understand the steps, <code>.\scripts\deploy-all.ps1 -ProjectName <span data-v="project">olist</span> -Location <span data-v="location">eastus</span></code> runs Steps 3 to 8 for you.</p>
+      </div>
+    </section>
+
+    <!-- ===================== TROUBLESHOOTING ===================== -->
+    <section id="trouble">
+      <div class="section-head">
+        <span class="eyebrow">When something goes wrong</span>
+        <h2>Troubleshooting</h2>
+      </div>
+      <p class="prose">Read the red error text from the bottom up; the real cause is usually on the last lines. Then look for it here.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>You see</th><th>What it means</th><th>What to do</th></tr></thead>
+          <tbody>
+            <tr><td><code>running scripts is disabled</code></td><td>Windows blocks scripts by default</td><td>Run the two commands in Step 1 again (each new terminal needs them)</td></tr>
+            <tr><td><code>Please run 'az login'</code></td><td>Your sign-in expired</td><td>Run <code>az login</code></td></tr>
+            <tr><td><code>QuotaExceeded</code> or Step 3 check 7 fails</td><td>No vCPU quota for that VM size in that region</td><td>Pick a size or region the check approves, then rerun from Step 3</td></tr>
+            <tr><td><code>AuthorizationFailed</code> … <code>roleAssignments/write</code></td><td>You cannot create role assignments</td><td>Ask for Owner, or Contributor + Role Based Access Control Administrator</td></tr>
+            <tr><td><code>VaultAlreadyExists</code> or "deleted state"</td><td>A soft-deleted key vault still holds the name</td><td><code>az keyvault list-deleted -o table</code>, then <code>az keyvault purge --name &lt;name&gt;</code></td></tr>
+            <tr><td>Compute name already exists</td><td>Compute names must be unique in the whole region</td><td>Choose a different project name in <a href="#settings">Your settings</a></td></tr>
+            <tr><td><code>RequestDisallowedByPolicy</code></td><td>Your organisation's Azure Policy blocks a setting</td><td>Show the error to your instructor or Azure admin</td></tr>
+            <tr><td><code>403</code> during the upload</td><td>New role assignments take a few minutes to activate</td><td>Wait 5 minutes and rerun Step 7</td></tr>
+            <tr><td><code>Source folder not found</code></td><td>The dataset is not where the script expects it</td><td>Check the <a href="#before">folder layout</a> or use <code>-SourceFolder</code></td></tr>
+            <tr><td><code>No deployment outputs found</code></td><td>Step 5 has not finished successfully yet</td><td>Run Step 5 first</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===================== QUIZ ===================== -->
+    <section id="quiz">
+      <div class="section-head">
+        <span class="eyebrow">Self-check</span>
+        <h2>Check your understanding</h2>
+      </div>
+      <p class="prose">Answer in your head first, then open the answer.</p>
+      <div>
+        <details><summary>1. Why does <code>main.bicep</code> use <code>targetScope = 'subscription'</code>?</summary><p>So the template can create the resource group itself. With resource-group scope, someone would have to create the group by hand first, and part of the environment would not be in code.</p></details>
+        <details><summary>2. You ran the deployment twice. Why is there still only one storage account?</summary><p>Bicep describes the desired state, and the name comes from <code>uniqueString()</code>, which returns the same suffix for the same inputs. Azure finds the existing account with that name and only updates it if something differs.</p></details>
+        <details><summary>3. Why is the dataset uploaded by a script instead of by Bicep?</summary><p>Bicep deployments run inside Azure Resource Manager and cannot read files on your computer. Bicep handles the control plane (creating resources); the Azure ML CLI handles the data plane (uploading content).</p></details>
+        <details><summary>4. In the what-if output, what do <code>+</code>, <code>~</code> and <code>=</code> mean?</summary><p><code>+</code> means the resource will be created, <code>~</code> means it will be modified, and <code>=</code> means no change.</p></details>
+        <details><summary>5. You have new Olist data. Can you replace version 1 of the data asset?</summary><p>No. Data asset versions are immutable. Register version 2 with <code>.\scripts\03-upload-data.ps1 -DataVersion 2</code>. Every experiment then records exactly which data it used.</p></details>
+        <details><summary>6. Which file would you change to make the compute instance shut down after 60 idle minutes?</summary><p><code>infra/main.bicepparam</code>: set <code>computeInstanceIdleShutdownMinutes = 60</code>. Note that idle shutdown is a creation-time setting, so it applies to a new compute instance.</p></details>
+        <details><summary>7. Why does the cleanup script do more than delete the resource group?</summary><p>Some resources are soft-deleted and keep their names reserved for 7–14 days. The script permanently deletes the workspace and Log Analytics and purges the key vault, so you can deploy again with the same names.</p></details>
+      </div>
+    </section>
+
+    <!-- ===================== CHALLENGES ===================== -->
+    <section id="challenges">
+      <div class="section-head">
+        <span class="eyebrow">Going further</span>
+        <h2>Bonus challenges</h2>
+      </div>
+      <ol class="prose stack" style="gap: 0.75rem">
+        <li><b>Preview a change.</b> In <code>infra/modules/monitoring.bicep</code>, change <code>retentionInDays</code> from 30 to 60. Run Step 4 and find the <code>~ Modify</code> line. Then deploy it.</li>
+        <li><b>A second environment.</b> Deploy a test copy beside dev: add <code>-EnvironmentName test -SkipComputeInstance</code> to the deploy command. Which names changed, and why? Remove it afterwards with <code>.\scripts\99-cleanup.ps1 -ProjectName <span data-v="project">olist</span> -EnvironmentName test</code>.</li>
+        <li><b>Add a compute cluster.</b> Write <code>infra/modules/compute-cluster.bicep</code> using <code>computeType: 'AmlCompute'</code> with <code>minNodeCount: 0</code> and <code>maxNodeCount: 2</code>, and call it from <code>main.bicep</code>. Why does a minimum of 0 nodes save money?</li>
+        <li><b>A new data version.</b> Register version 2 containing only the orders and reviews files, then compare both versions in studio.</li>
+      </ol>
+    </section>
+
+    <!-- ===================== GLOSSARY ===================== -->
+    <section id="glossary">
+      <div class="section-head">
+        <span class="eyebrow">Words used in this lab</span>
+        <h2>Glossary</h2>
+      </div>
+      <dl class="glossary">
+        <div><dt>Subscription</dt><dd>Your Azure account for billing and access. Everything you create belongs to one.</dd></div>
+        <div><dt>Resource group</dt><dd>A folder for related resources. Delete the group and its contents go with it.</dd></div>
+        <div><dt>Bicep module</dt><dd>A small Bicep file for one job, called from another Bicep file.</dd></div>
+        <div><dt>Parameter / output</dt><dd>A value going into a template, and a value coming back out of it.</dd></div>
+        <div><dt>What-if</dt><dd>A preview of the changes a deployment would make, without making them.</dd></div>
+        <div><dt>Idempotent</dt><dd>Running it again gives the same result and does not create duplicates.</dd></div>
+        <div><dt>Managed identity</dt><dd>An identity Azure gives a resource so it can access others without passwords.</dd></div>
+        <div><dt>Role assignment (RBAC)</dt><dd>Permission for a person or identity to do certain things on a certain resource.</dd></div>
+        <div><dt>Quota</dt><dd>The maximum number of virtual CPUs you may run per VM family in a region.</dd></div>
+        <div><dt>Compute instance</dt><dd>A personal cloud workstation with Jupyter and VS Code, managed by Azure ML.</dd></div>
+        <div><dt>Datastore</dt><dd>A saved connection from the workspace to a storage location.</dd></div>
+        <div><dt>Data asset</dt><dd>A named, versioned reference to data, such as <code>olist-ecommerce-raw:1</code>.</dd></div>
+        <div><dt>Soft delete</dt><dd>Deleted, but recoverable for a while, and the name stays reserved.</dd></div>
+        <div><dt>Control / data plane</dt><dd>Managing resources versus working with the content inside them.</dd></div>
+      </dl>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Further reading on Microsoft Learn:
+      <a href="https://learn.microsoft.com/azure/azure-resource-manager/bicep/overview" target="_blank" rel="noopener">What is Bicep?</a> ·
+      <a href="https://learn.microsoft.com/azure/azure-resource-manager/bicep/deploy-what-if" target="_blank" rel="noopener">What-if</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-create-compute-instance" target="_blank" rel="noopener">Compute instances</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-create-data-assets" target="_blank" rel="noopener">Data assets</a> ·
+      <a href="https://learn.microsoft.com/azure/machine-learning/how-to-manage-quotas" target="_blank" rel="noopener">Quotas</a>
+    </p>
+    <p>Dataset: <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Olist Brazilian E-Commerce</a>, licensed CC BY-NC-SA 4.0. Full reference documentation: <code>README.md</code> in this folder.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var KEY_SETTINGS = 'amlLab.settings';
+  var KEY_PROGRESS = 'amlLab.progress';
+  var TOTAL_STEPS = 11;
+
+  function load(key, fallback) {
+    try { var raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : fallback; } catch (e) { return fallback; }
+  }
+  function save(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) { /* storage unavailable - page still works */ }
+  }
+
+  /* ---------- Settings: personalise every command ---------- */
+  var PROJECT_RE = /^[a-z0-9]{3,10}$/;
+  var state = { project: 'olist', location: 'eastus', vm: 'Standard_E4ds_v4' };
+  var saved = load(KEY_SETTINGS, {});
+  if (saved && PROJECT_RE.test(saved.project || '')) state.project = saved.project;
+  if (saved && saved.location) state.location = saved.location;
+  if (saved && saved.vm) state.vm = saved.vm;
+
+  var projectInput = document.getElementById('set-project');
+  var locationSelect = document.getElementById('set-location');
+  var vmSelect = document.getElementById('set-vm');
+  var projectErr = document.getElementById('project-err');
+
+  function hasOption(select, value) {
+    for (var i = 0; i < select.options.length; i++) { if (select.options[i].value === value) return true; }
+    return false;
+  }
+  if (!hasOption(locationSelect, state.location)) state.location = 'eastus';
+  if (!hasOption(vmSelect, state.vm)) state.vm = 'Standard_E4ds_v4';
+
+  projectInput.value = state.project;
+  locationSelect.value = state.location;
+  vmSelect.value = state.vm;
+
+  function render() {
+    var values = {
+      project: state.project,
+      location: state.location,
+      vm: state.vm,
+      rg: 'rg-' + state.project + '-ml-dev',
+      ws: 'mlw-' + state.project + '-dev',
+      dep: 'aml-' + state.project + '-dev-' + state.location
+    };
+    var nodes = document.querySelectorAll('[data-v]');
+    for (var i = 0; i < nodes.length; i++) {
+      var key = nodes[i].getAttribute('data-v');
+      if (values[key] !== undefined) nodes[i].textContent = values[key];
+    }
+  }
+
+  projectInput.addEventListener('input', function () {
+    var value = projectInput.value.trim();
+    var valid = PROJECT_RE.test(value);
+    projectErr.hidden = valid;
+    projectInput.setAttribute('aria-invalid', valid ? 'false' : 'true');
+    if (valid) { state.project = value; save(KEY_SETTINGS, state); render(); }
+  });
+  locationSelect.addEventListener('change', function () { state.location = locationSelect.value; save(KEY_SETTINGS, state); render(); });
+  vmSelect.addEventListener('change', function () { state.vm = vmSelect.value; save(KEY_SETTINGS, state); render(); });
+  render();
+
+  /* ---------- Copy buttons ---------- */
+  function selectText(el) {
+    try {
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      var sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    } catch (e) { /* ignore */ }
+  }
+  var blocks = document.querySelectorAll('.term');
+  for (var b = 0; b < blocks.length; b++) {
+    (function (block) {
+      var button = block.querySelector('.copy');
+      var code = block.querySelector('code');
+      button.addEventListener('click', function () {
+        var text = code.innerText.replace(/\s+$/, '');
+        var done = function (label) {
+          button.textContent = label;
+          setTimeout(function () { button.textContent = 'Copy'; }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () { done('Copied'); }, function () { selectText(code); done('Press Ctrl+C'); });
+        } else {
+          selectText(code); done('Press Ctrl+C');
+        }
+      });
+    })(blocks[b]);
+  }
+
+  /* ---------- Progress tracking ---------- */
+  var progress = load(KEY_PROGRESS, {}) || {};
+  var boxes = document.querySelectorAll('input[data-step]');
+  var countEl = document.getElementById('progress-count');
+  var barEl = document.getElementById('progress-bar');
+
+  function renderProgress() {
+    var done = 0;
+    for (var i = 0; i < boxes.length; i++) {
+      var step = boxes[i].getAttribute('data-step');
+      var checked = !!progress[step];
+      boxes[i].checked = checked;
+      var link = document.querySelector('.rail a[data-rail="' + step + '"]');
+      if (link) link.classList.toggle('is-done', checked);
+      if (checked) done++;
+    }
+    countEl.textContent = done + '/' + TOTAL_STEPS;
+    barEl.setAttribute('aria-valuenow', String(done));
+    barEl.firstElementChild.style.width = (done / TOTAL_STEPS * 100) + '%';
+  }
+  for (var j = 0; j < boxes.length; j++) {
+    boxes[j].addEventListener('change', function (event) {
+      progress[event.target.getAttribute('data-step')] = event.target.checked;
+      save(KEY_PROGRESS, progress);
+      renderProgress();
+    });
+  }
+  document.getElementById('reset-progress').addEventListener('click', function () {
+    progress = {};
+    save(KEY_PROGRESS, progress);
+    renderProgress();
+  });
+  renderProgress();
+})();
+</script>
+</body>
+</html>

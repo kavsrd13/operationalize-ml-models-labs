@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Exercise 05: Compare AutoML and MLflow experiments | Operationalize Machine Learning Models</title>
+<link rel="stylesheet" href="../../assets/site.css"></head>
+<body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 05: Compare AutoML and MLflow experiments</h1>
+<h2>Goal</h2>
+<p>Prepare chronological freight data, compare bounded AutoML with tracked Ridge and boosting jobs, select on validation data, and use the held-out test once.</p>
+<h2>Steps</h2>
+<ol start="1">
+<li>Complete exercise 00. Confirm <code>olist-course-cpu</code> exists. Open <code>../Olist freight Azure ML experiments.ipynb</code> with <strong>Python (Olist Azure ML)</strong>.</li>
+<li>In notebook step 1 leave <code>UPLOAD_DATA</code>, <code>SUBMIT_JOBS</code>, and <code>SUBMIT_EVALUATION</code> set to <code>False</code>. Run the setup and preparation cells.</li>
+<li>Inspect the three <code>data/{train,validation,test}</code> folders. Each must have <code>orders.csv</code> and <code>MLTable</code>; dates must be chronological. The test set is reserved until a validation winner is chosen.</li>
+<li>Set <code>UPLOAD_DATA = True</code> and rerun the registration cell. Verify the named assets <code>olist-freight-train:1</code>, <code>olist-freight-validation:1</code>, and <code>olist-freight-test:1</code> in Studio. Existing version 1 assets are reused.</li>
+<li>Review <code>../jobs/automl-regression.yml</code> (five trials, one concurrent, 90-minute total), <code>../jobs/track-mlflow.yml</code>, and <code>../src/train.py</code>. All jobs use <code>olist-course-cpu</code>.</li>
+<li>Set <code>SUBMIT_JOBS = True</code>, rerun notebook steps 6–8, and record the AutoML, Ridge, and boosting job IDs saved in ignored <code>.freight-run-ids.json</code>.</li>
+<li>Wait until all three jobs show <code>Completed</code>. In Studio inspect validation MAE, baseline, plots, MLflow parameters, and model outputs. Choose either Ridge or boosting using validation evidence; do not choose on test data.</li>
+<li>In the notebook&#x27;s final evaluation cell set <code>selected_algorithm</code> to the chosen manual model and <code>SUBMIT_EVALUATION = True</code>. This registers the selected model and submits <code>../jobs/evaluate.yml</code> against <code>olist-freight-test:1</code> once.</li>
+<li>Wait for the evaluation job to complete. Record held-out MAE/RMSE and compare them to validation. If the test result differs, discuss time drift.</li>
+<li>Reset the three submission flags to <code>False</code> in your saved notebook.</li>
+</ol>
+<p>Do not delete the shared cluster or assets while later exercises need them.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

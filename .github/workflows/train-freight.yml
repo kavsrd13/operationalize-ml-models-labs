@@ -1,0 +1,63 @@
+name: Train freight model in Azure ML
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '03-Freight-Regression-Training/jobs/train-job.yml'
+      - '03-Freight-Regression-Training/src/**'
+      - '.github/workflows/train-freight.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: freight-training-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  train:
+    # The initial publication cannot accidentally submit a billable job.
+    if: vars.ENABLE_AZURE_TRAINING == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sign in to Azure with GitHub OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Azure ML CLI extension
+        run: az extension add --name ml --yes
+
+      - name: Check shared course resources
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+          WS: ${{ vars.AZURE_ML_WORKSPACE }}
+        run: |
+          set -euo pipefail
+          az ml workspace show -g "$RG" -n "$WS" --query name -o tsv
+          az ml compute show -g "$RG" -w "$WS" -n olist-course-cpu --query name -o tsv
+          az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query name -o tsv
+
+      - name: Submit training and check result
+        env:
+          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
+          WS: ${{ vars.AZURE_ML_WORKSPACE }}
+        run: |
+          set -euo pipefail
+          JOB_NAME=$(az ml job create \
+            --file 03-Freight-Regression-Training/jobs/train-job.yml \
+            -g "$RG" -w "$WS" --query name -o tsv)
+          echo "Azure ML job: $JOB_NAME"
+          echo "### Azure ML training" >> "$GITHUB_STEP_SUMMARY"
+          echo "Job: \`$JOB_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          az ml job stream -n "$JOB_NAME" -g "$RG" -w "$WS" || true
+          STATUS=$(az ml job show -n "$JOB_NAME" -g "$RG" -w "$WS" --query status -o tsv)
+          echo "Status: $STATUS" >> "$GITHUB_STEP_SUMMARY"
+          test "$STATUS" = Completed

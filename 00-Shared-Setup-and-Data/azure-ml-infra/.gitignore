@@ -1,0 +1,15 @@
+# Staging copy of the Olist CSVs (created by scripts/03-upload-data.ps1).
+# Raw data never goes into git - it is uploaded to Azure ML instead.
+data/olist-raw/
+
+# Compiled ARM JSON produced by `az bicep build` (the .bicep files are the source of truth)
+infra/**/*.json
+!infra/bicepconfig.json
+
+# Local outputs captured from deployments
+.deployment-outputs.json
+
+# Editor / OS noise
+.vscode/
+.DS_Store
+Thumbs.db
