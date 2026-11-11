@@ -14,15 +14,18 @@ submits exercise 03's job and reports whether it completed.
 2. Put this **collection's contents at the root of your own GitHub repository**.
    The workflow must be at `.github/workflows/train-freight.yml` relative to that root.
    GitHub Actions runs from the repository root; a nested workflow is not discovered.
+   Install and sign in to GitHub CLI (`gh auth login`) for the identity commands below.
 3. Ask an Azure administrator for permission to create a Microsoft Entra
    application, service principal, and workspace role assignment for this
    repository. The identity needs **AzureML Data Scientist** on the course
    workspace; it does not need to create another compute cluster.
-4. Add a federated credential to the application with issuer
+4. Add a federated credential with issuer
    `https://token.actions.githubusercontent.com`, audience
-   `api://AzureADTokenExchange`, and subject
-   `repo:YOUR_GITHUB_OWNER/YOUR_REPOSITORY:ref:refs/heads/main`.
-   Use the exact case of the GitHub owner and repository. This trusts only `main`.
+   `api://AzureADTokenExchange`, and the exact GitHub OIDC subject for `main`.
+   New GitHub repositories use an **immutable subject** containing numeric owner
+   and repository IDs: `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main`.
+   Older repositories may still use `repo:OWNER/REPO:ref:refs/heads/main`.
+   The subject is case-sensitive; use the format your repository issues.
    An Azure administrator can run the following in PowerShell after setting
    `$RG`, `$WS`, `$OWNER`, and `$REPO` to the student's values:
 
@@ -34,10 +37,12 @@ submits exercise 03's job and reports whether it completed.
    az role assignment create --assignee-object-id $SP_OBJECT_ID `
      --assignee-principal-type ServicePrincipal --role 'AzureML Data Scientist' `
      --scope $WORKSPACE_ID
+   $OWNER_ID = gh api "repos/$OWNER/$REPO" --jq '.owner.id'
+   $REPO_ID = gh api "repos/$OWNER/$REPO" --jq '.id'
    $credential = @{
      name = 'github-main'
      issuer = 'https://token.actions.githubusercontent.com'
-     subject = "repo:${OWNER}/${REPO}:ref:refs/heads/main"
+     subject = "repo:${OWNER}@${OWNER_ID}/${REPO}@${REPO_ID}:ref:refs/heads/main"
      audiences = @('api://AzureADTokenExchange')
    }
    $credential | ConvertTo-Json | Set-Content -Encoding utf8 .\github-oidc.json
@@ -56,13 +61,15 @@ submits exercise 03's job and reports whether it completed.
 
 Microsoft's [OIDC setup guide](https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect)
 shows the portal screens for the app and federated credential. GitHub's
-[Azure OIDC guide](https://docs.github.com/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure)
-explains the matching repository subject.
+[OIDC reference](https://docs.github.com/en/actions/reference/security/oidc)
+explains immutable subjects for newer repositories. If the sign-in step reports
+`AADSTS700213`, copy the **presented assertion subject** from the failed run
+and make the federated credential match it exactly.
 
 ## Run the exercise
 
 6. Open `.github/workflows/train-freight.yml`. Identify the `push` file paths, the
-   `id-token: write` permission, the OIDC login, and the final `Completed` check.
+   `id-token: write` permission, the OIDC login, and the final-status polling loop.
 7. In GitHub Actions variables, set `ENABLE_AZURE_TRAINING` to `true`. This gate
    prevents an automatic Azure job when the materials are first published.
 8. In **Actions → Train freight model in Azure ML**, choose **Run workflow** on
@@ -81,16 +88,16 @@ explains the matching repository subject.
 
 ## If a run fails
 
-- **Login failed:** compare the OIDC credential's exact `repo:...:ref:refs/heads/main`
-  subject with your GitHub repository and branch; check client, tenant, and
-  subscription IDs.
+- **Login failed:** compare the exact subject printed in `AADSTS700213` with
+  the federated credential, including numeric IDs in an immutable subject.
+  Also check client, tenant, and subscription IDs.
 - **Resource check failed:** run exercise 00 again with `--create-cluster`, verify the
   same workspace variables, and check the OIDC identity's workspace role.
 - **Training failed:** open the Azure ML job link or job name in Studio and read
   `user_logs/std_log.txt`. The workflow reports the actual Azure ML final status.
-- **Log streaming says `Incorrect padding`:** inspect the final `Status` in the
-  workflow summary. The workflow checks Azure ML status separately, so a
-  local log-stream error alone does not mark a completed training job as failed.
+- **Azure ML logs are needed:** use Studio or `az ml job download -n JOB_NAME
+  -g RESOURCE_GROUP -w WORKSPACE --all`. The workflow polls job status; it does
+  not depend on the CLI log-stream command, which can fail with `Incorrect padding`.
 
 ## Validation status
 

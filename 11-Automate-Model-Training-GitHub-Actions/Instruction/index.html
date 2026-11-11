@@ -9,9 +9,9 @@
 <h2>Before you start</h2>
 <ol start="1">
 <li>Complete exercises 00 and 03 in one Azure ML workspace. Confirm the shared <code>olist-course-cpu</code> compute and <code>olist-ecommerce-raw:1</code> data asset exist. Keep the cluster minimum node count at zero.</li>
-<li>Put this <strong>collection&#x27;s contents at the root of your own GitHub repository</strong>. The workflow must be at <code>.github/workflows/train-freight.yml</code> relative to that root. GitHub Actions runs from the repository root; a nested workflow is not discovered.</li>
+<li>Put this <strong>collection&#x27;s contents at the root of your own GitHub repository</strong>. The workflow must be at <code>.github/workflows/train-freight.yml</code> relative to that root. GitHub Actions runs from the repository root; a nested workflow is not discovered. Install and sign in to GitHub CLI (<code>gh auth login</code>) for the identity commands below.</li>
 <li>Ask an Azure administrator for permission to create a Microsoft Entra application, service principal, and workspace role assignment for this repository. The identity needs <strong>AzureML Data Scientist</strong> on the course workspace; it does not need to create another compute cluster.</li>
-<li>Add a federated credential to the application with issuer <code>https://token.actions.githubusercontent.com</code>, audience <code>api://AzureADTokenExchange</code>, and subject <code>repo:YOUR_GITHUB_OWNER/YOUR_REPOSITORY:ref:refs/heads/main</code>. Use the exact case of the GitHub owner and repository. This trusts only <code>main</code>. An Azure administrator can run the following in PowerShell after setting <code>$RG</code>, <code>$WS</code>, <code>$OWNER</code>, and <code>$REPO</code> to the student&#x27;s values:</li>
+<li>Add a federated credential with issuer <code>https://token.actions.githubusercontent.com</code>, audience <code>api://AzureADTokenExchange</code>, and the exact GitHub OIDC subject for <code>main</code>. New GitHub repositories use an <strong>immutable subject</strong> containing numeric owner and repository IDs: <code>repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main</code>. Older repositories may still use <code>repo:OWNER/REPO:ref:refs/heads/main</code>. The subject is case-sensitive; use the format your repository issues. An Azure administrator can run the following in PowerShell after setting <code>$RG</code>, <code>$WS</code>, <code>$OWNER</code>, and <code>$REPO</code> to the student&#x27;s values:</li>
 </ol>
 <pre><code>   $APP_ID = az ad app create --display-name &quot;olist-course-github-$REPO&quot; --query appId -o tsv
    az ad sp create --id $APP_ID
@@ -20,10 +20,12 @@
    az role assignment create --assignee-object-id $SP_OBJECT_ID `
      --assignee-principal-type ServicePrincipal --role &#x27;AzureML Data Scientist&#x27; `
      --scope $WORKSPACE_ID
+   $OWNER_ID = gh api &quot;repos/$OWNER/$REPO&quot; --jq &#x27;.owner.id&#x27;
+   $REPO_ID = gh api &quot;repos/$OWNER/$REPO&quot; --jq &#x27;.id&#x27;
    $credential = @{
      name = &#x27;github-main&#x27;
      issuer = &#x27;https://token.actions.githubusercontent.com&#x27;
-     subject = &quot;repo:${OWNER}/${REPO}:ref:refs/heads/main&quot;
+     subject = &quot;repo:${OWNER}@${OWNER_ID}/${REPO}@${REPO_ID}:ref:refs/heads/main&quot;
      audiences = @(&#x27;api://AzureADTokenExchange&#x27;)
    }
    $credential | ConvertTo-Json | Set-Content -Encoding utf8 .\github-oidc.json
@@ -34,10 +36,10 @@
 <ol start="5">
 <li>In GitHub <strong>Settings → Secrets and variables → Actions</strong>, add repository secrets <code>AZURE_CLIENT_ID</code>, <code>AZURE_TENANT_ID</code>, and <code>AZURE_SUBSCRIPTION_ID</code> from that application and subscription. Add repository variables <code>AZURE_RESOURCE_GROUP</code> and <code>AZURE_ML_WORKSPACE</code> with the names from exercise 00. These IDs are not passwords, but keep them in GitHub settings so the workflow can be reused.</li>
 </ol>
-<p>Microsoft&#x27;s <a href="https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect">OIDC setup guide</a> shows the portal screens for the app and federated credential. GitHub&#x27;s <a href="https://docs.github.com/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure">Azure OIDC guide</a> explains the matching repository subject.</p>
+<p>Microsoft&#x27;s <a href="https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect">OIDC setup guide</a> shows the portal screens for the app and federated credential. GitHub&#x27;s <a href="https://docs.github.com/en/actions/reference/security/oidc">OIDC reference</a> explains immutable subjects for newer repositories. If the sign-in step reports <code>AADSTS700213</code>, copy the <strong>presented assertion subject</strong> from the failed run and make the federated credential match it exactly.</p>
 <h2>Run the exercise</h2>
 <ol start="6">
-<li>Open <code>.github/workflows/train-freight.yml</code>. Identify the <code>push</code> file paths, the <code>id-token: write</code> permission, the OIDC login, and the final <code>Completed</code> check.</li>
+<li>Open <code>.github/workflows/train-freight.yml</code>. Identify the <code>push</code> file paths, the <code>id-token: write</code> permission, the OIDC login, and the final-status polling loop.</li>
 <li>In GitHub Actions variables, set <code>ENABLE_AZURE_TRAINING</code> to <code>true</code>. This gate prevents an automatic Azure job when the materials are first published.</li>
 <li>In <strong>Actions → Train freight model in Azure ML</strong>, choose <strong>Run workflow</strong> on <code>main</code>. The run checks the shared compute and asset before submitting training.</li>
 <li>Open the run logs. Record the Azure ML job name. In Azure ML Studio, open that job and inspect its <code>Completed</code> status, MAE, baseline comparison, and model output. The GitHub run must also finish green and show <code>Completed</code> in its summary.</li>
@@ -47,10 +49,10 @@
 </ol>
 <h2>If a run fails</h2>
 <ul>
-<li><strong>Login failed:</strong> compare the OIDC credential&#x27;s exact <code>repo:...:ref:refs/heads/main</code> subject with your GitHub repository and branch; check client, tenant, and subscription IDs.</li>
+<li><strong>Login failed:</strong> compare the exact subject printed in <code>AADSTS700213</code> with the federated credential, including numeric IDs in an immutable subject. Also check client, tenant, and subscription IDs.</li>
 <li><strong>Resource check failed:</strong> run exercise 00 again with <code>--create-cluster</code>, verify the same workspace variables, and check the OIDC identity&#x27;s workspace role.</li>
 <li><strong>Training failed:</strong> open the Azure ML job link or job name in Studio and read <code>user_logs/std_log.txt</code>. The workflow reports the actual Azure ML final status.</li>
-<li><strong>Log streaming says <code>Incorrect padding</code>:</strong> inspect the final <code>Status</code> in the workflow summary. The workflow checks Azure ML status separately, so a local log-stream error alone does not mark a completed training job as failed.</li>
+<li><strong>Azure ML logs are needed:</strong> use Studio or `az ml job download -n JOB_NAME -g RESOURCE_GROUP -w WORKSPACE --all`. The workflow polls job status; it does not depend on the CLI log-stream command, which can fail with <code>Incorrect padding</code>.</li>
 </ul>
 <h2>Validation status</h2>
 <p>The workflow and YAML are checked locally. The GitHub OIDC run requires each learner&#x27;s own repository identity and has not yet been executed in GitHub Actions.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

@@ -57,7 +57,22 @@ jobs:
           echo "Azure ML job: $JOB_NAME"
           echo "### Azure ML training" >> "$GITHUB_STEP_SUMMARY"
           echo "Job: \`$JOB_NAME\`" >> "$GITHUB_STEP_SUMMARY"
-          az ml job stream -n "$JOB_NAME" -g "$RG" -w "$WS" || true
-          STATUS=$(az ml job show -n "$JOB_NAME" -g "$RG" -w "$WS" --query status -o tsv)
-          echo "Status: $STATUS" >> "$GITHUB_STEP_SUMMARY"
-          test "$STATUS" = Completed
+          # Poll Azure ML directly. Some CLI versions fail while streaming logs
+          # even when the cloud job itself completes successfully.
+          for attempt in {1..120}; do
+            STATUS=$(az ml job show -n "$JOB_NAME" -g "$RG" -w "$WS" --query status -o tsv)
+            echo "Azure ML status: $STATUS"
+            case "$STATUS" in
+              Completed)
+                echo "Status: Completed" >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+                ;;
+              Failed|Canceled|Cancelled|NotResponding)
+                echo "Status: $STATUS" >> "$GITHUB_STEP_SUMMARY"
+                exit 1
+                ;;
+            esac
+            sleep 30
+          done
+          echo "Status: timed out waiting for Azure ML" >> "$GITHUB_STEP_SUMMARY"
+          exit 1
