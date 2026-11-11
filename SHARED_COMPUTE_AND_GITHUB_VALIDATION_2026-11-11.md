@@ -32,12 +32,37 @@ fetched `index.html` and `.github/workflows/train-freight.yml` successfully.
 GitHub recognized the workflow. Its initial `push` run was **skipped** because
 `ENABLE_AZURE_TRAINING` was unset, so publication did not launch a billable job.
 
-The workflow's OIDC sign-in and Azure job submission have **not** yet run.
-Automatic approval review rejected creation of the temporary Entra application
-needed to grant the workflow workspace access. The rejection reason was its
-persistent security and access implications without specific authorization.
-No Entra app, role assignment, or GitHub repository credentials were created for
-this test. The workflow's YAML and Azure ML job reference passed local parsing.
+After explicit approval, a temporary Entra application received **AzureML Data
+Scientist** only on `AzureML/MachineLearn123`. Its GitHub federated credential
+trusted this repository's `main` branch. Three manual runs found and fixed two
+real integration issues:
+
+1. [Run 42960837820](https://github.com/kavsrd13/operationalize-ml-models-labs/actions/runs/42960837820)
+   failed OIDC sign-in. New GitHub repositories use an immutable subject with
+   owner and repository IDs; the original name-only subject did not match.
+   Exercise 11 now builds the ID-based subject. See the
+   [GitHub OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).
+2. [Run 42961001284](https://github.com/kavsrd13/operationalize-ml-models-labs/actions/runs/42961001284)
+   passed OIDC and resource checks and submitted Azure job
+   `dynamic_lamp_l16bxv3m3b`, which **Completed**. The workflow itself failed
+   because `az ml job stream` returned `Incorrect padding` during finalization;
+   it checked status before Azure reported the terminal state.
+3. The workflow was changed to poll Azure ML status directly, with a 60-minute
+   bound. [Run 42961914658](https://github.com/kavsrd13/operationalize-ml-models-labs/actions/runs/42961914658)
+   finished **success**: OIDC sign-in, CLI install, shared-resource checks,
+   job submission, and final `Completed` check all passed. Its Azure job
+   `polite_hat_dw0yh6gkjj` **Completed** on `olist-course-cpu`. Downloaded
+   artifacts contain `outputs/model/MLmodel` and `outputs/metrics.json`;
+   boosting MAE was 5.4856 BRL versus 9.7709 BRL for the median baseline.
+
+After the successful test, the training gate was disabled. All three temporary
+GitHub secrets and all three repository variables were deleted; both GitHub
+lists returned empty. The temporary workspace role assignment, service
+principal, and Entra application were deleted. The role and app lists returned
+empty. The test cluster was deleted; `az ml compute list` returned only the
+pre-existing `krishnacompute` instance. Existing workspace assets were left
+in place. Clients must configure their own GitHub OIDC identity and
+repository settings to run the workflow.
 
 The revised shared-compute definitions for exercises 04–07 and 09–10 passed
 Azure ML SDK `load_job` checks, but have not been rerun live after the naming

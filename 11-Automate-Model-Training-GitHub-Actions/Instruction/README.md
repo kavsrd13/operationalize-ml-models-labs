@@ -101,5 +101,8 @@ and make the federated credential match it exactly.
 
 ## Validation status
 
-The workflow and YAML are checked locally. The GitHub OIDC run requires each learner's
-own repository identity and has not yet been executed in GitHub Actions.
+This workflow completed a live GitHub Actions → Azure ML training run in the
+course test workspace on 11 November 2026. The temporary identity, GitHub
+settings, and test compute were removed afterward. Each learner must configure
+their own repository identity and shared Azure ML resources before running it.
+See `../../SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md` for the run record.
