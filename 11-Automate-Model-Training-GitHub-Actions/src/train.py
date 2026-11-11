@@ -213,6 +213,11 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
 
     with mlflow.start_run():
+        mlflow.set_tags({
+            "git_commit": os.environ.get("TRAINING_GIT_SHA", "local"),
+            "github_run_url": os.environ.get("TRAINING_RUN_URL", "local"),
+            "data_asset": "olist-ecommerce-raw:1",
+        })
         mlflow.log_params({k: v for k, v in vars(args).items() if k not in ("data", "output_dir")})
 
         # ---- Data and time-based split ------------------------------------------------------
@@ -270,7 +275,9 @@ def main():
             # curated environment does not include. cloudpickle works everywhere.
             serialization_format=mlflow.sklearn.SERIALIZATION_FORMAT_CLOUDPICKLE,
         )
-        print(f"Done. MLflow model saved to {model_dir}")
+        mlflow.log_artifacts(args.output_dir, artifact_path="results")
+        plt.close("all")
+        print(f"Done. MLflow model saved to {model_dir} and logged under results/")
 
 
 if __name__ == "__main__":

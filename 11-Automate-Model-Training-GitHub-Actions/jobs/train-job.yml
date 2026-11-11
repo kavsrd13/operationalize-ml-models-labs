@@ -1,7 +1,7 @@
 # =====================================================================================
 #  Azure ML COMMAND JOB - train the Olist freight-cost model in the cloud
 # -------------------------------------------------------------------------------------
-#  Submit:   az ml job create --file jobs/train-job.yml -g rg-olist-ml-dev -w mlw-olist-dev
+#  Submit:   az ml job create --file jobs/train-job.yml -g rg-course-ml -w mlw-course-ml
 #
 #  code         -> the ../src folder is uploaded and becomes the working directory
 #  inputs       -> the registered data asset is MOUNTED (read-only) into the job
@@ -42,3 +42,8 @@ tags:
   dataset: olist-ecommerce-raw:1
   task: regression
   target: freight_value
+
+# GitHub overrides these values so MLflow records the exact source revision.
+environment_variables:
+  TRAINING_GIT_SHA: local
+  TRAINING_RUN_URL: local

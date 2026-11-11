@@ -9,3 +9,5 @@
 **/mlruns/
 **/mlflow-local.db
 /datasets/olist/Ecommerce Dataset/
+
+**/.lab11.parameters.json

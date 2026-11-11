@@ -22,6 +22,7 @@ jobs:
     # The initial publication cannot accidentally submit a billable job.
     if: vars.ENABLE_AZURE_TRAINING == 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -53,8 +54,14 @@ jobs:
           set -euo pipefail
           JOB_NAME=$(az ml job create \
             --file 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml \
-            -g "$RG" -w "$WS" --query name -o tsv)
+            -g "$RG" -w "$WS" \
+            --set environment_variables.TRAINING_GIT_SHA="$GITHUB_SHA" \
+                  environment_variables.TRAINING_RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+                  tags.git_commit="$GITHUB_SHA" --query name -o tsv)
           echo "Azure ML job: $JOB_NAME"
+          STUDIO_URL=$(az ml job show -n "$JOB_NAME" -g "$RG" -w "$WS" --query services.Studio.endpoint -o tsv)
+          echo "[Open training in Azure ML Studio]($STUDIO_URL)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "### Azure ML training" >> "$GITHUB_STEP_SUMMARY"
           echo "Job: \`$JOB_NAME\`" >> "$GITHUB_STEP_SUMMARY"
           # Poll Azure ML directly. Some CLI versions fail while streaming logs

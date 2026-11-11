@@ -1,181 +1,129 @@
-# Exercise 11: Automate model training with GitHub Actions
+# Exercise 11: GitHub training automation with Bicep and MLflow
 
-## Goal
+## Outcome
 
-Use a change to the freight training code to trigger an Azure ML training job. GitHub
-signs in to Azure with OpenID Connect (OIDC), checks the existing course assets, then
-submits this exercise's own job and reports whether it completed.
+Provision a reusable Azure ML environment, push a training change to GitHub, and compare the resulting MLflow experiments. Infrastructure setup runs once. Training runs automatically for each relevant push to main. This exercise is independent: it includes cloning, infrastructure, data registration, training and results. Model serving is covered in Exercise 08.
 
-## Start from a fresh clone
+This lab uses industry practices: versioned infrastructure, a deployment preview, passwordless GitHub OIDC, a workspace-scoped training identity, versioned data, and commit-linked experiments. It uses public service endpoints for classroom simplicity; private networking and production deployment approvals are outside this lab.
 
-Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:
+## 1. Prepare access and tools
+
+Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. You need access to the private course repository and permission to create a private repository. For infrastructure setup, use an Azure account permitted to create resource groups and resources and assign roles (for example subscription Owner). An instructor can perform setup for students who only have workspace access. Ensure the selected region has at least four available E-series v4 CPU cores for Standard_E4ds_v4, or pass an available size using -VmSize.
 
 ```powershell
 gh auth login
+az login
+az bicep install
 gh repo clone kavsrd13/operationalize-ml-models-labs
 Set-Location .\operationalize-ml-models-labs
 ```
 
-Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named `course-cpu`. Reuse the same names in later labs. Check regional quota for `Standard_E4ds_v4`.
+Clone first because the Bicep template and setup script are in the repository. All following commands run from this repository root.
+
+## 2. Create your private student repository
 
 ```powershell
-$SUB = 'YOUR_SUBSCRIPTION_ID'
-$RG = 'rg-course-ml'
-$WS = 'mlw-course-ml'
-$LOCATION = 'eastus'
-az login
-az account set --subscription $SUB
-az extension add --name ml --yes
-az group create -n $RG -l $LOCATION
-az ml workspace show -n $WS -g $RG --subscription $SUB 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
-}
-python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
-  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
-az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
-az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
+$OWNER = gh api user --jq '.login'
+$REPO = 'my-azure-ml-training-lab'
+$LAB_REPO = "$OWNER/$REPO"
+gh repo create $LAB_REPO --private --source . --remote student --push
 ```
 
-## Code files
+Choose a new repository name if that name already exists. Keep main as the default branch. The initial workflow may be skipped: setup enables training only after resources and access are ready. The student remote points to your repository; origin still points to the instructor repository.
 
-The actual code for this exercise is here:
+## 3. Run guided setup
 
-- [`src/train.py`](../src/train.py)
-- [`jobs/train-job.yml`](../jobs/train-job.yml)
-- [`.github/workflows/train-freight.yml`](../../.github/workflows/train-freight.yml)
+```powershell
+.\11-Automate-Model-Training-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO
+```
 
-Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
+The script asks for subscription, region, resource group and workspace. Use a dedicated course group, for example rg-course-anna and mlw-course-anna. Keep those names for subsequent labs. Students sharing a subscription need separate groups and workspaces.
 
+Compute stays course-cpu. Storage, Key Vault and monitoring names are generated consistently from the resource group, so rerunning setup uses the same names. Read the Bicep preview before typing deploy. Do not point this template at an unrelated existing workspace: workspace storage and Key Vault associations cannot be changed in place.
 
-## Before you start
+The script performs these steps:
 
-1. Confirm the setup above created `course-cpu` and `olist-ecommerce-raw:1`.
-   Read this lab's `src/train.py` and `jobs/train-job.yml` to understand the
-   training code that GitHub Actions will submit. Keep the cluster minimum at zero.
-2. Create a private repository under your own GitHub account and push this clone
-   to it. The workflow must be at `.github/workflows/train-freight.yml` at the
-   repository root; GitHub does not discover nested workflows. Use a new name
-   for `$REPO` and keep the course repository as the `origin` remote:
+1. Checks Azure and GitHub sign-in and your repository permissions.
+2. Saves the deployment parameters in an ignored local .lab11.parameters.json file.
+3. Runs Bicep what-if to show the resources and role assignments.
+4. Creates the resource group, storage, Key Vault, monitoring, workspace and course-cpu cluster (minimum zero nodes, maximum one).
+5. Creates a managed identity with GitHub federation for this repository's main branch and AzureML Data Scientist access on this workspace. No application password is created.
+6. Extracts the included Olist ZIP and registers olist-ecommerce-raw:1. Existing version 1 is reused.
+7. Sets GitHub's Azure IDs and workspace variables, then enables automatic training.
+8. Prints GitHub Actions and Azure ML Studio links.
 
-   ```powershell
-   $OWNER = gh api user --jq '.login'
-   $REPO = 'my-azure-ml-training-lab'
-   gh repo create "$OWNER/$REPO" --private --source . --remote student --push
-   gh repo view "$OWNER/$REPO" --web
-   ```
-3. Ask an Azure administrator for permission to create a Microsoft Entra
-   application, service principal, and workspace role assignment for this
-   repository. The identity needs **AzureML Data Scientist** on the course
-   workspace; it does not need to create another compute cluster.
-4. Add a federated credential with issuer
-   `https://token.actions.githubusercontent.com`, audience
-   `api://AzureADTokenExchange`, and the exact GitHub OIDC subject for `main`.
-   New GitHub repositories use an **immutable subject** containing numeric owner
-   and repository IDs: `repo:OWNER@OWNER_ID/REPO@REPO_ID:ref:refs/heads/main`.
-   Older repositories may still use `repo:OWNER/REPO:ref:refs/heads/main`.
-   The subject is case-sensitive; use the format your repository issues.
-   An Azure administrator can run the following in PowerShell using `$RG`,
-   `$WS`, `$OWNER`, and `$REPO` from the steps above:
+For repeatable unattended provisioning, pass the same choices explicitly. Preview first; -Yes accepts deployment without the interactive question.
 
-   ```powershell
-   $APP_ID = az ad app create --display-name "course-github-$REPO" --query appId -o tsv
-   az ad sp create --id $APP_ID
-   $SP_OBJECT_ID = az ad sp show --id $APP_ID --query id -o tsv
-   $WORKSPACE_ID = az ml workspace show -n $WS -g $RG --query id -o tsv
-   $ROLE_ASSIGNMENT_ID = az role assignment create --assignee-object-id $SP_OBJECT_ID `
-     --assignee-principal-type ServicePrincipal --role 'AzureML Data Scientist' `
-     --scope $WORKSPACE_ID --query id -o tsv
-   $OWNER_ID = gh api "repos/$OWNER/$REPO" --jq '.owner.id'
-   $REPO_ID = gh api "repos/$OWNER/$REPO" --jq '.id'
-   $credential = @{
-     name = 'github-main'
-     issuer = 'https://token.actions.githubusercontent.com'
-     subject = "repo:${OWNER}@${OWNER_ID}/${REPO}@${REPO_ID}:ref:refs/heads/main"
-     audiences = @('api://AzureADTokenExchange')
-   }
-   $credential | ConvertTo-Json | Set-Content -Encoding utf8 .\github-oidc.json
-   az ad app federated-credential create --id $APP_ID --parameters .\github-oidc.json
-   Remove-Item .\github-oidc.json
-   az account show --query tenantId -o tsv
-   ```
+```powershell
+.\11-Automate-Model-Training-GitHub-Actions\setup.ps1 `
+  -SubscriptionId YOUR_SUBSCRIPTION_ID `
+  -ResourceGroup rg-course-anna -Workspace mlw-course-anna `
+  -Location eastus -GitHubRepo $LAB_REPO -PreviewOnly
+```
 
-   Record `$APP_ID` and `$ROLE_ASSIGNMENT_ID` for cleanup. Use `$APP_ID`
-   for `AZURE_CLIENT_ID`, the last command's tenant ID for
-   `AZURE_TENANT_ID`, and `az account show --query id -o tsv` for the subscription.
-5. In GitHub **Settings → Secrets and variables → Actions**, add repository secrets
-   `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` from that
-   application and subscription. Add repository variables `AZURE_RESOURCE_GROUP`
-   and `AZURE_ML_WORKSPACE` with `$RG` and `$WS` above. These IDs are not
-   passwords, but keep them in GitHub settings so the workflow can be reused.
+Rerun without -PreviewOnly to deploy. Keep the same region and names on subsequent runs. The saved parameter file can also be reviewed and supplied to an infrastructure deployment pipeline; personal login and terminal prompts are the classroom bootstrap, while production pipelines supply approved parameters noninteractively.
 
-Microsoft's [OIDC setup guide](https://learn.microsoft.com/azure/developer/github/connect-from-azure-openid-connect)
-shows the portal screens for the app and federated credential. GitHub's
-[OIDC reference](https://docs.github.com/en/actions/reference/security/oidc)
-explains immutable subjects for newer repositories. If the sign-in step reports
-`AADSTS700213`, copy the **presented assertion subject** from the failed run
-and make the federated credential match it exactly.
+## 4. Locate and understand the actual code
 
-## Run the exercise
+- [setup.ps1](../setup.ps1): guided provisioning and GitHub configuration.
+- [infra/main.bicep](../infra/main.bicep): subscription deployment and resource group.
+- [infra/resources.bicep](../infra/resources.bicep): workspace, cluster, identity and GitHub trust. Supporting resources reuse the shared Bicep modules included in this clone.
+- [src/train.py](../src/train.py): feature preparation and baseline, ridge and gradient boosting models.
+- [jobs/train-job.yml](../jobs/train-job.yml): pinned training environment, dataset version, compute and parameters.
+- [GitHub workflow](../../.github/workflows/train-freight.yml): push trigger, Azure login, job submission and final status checking.
 
-6. Open `.github/workflows/train-freight.yml`. Identify the `push` file paths, the
-   `id-token: write` permission, the OIDC login, and the final-status polling loop.
-7. In GitHub Actions variables, set `ENABLE_AZURE_TRAINING` to `true`. This gate
-   prevents an automatic Azure job when the materials are first published.
-8. In **Actions → Train freight model in Azure ML**, choose **Run workflow** on
-   `main`. The run checks the shared compute and asset before submitting training.
-9. Open the run logs. Record the Azure ML job name. In Azure ML Studio, open that
-   job and inspect its `Completed` status, MAE, baseline comparison, and model output.
-   The GitHub run must also finish green and show `Completed` in its summary.
-10. Edit one harmless setting in `11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml`,
-    such as `display_name`, and push it to your repository. The `push` trigger
-    should start another workflow run automatically. Compare its Azure ML job
-    name with step 9:
+The workflow must remain in .github/workflows at repository root. GitHub submits the job; the model actually trains on Azure ML course-cpu. Azure ML supplies the MLflow tracking connection to the job.
 
-    ```powershell
-    git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
-    git commit -m "Exercise 11: update training display name"
-    git push student main
-    ```
+## 5. Run a baseline from GitHub
 
-11. Commit a change outside the three watched paths, such as this instruction file,
-    and push it to `student main`.
-    Verify that the freight training workflow does not start for that commit.
-12. Set `ENABLE_AZURE_TRAINING` back to `false` when finished. The shared compute
-    scales to zero. For a one-time classroom run, remove the temporary GitHub
-    settings and identity using the values saved in step 4:
+```powershell
+gh workflow run train-freight.yml --repo $LAB_REPO --ref main
+gh repo view $LAB_REPO --web
+```
 
-    ```powershell
-    $LAB_REPO = "$OWNER/$REPO"
-    gh variable delete ENABLE_AZURE_TRAINING -R $LAB_REPO
-    gh variable delete AZURE_RESOURCE_GROUP -R $LAB_REPO
-    gh variable delete AZURE_ML_WORKSPACE -R $LAB_REPO
-    gh secret delete AZURE_CLIENT_ID -R $LAB_REPO
-    gh secret delete AZURE_TENANT_ID -R $LAB_REPO
-    gh secret delete AZURE_SUBSCRIPTION_ID -R $LAB_REPO
-    az role assignment delete --ids $ROLE_ASSIGNMENT_ID
-    az ad sp delete --id $APP_ID
-    az ad app delete --id $APP_ID
-    ```
+Open Actions and select the run. Wait for the Azure ML job to finish; initial compute startup can take several minutes. The GitHub summary links to Studio and records the Git commit and job name. A green GitHub run means Azure ML reported Completed.
 
-## If a run fails
+In Studio, open Jobs, experiment olist-freight-cost, then the job. Inspect Metrics and Outputs + logs. Record boosting_mae, boosting_rmse, boosting_r2 and mae_improvement_vs_baseline. Confirm parameters include learning_rate and max_iter. MLflow tags include git_commit, github_run_url and data_asset. Artifacts contain prediction plots, feature importance, results/metrics.json and results/model in MLflow format. The model is also retained under outputs/model; saving a model does not automatically register a model version or deploy an endpoint.
 
-- **Login failed:** compare the exact subject printed in `AADSTS700213` with
-  the federated credential, including numeric IDs in an immutable subject.
-  Also check client, tenant, and subscription IDs.
-- **Resource check failed:** rerun the setup above, verify the
-  same workspace variables, and check the OIDC identity's workspace role.
-- **Training failed:** open the Azure ML job link or job name in Studio and read
-  `user_logs/std_log.txt`. The workflow reports the actual Azure ML final status.
-- **Azure ML logs are needed:** use Studio or `az ml job download -n JOB_NAME
-  -g RESOURCE_GROUP -w WORKSPACE --all`. The workflow polls job status; it does
-  not depend on the CLI log-stream command, which can fail with `Incorrect padding`.
+## 6. Change the model and push
+
+Open jobs/train-job.yml in Lab 11. Change learning_rate from 0.05 to 0.10, then:
+
+```powershell
+git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
+git commit -m "Experiment: compare learning rate 0.10"
+git push student main
+```
+
+Open Actions. A new run starts automatically; do not click Run workflow again. Select both jobs in the Studio experiment to compare metrics. Check that the MLflow git_commit tag matches each GitHub commit. Record whether MAE improved; lower is better. A parameter change does not guarantee improvement.
+
+## 7. Validate what you learned
+
+- Both GitHub runs are green and both Azure ML jobs are Completed.
+- Each job references a different commit and the same versioned dataset.
+- The second run records learning_rate=0.10.
+- Metrics, plots, feature importance and the model artifact are visible.
+- A documentation-only change does not start training because the workflow watches only its own file, Lab 11 training source and job YAML.
+
+## 8. Stop automatic training and clean up
+
+```powershell
+gh variable set ENABLE_AZURE_TRAINING --body false --repo $LAB_REPO
+```
+
+Let running jobs complete, or cancel them in Azure ML Studio. Cancelling GitHub alone does not cancel a submitted Azure job. course-cpu scales to zero when idle; storage and monitoring can still incur charges. Keep the shared course resources for later labs. When the course is finished, remove the dedicated course resource group through Azure Portal after checking its contents; this also removes its managed identity and workspace role. Remove the three AZURE_* repository secrets and the workspace/group/training variables from GitHub Settings when access is no longer needed.
+
+## Troubleshooting
+
+- Setup permission error: an administrator must provision resources and role assignments; training uses a narrower workspace role.
+- Quota error: select a region and VM size with capacity, then rerun setup with the same intended names.
+- AADSTS700213: GitHub's presented subject must match exactly. New repositories use numeric owner/repository IDs. Older, renamed, transferred or customized repositories can differ. Rerun setup with -OidcSubject followed by the exact presented subject from the failed login. See [GitHub OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).
+- First-run authorization error: role assignments can take a few minutes to propagate. Retry the workflow after propagation.
+- Workflow skipped: verify ENABLE_AZURE_TRAINING is true in your student repository.
+- No push run: verify you pushed to student main and changed a watched path.
+- Training failed: open the Azure job's user_logs/std_log.txt. GitHub reports the Azure final status.
+- GitHub timed out or was cancelled: inspect the Azure job before retrying to avoid duplicate jobs.
 
 ## Validation status
 
-The current standalone workflow completed a live GitHub Actions → Azure ML
-training run on 11 November 2026. Its job used `course-cpu` and completed;
-the GitHub run finished green. The temporary identity and GitHub settings were
-removed afterward. Each learner must configure their own repository identity
-and Azure ML resources. See the standalone validation report in the repository
-root for the run record.
+The previous training workflow was live-tested on 11 November 2026. The Bicep-managed identity setup and additional MLflow artifacts are a new revision. See LAB11_VALIDATION.md in this exercise for the checks actually completed; previous live evidence does not validate the new setup.
