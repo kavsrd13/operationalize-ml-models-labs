@@ -31,13 +31,16 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <h2>Code files</h2>
 <p>The actual code for this exercise is here:</p>
 <ul>
-<li><a href="../src/train.py"><code>train.py</code></a></li>
-<li><a href="../jobs/train-job.yml"><code>train-job.yml</code></a></li>
-<li><a href="../deploy/score.py"><code>score.py</code></a></li>
-<li><a href="../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
-<li><a href="../deploy/deployment.yml"><code>deployment.yml</code></a></li>
-<li><a href="../deploy/sample-request.json"><code>sample-request.json</code></a></li>
-<li><a href="../app/app.py"><code>app.py</code></a></li>
+<li><a href="../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="../jobs/train-job.yml"><code>jobs/train-job.yml</code></a></li>
+<li><a href="../deploy/score.py"><code>deploy/score.py</code></a></li>
+<li><a href="../deploy/endpoint.yml"><code>deploy/endpoint.yml</code></a></li>
+<li><a href="../deploy/deployment.yml"><code>deploy/deployment.yml</code></a></li>
+<li><a href="../deploy/conda.yaml"><code>deploy/conda.yaml</code></a></li>
+<li><a href="../deploy/sample-request.json"><code>deploy/sample-request.json</code></a></li>
+<li><a href="../deploy/sample-invalid-request.json"><code>deploy/sample-invalid-request.json</code></a></li>
+<li><a href="../app/app.py"><code>app/app.py</code></a></li>
+<li><a href="../app/requirements.txt"><code>app/requirements.txt</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>

@@ -6,4 +6,6 @@
 **/.freight-run-ids.json
 **/.sweep-run-id.json
 **/.mlflow/
+**/mlruns/
+**/mlflow-local.db
 /datasets/olist/Ecommerce Dataset/

@@ -73,8 +73,9 @@ Exercise 03's earlier shared-compute job and exercise 11's earlier workflow were
 live-tested. The generic `course-cpu` cluster is provisioned, and exercise 08's
 standalone training and model registration completed in Azure. A new West US
 endpoint attempt failed with a subscription registration error and was removed.
-The revised exercise 11 paths have not yet been run through GitHub Actions.
-See `STANDALONE_LABS_VALIDATION_2026-11-11.md` for the current checks.
+The revised exercise 11 workflow completed a live GitHub Actions → Azure ML
+training run on `course-cpu`. See `STANDALONE_LABS_VALIDATION_2026-11-11.md`
+for the current checks.
 The newer shared-compute settings for 04–07 and 09–10, named IMDB/Delhi assets,
 and explicit IMDB/Delhi serving scripts still need live checks in a learner
 workspace before being described as cloud-verified.

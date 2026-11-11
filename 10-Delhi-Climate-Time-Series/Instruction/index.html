@@ -15,14 +15,15 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="../train_delhi_climate_timeseries_local.ipynb"><code>train_delhi_climate_timeseries_local.ipynb</code></a></li>
-<li><a href="../src/train.py"><code>train.py</code></a></li>
-<li><a href="../jobs/train.yml"><code>train.yml</code></a></li>
-<li><a href="../data/train.yml"><code>train.yml</code></a></li>
-<li><a href="../data/test.yml"><code>test.yml</code></a></li>
-<li><a href="../deploy/score.py"><code>score.py</code></a></li>
-<li><a href="../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
-<li><a href="../deploy/deployment.yml"><code>deployment.yml</code></a></li>
-<li><a href="../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="../jobs/train.yml"><code>jobs/train.yml</code></a></li>
+<li><a href="../data/train.yml"><code>data/train.yml</code></a></li>
+<li><a href="../data/test.yml"><code>data/test.yml</code></a></li>
+<li><a href="../deploy/score.py"><code>deploy/score.py</code></a></li>
+<li><a href="../deploy/endpoint.yml"><code>deploy/endpoint.yml</code></a></li>
+<li><a href="../deploy/deployment.yml"><code>deploy/deployment.yml</code></a></li>
+<li><a href="../deploy/conda.yaml"><code>deploy/conda.yaml</code></a></li>
+<li><a href="../deploy/sample-request.json"><code>deploy/sample-request.json</code></a></li>
 <li><a href="../DailyDelhiClimateTrain.csv"><code>DailyDelhiClimateTrain.csv</code></a></li>
 <li><a href="../DailyDelhiClimateTest.csv"><code>DailyDelhiClimateTest.csv</code></a></li>
 </ul>
@@ -32,10 +33,16 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <li>Install the local Python packages and notebook kernel from the cloned root:</li>
 </ol>
 <pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
-<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel. Set the notebook working directory to this exercise folder so its CSV paths resolve.</p>
 <ol start="2">
-<li>Start/configure MLflow.</li>
-<li>Load the train and test CSVs, create lag-one features, train, and inspect metrics.</li>
+<li>In a second PowerShell window at the cloned repository root, start MLflow and leave that window open:</li>
+</ol>
+<pre><code>   New-Item -ItemType Directory -Force .\mlruns | Out-Null
+   .\.venv\Scripts\mlflow.exe server --host 127.0.0.1 --port 5000 `
+     --backend-store-uri sqlite:///mlruns/mlflow.db `
+     --default-artifact-root ./mlruns</code></pre>
+<ol start="3">
+<li>Run every notebook cell in order. It loads the train and test CSVs, creates lag-one features, and logs metrics. Open <code>http://127.0.0.1:5000</code> to inspect the run, then stop the server with Ctrl+C.</li>
 </ol>
 <h2>Create or reuse Azure resources for this lab</h2>
 <p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>

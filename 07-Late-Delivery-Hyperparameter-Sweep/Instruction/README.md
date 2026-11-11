@@ -42,10 +42,10 @@ The actual code for this exercise is here:
 
 - [`Azure ML late delivery sweep.ipynb`](../Azure%20ML%20late%20delivery%20sweep.ipynb)
 - [`prepare.py`](../prepare.py)
-- [`sweep_train.py`](../src/sweep_train.py)
-- [`sweep-smoke.yml`](../jobs/sweep-smoke.yml)
-- [`sweep.yml`](../jobs/sweep.yml)
-- [`environment.yml`](../environment/environment.yml)
+- [`src/sweep_train.py`](../src/sweep_train.py)
+- [`jobs/sweep-smoke.yml`](../jobs/sweep-smoke.yml)
+- [`jobs/sweep.yml`](../jobs/sweep.yml)
+- [`environment/environment.yml`](../environment/environment.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

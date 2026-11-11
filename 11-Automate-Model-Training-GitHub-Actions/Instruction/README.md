@@ -41,9 +41,9 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 
 The actual code for this exercise is here:
 
-- [`train.py`](../src/train.py)
-- [`train-job.yml`](../jobs/train-job.yml)
-- [`train-freight.yml`](../../.github/workflows/train-freight.yml)
+- [`src/train.py`](../src/train.py)
+- [`jobs/train-job.yml`](../jobs/train-job.yml)
+- [`.github/workflows/train-freight.yml`](../../.github/workflows/train-freight.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 
@@ -83,9 +83,9 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    az ad sp create --id $APP_ID
    $SP_OBJECT_ID = az ad sp show --id $APP_ID --query id -o tsv
    $WORKSPACE_ID = az ml workspace show -n $WS -g $RG --query id -o tsv
-   az role assignment create --assignee-object-id $SP_OBJECT_ID `
+   $ROLE_ASSIGNMENT_ID = az role assignment create --assignee-object-id $SP_OBJECT_ID `
      --assignee-principal-type ServicePrincipal --role 'AzureML Data Scientist' `
-     --scope $WORKSPACE_ID
+     --scope $WORKSPACE_ID --query id -o tsv
    $OWNER_ID = gh api "repos/$OWNER/$REPO" --jq '.owner.id'
    $REPO_ID = gh api "repos/$OWNER/$REPO" --jq '.id'
    $credential = @{
@@ -100,7 +100,8 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    az account show --query tenantId -o tsv
    ```
 
-   Use `$APP_ID` for `AZURE_CLIENT_ID`, the last command's tenant ID for
+   Record `$APP_ID` and `$ROLE_ASSIGNMENT_ID` for cleanup. Use `$APP_ID`
+   for `AZURE_CLIENT_ID`, the last command's tenant ID for
    `AZURE_TENANT_ID`, and `az account show --query id -o tsv` for the subscription.
 5. In GitHub **Settings → Secrets and variables → Actions**, add repository secrets
    `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, and `AZURE_SUBSCRIPTION_ID` from that
@@ -141,8 +142,21 @@ and make the federated credential match it exactly.
     and push it to `student main`.
     Verify that the freight training workflow does not start for that commit.
 12. Set `ENABLE_AZURE_TRAINING` back to `false` when finished. The shared compute
-    scales to zero; delete only job outputs or identity permissions that you own and
-    no longer need.
+    scales to zero. For a one-time classroom run, remove the temporary GitHub
+    settings and identity using the values saved in step 4:
+
+    ```powershell
+    $LAB_REPO = "$OWNER/$REPO"
+    gh variable delete ENABLE_AZURE_TRAINING -R $LAB_REPO
+    gh variable delete AZURE_RESOURCE_GROUP -R $LAB_REPO
+    gh variable delete AZURE_ML_WORKSPACE -R $LAB_REPO
+    gh secret delete AZURE_CLIENT_ID -R $LAB_REPO
+    gh secret delete AZURE_TENANT_ID -R $LAB_REPO
+    gh secret delete AZURE_SUBSCRIPTION_ID -R $LAB_REPO
+    az role assignment delete --ids $ROLE_ASSIGNMENT_ID
+    az ad sp delete --id $APP_ID
+    az ad app delete --id $APP_ID
+    ```
 
 ## If a run fails
 
@@ -159,9 +173,9 @@ and make the federated credential match it exactly.
 
 ## Validation status
 
-An earlier version of this workflow completed a live GitHub Actions → Azure ML
-training run in the course test workspace on 11 November 2026. The temporary
-identity, GitHub settings, and test compute were removed afterward. The current
-standalone paths and generic compute name have not yet been rerun live. Each
-learner must configure their own repository identity and Azure ML resources.
-See `../../SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md` for the run record.
+The current standalone workflow completed a live GitHub Actions → Azure ML
+training run on 11 November 2026. Its job used `course-cpu` and completed;
+the GitHub run finished green. The temporary identity and GitHub settings were
+removed afterward. Each learner must configure their own repository identity
+and Azure ML resources. See the standalone validation report in the repository
+root for the run record.

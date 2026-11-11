@@ -40,9 +40,12 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 
 The actual code for this exercise is here:
 
-- [`bootstrap.py`](../scripts/bootstrap.py)
-- [`compute.yml`](../scripts/compute.yml)
-- [`README.md`](../azure-ml-infra/README.md)
+- [`scripts/bootstrap.py`](../scripts/bootstrap.py)
+- [`scripts/compute.yml`](../scripts/compute.yml)
+- [`scripts/requirements.txt`](../scripts/requirements.txt)
+- [`datasets/olist/olist-data-asset.yml`](../../datasets/olist/olist-data-asset.yml)
+- [`azure-ml-infra/infra/main.bicep`](../azure-ml-infra/infra/main.bicep)
+- [`azure-ml-infra/README.md`](../azure-ml-infra/README.md)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

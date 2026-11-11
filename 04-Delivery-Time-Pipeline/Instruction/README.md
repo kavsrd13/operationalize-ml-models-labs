@@ -41,9 +41,9 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 The actual code for this exercise is here:
 
 - [`delivery-time-local.ipynb`](../delivery-time-local.ipynb)
-- [`prep.py`](../src/prep/prep.py)
-- [`train.py`](../src/train/train.py)
-- [`delivery-time-pipeline.yml`](../pipelines/delivery-time-pipeline.yml)
+- [`src/prep/prep.py`](../src/prep/prep.py)
+- [`src/train/train.py`](../src/train/train.py)
+- [`pipelines/delivery-time-pipeline.yml`](../pipelines/delivery-time-pipeline.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

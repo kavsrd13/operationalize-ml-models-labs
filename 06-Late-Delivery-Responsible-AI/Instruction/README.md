@@ -41,13 +41,13 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 The actual code for this exercise is here:
 
 - [`prepare.py`](../prepare.py)
-- [`train.py`](../src/train.py)
-- [`train.yml`](../jobs/train.yml)
-- [`rai-dashboard.yml`](../jobs/rai-dashboard.yml)
-- [`train.yml`](../data/train.yml)
-- [`test.yml`](../data/test.yml)
-- [`rai-train.yml`](../data/rai-train.yml)
-- [`rai-test.yml`](../data/rai-test.yml)
+- [`src/train.py`](../src/train.py)
+- [`jobs/train.yml`](../jobs/train.yml)
+- [`jobs/rai-dashboard.yml`](../jobs/rai-dashboard.yml)
+- [`data/train.yml`](../data/train.yml)
+- [`data/test.yml`](../data/test.yml)
+- [`data/rai-train.yml`](../data/rai-train.yml)
+- [`data/rai-test.yml`](../data/rai-test.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

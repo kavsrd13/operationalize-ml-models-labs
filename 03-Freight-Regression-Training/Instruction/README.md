@@ -41,8 +41,8 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 The actual code for this exercise is here:
 
 - [`freight-cost-local.ipynb`](../freight-cost-local.ipynb)
-- [`train.py`](../src/train.py)
-- [`train-job.yml`](../jobs/train-job.yml)
+- [`src/train.py`](../src/train.py)
+- [`jobs/train-job.yml`](../jobs/train-job.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

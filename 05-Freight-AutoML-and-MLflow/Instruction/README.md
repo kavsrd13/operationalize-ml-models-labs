@@ -42,14 +42,14 @@ The actual code for this exercise is here:
 
 - [`Olist freight Azure ML experiments.ipynb`](../Olist%20freight%20Azure%20ML%20experiments.ipynb)
 - [`prepare.py`](../prepare.py)
-- [`train.py`](../src/train.py)
-- [`evaluate.py`](../src/evaluate.py)
-- [`automl-regression.yml`](../jobs/automl-regression.yml)
-- [`track-mlflow.yml`](../jobs/track-mlflow.yml)
-- [`evaluate.yml`](../jobs/evaluate.yml)
-- [`train.yml`](../data/train.yml)
-- [`validation.yml`](../data/validation.yml)
-- [`test.yml`](../data/test.yml)
+- [`src/train.py`](../src/train.py)
+- [`src/evaluate.py`](../src/evaluate.py)
+- [`jobs/automl-regression.yml`](../jobs/automl-regression.yml)
+- [`jobs/track-mlflow.yml`](../jobs/track-mlflow.yml)
+- [`jobs/evaluate.yml`](../jobs/evaluate.yml)
+- [`data/train.yml`](../data/train.yml)
+- [`data/validation.yml`](../data/validation.yml)
+- [`data/test.yml`](../data/test.yml)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 

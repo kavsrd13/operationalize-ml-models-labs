@@ -20,14 +20,15 @@ Set-Location .\operationalize-ml-models-labs
 The actual code for this exercise is here:
 
 - [`train_delhi_climate_timeseries_local.ipynb`](../train_delhi_climate_timeseries_local.ipynb)
-- [`train.py`](../src/train.py)
-- [`train.yml`](../jobs/train.yml)
-- [`train.yml`](../data/train.yml)
-- [`test.yml`](../data/test.yml)
-- [`score.py`](../deploy/score.py)
-- [`endpoint.yml`](../deploy/endpoint.yml)
-- [`deployment.yml`](../deploy/deployment.yml)
-- [`sample-request.json`](../deploy/sample-request.json)
+- [`src/train.py`](../src/train.py)
+- [`jobs/train.yml`](../jobs/train.yml)
+- [`data/train.yml`](../data/train.yml)
+- [`data/test.yml`](../data/test.yml)
+- [`deploy/score.py`](../deploy/score.py)
+- [`deploy/endpoint.yml`](../deploy/endpoint.yml)
+- [`deploy/deployment.yml`](../deploy/deployment.yml)
+- [`deploy/conda.yaml`](../deploy/conda.yaml)
+- [`deploy/sample-request.json`](../deploy/sample-request.json)
 - [`DailyDelhiClimateTrain.csv`](../DailyDelhiClimateTrain.csv)
 - [`DailyDelhiClimateTest.csv`](../DailyDelhiClimateTest.csv)
 
@@ -42,9 +43,21 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure
    ```
 
-   Open `../train_delhi_climate_timeseries_local.ipynb` with the **Python (Olist Azure ML)** kernel.
-2. Start/configure MLflow.
-3. Load the train and test CSVs, create lag-one features, train, and inspect metrics.
+   Open `../train_delhi_climate_timeseries_local.ipynb` with the **Python (Olist Azure ML)** kernel. Set the
+   notebook working directory to this exercise folder so its CSV paths resolve.
+2. In a second PowerShell window at the cloned repository root, start MLflow
+   and leave that window open:
+
+   ```powershell
+   New-Item -ItemType Directory -Force .\mlruns | Out-Null
+   .\.venv\Scripts\mlflow.exe server --host 127.0.0.1 --port 5000 `
+     --backend-store-uri sqlite:///mlruns/mlflow.db `
+     --default-artifact-root ./mlruns
+   ```
+
+3. Run every notebook cell in order. It loads the train and test CSVs, creates
+   lag-one features, and logs metrics. Open `http://127.0.0.1:5000` to inspect
+   the run, then stop the server with Ctrl+C.
 
 ## Create or reuse Azure resources for this lab
 

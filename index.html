@@ -42,9 +42,12 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <h2>Code files</h2>
 <p>The actual code for this exercise is here:</p>
 <ul>
-<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/bootstrap.py"><code>bootstrap.py</code></a></li>
-<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/compute.yml"><code>compute.yml</code></a></li>
-<li><a href="00-Shared-Setup-and-Data/Instruction/../azure-ml-infra/README.md"><code>README.md</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/bootstrap.py"><code>scripts/bootstrap.py</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/compute.yml"><code>scripts/compute.yml</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../scripts/requirements.txt"><code>scripts/requirements.txt</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../../datasets/olist/olist-data-asset.yml"><code>datasets/olist/olist-data-asset.yml</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../azure-ml-infra/infra/main.bicep"><code>azure-ml-infra/infra/main.bicep</code></a></li>
+<li><a href="00-Shared-Setup-and-Data/Instruction/../azure-ml-infra/README.md"><code>azure-ml-infra/README.md</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -151,8 +154,8 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="03-Freight-Regression-Training/Instruction/../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a></li>
-<li><a href="03-Freight-Regression-Training/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="03-Freight-Regression-Training/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
+<li><a href="03-Freight-Regression-Training/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="03-Freight-Regression-Training/Instruction/../jobs/train-job.yml"><code>jobs/train-job.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -209,9 +212,9 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="04-Delivery-Time-Pipeline/Instruction/../delivery-time-local.ipynb"><code>delivery-time-local.ipynb</code></a></li>
-<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/prep/prep.py"><code>prep.py</code></a></li>
-<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/train/train.py"><code>train.py</code></a></li>
-<li><a href="04-Delivery-Time-Pipeline/Instruction/../pipelines/delivery-time-pipeline.yml"><code>delivery-time-pipeline.yml</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/prep/prep.py"><code>src/prep/prep.py</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../src/train/train.py"><code>src/train/train.py</code></a></li>
+<li><a href="04-Delivery-Time-Pipeline/Instruction/../pipelines/delivery-time-pipeline.yml"><code>pipelines/delivery-time-pipeline.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -263,14 +266,14 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <ul>
 <li><a href="05-Freight-AutoML-and-MLflow/Instruction/../Olist%20freight%20Azure%20ML%20experiments.ipynb"><code>Olist freight Azure ML experiments.ipynb</code></a></li>
 <li><a href="05-Freight-AutoML-and-MLflow/Instruction/../prepare.py"><code>prepare.py</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/evaluate.py"><code>evaluate.py</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/automl-regression.yml"><code>automl-regression.yml</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/track-mlflow.yml"><code>track-mlflow.yml</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/evaluate.yml"><code>evaluate.yml</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/train.yml"><code>train.yml</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/validation.yml"><code>validation.yml</code></a></li>
-<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/test.yml"><code>test.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../src/evaluate.py"><code>src/evaluate.py</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/automl-regression.yml"><code>jobs/automl-regression.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/track-mlflow.yml"><code>jobs/track-mlflow.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../jobs/evaluate.yml"><code>jobs/evaluate.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/train.yml"><code>data/train.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/validation.yml"><code>data/validation.yml</code></a></li>
+<li><a href="05-Freight-AutoML-and-MLflow/Instruction/../data/test.yml"><code>data/test.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -316,13 +319,13 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="06-Late-Delivery-Responsible-AI/Instruction/../prepare.py"><code>prepare.py</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/rai-dashboard.yml"><code>rai-dashboard.yml</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/train.yml"><code>train.yml</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/test.yml"><code>test.yml</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-train.yml"><code>rai-train.yml</code></a></li>
-<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-test.yml"><code>rai-test.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/train.yml"><code>jobs/train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../jobs/rai-dashboard.yml"><code>jobs/rai-dashboard.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/train.yml"><code>data/train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/test.yml"><code>data/test.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-train.yml"><code>data/rai-train.yml</code></a></li>
+<li><a href="06-Late-Delivery-Responsible-AI/Instruction/../data/rai-test.yml"><code>data/rai-test.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -388,10 +391,10 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <ul>
 <li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../Azure%20ML%20late%20delivery%20sweep.ipynb"><code>Azure ML late delivery sweep.ipynb</code></a></li>
 <li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../prepare.py"><code>prepare.py</code></a></li>
-<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../src/sweep_train.py"><code>sweep_train.py</code></a></li>
-<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep-smoke.yml"><code>sweep-smoke.yml</code></a></li>
-<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep.yml"><code>sweep.yml</code></a></li>
-<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../environment/environment.yml"><code>environment.yml</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../src/sweep_train.py"><code>src/sweep_train.py</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep-smoke.yml"><code>jobs/sweep-smoke.yml</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../jobs/sweep.yml"><code>jobs/sweep.yml</code></a></li>
+<li><a href="07-Late-Delivery-Hyperparameter-Sweep/Instruction/../environment/environment.yml"><code>environment/environment.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Steps</h2>
@@ -438,13 +441,16 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <h2>Code files</h2>
 <p>The actual code for this exercise is here:</p>
 <ul>
-<li><a href="08-Online-Model-Serving/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../deploy/score.py"><code>score.py</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
-<li><a href="08-Online-Model-Serving/Instruction/../app/app.py"><code>app.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../jobs/train-job.yml"><code>jobs/train-job.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/score.py"><code>deploy/score.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/endpoint.yml"><code>deploy/endpoint.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/deployment.yml"><code>deploy/deployment.yml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/conda.yaml"><code>deploy/conda.yaml</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/sample-request.json"><code>deploy/sample-request.json</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../deploy/sample-invalid-request.json"><code>deploy/sample-invalid-request.json</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../app/app.py"><code>app/app.py</code></a></li>
+<li><a href="08-Online-Model-Serving/Instruction/../app/requirements.txt"><code>app/requirements.txt</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Run</h2>
@@ -497,13 +503,14 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="09-IMDB-Sentiment-Classification/Instruction/../train_imdb_sentiment_local.ipynb"><code>train_imdb_sentiment_local.ipynb</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../data/imdb.yml"><code>imdb.yml</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/score.py"><code>score.py</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
-<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../jobs/train.yml"><code>jobs/train.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../data/imdb.yml"><code>data/imdb.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/score.py"><code>deploy/score.py</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/endpoint.yml"><code>deploy/endpoint.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/deployment.yml"><code>deploy/deployment.yml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/conda.yaml"><code>deploy/conda.yaml</code></a></li>
+<li><a href="09-IMDB-Sentiment-Classification/Instruction/../deploy/sample-request.json"><code>deploy/sample-request.json</code></a></li>
 <li><a href="09-IMDB-Sentiment-Classification/Instruction/../IMDB%20Dataset.csv"><code>IMDB Dataset.csv</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
@@ -512,10 +519,16 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <li>Install the local Python packages and notebook kernel from the cloned root:</li>
 </ol>
 <pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
-<p>Open <code>../train_imdb_sentiment_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<p>Open <code>../train_imdb_sentiment_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel. Set the notebook working directory to this exercise folder so its CSV paths resolve.</p>
 <ol start="2">
-<li>Start the local MLflow server as instructed.</li>
-<li>Load <code>../IMDB Dataset.csv</code>, train the classifier, and inspect logged results.</li>
+<li>In a second PowerShell window at the cloned repository root, start MLflow and leave that window open:</li>
+</ol>
+<pre><code>   New-Item -ItemType Directory -Force .\mlruns | Out-Null
+   .\.venv\Scripts\mlflow.exe server --host 127.0.0.1 --port 5000 `
+     --backend-store-uri sqlite:///mlruns/mlflow.db `
+     --default-artifact-root ./mlruns</code></pre>
+<ol start="3">
+<li>Run every notebook cell in order. It loads <code>../IMDB Dataset.csv</code>, trains the classifier, and logs metrics. Open <code>http://127.0.0.1:5000</code> to inspect the run, then stop the server with Ctrl+C.</li>
 </ol>
 <h2>Create or reuse Azure resources for this lab</h2>
 <p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>
@@ -576,14 +589,15 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <p>The actual code for this exercise is here:</p>
 <ul>
 <li><a href="10-Delhi-Climate-Time-Series/Instruction/../train_delhi_climate_timeseries_local.ipynb"><code>train_delhi_climate_timeseries_local.ipynb</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../jobs/train.yml"><code>train.yml</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/train.yml"><code>train.yml</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/test.yml"><code>test.yml</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/score.py"><code>score.py</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/endpoint.yml"><code>endpoint.yml</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/deployment.yml"><code>deployment.yml</code></a></li>
-<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/sample-request.json"><code>sample-request.json</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../jobs/train.yml"><code>jobs/train.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/train.yml"><code>data/train.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../data/test.yml"><code>data/test.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/score.py"><code>deploy/score.py</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/endpoint.yml"><code>deploy/endpoint.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/deployment.yml"><code>deploy/deployment.yml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/conda.yaml"><code>deploy/conda.yaml</code></a></li>
+<li><a href="10-Delhi-Climate-Time-Series/Instruction/../deploy/sample-request.json"><code>deploy/sample-request.json</code></a></li>
 <li><a href="10-Delhi-Climate-Time-Series/Instruction/../DailyDelhiClimateTrain.csv"><code>DailyDelhiClimateTrain.csv</code></a></li>
 <li><a href="10-Delhi-Climate-Time-Series/Instruction/../DailyDelhiClimateTest.csv"><code>DailyDelhiClimateTest.csv</code></a></li>
 </ul>
@@ -593,10 +607,16 @@ Set-Location .\operationalize-ml-models-labs</code></pre>
 <li>Install the local Python packages and notebook kernel from the cloned root:</li>
 </ol>
 <pre><code>   python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
-<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel.</p>
+<p>Open <code>../train_delhi_climate_timeseries_local.ipynb</code> with the <strong>Python (Olist Azure ML)</strong> kernel. Set the notebook working directory to this exercise folder so its CSV paths resolve.</p>
 <ol start="2">
-<li>Start/configure MLflow.</li>
-<li>Load the train and test CSVs, create lag-one features, train, and inspect metrics.</li>
+<li>In a second PowerShell window at the cloned repository root, start MLflow and leave that window open:</li>
+</ol>
+<pre><code>   New-Item -ItemType Directory -Force .\mlruns | Out-Null
+   .\.venv\Scripts\mlflow.exe server --host 127.0.0.1 --port 5000 `
+     --backend-store-uri sqlite:///mlruns/mlflow.db `
+     --default-artifact-root ./mlruns</code></pre>
+<ol start="3">
+<li>Run every notebook cell in order. It loads the train and test CSVs, creates lag-one features, and logs metrics. Open <code>http://127.0.0.1:5000</code> to inspect the run, then stop the server with Ctrl+C.</li>
 </ol>
 <h2>Create or reuse Azure resources for this lab</h2>
 <p>The local route above needs no Azure resources. For the Azure route, stay at the cloned repository root and run these commands. Replace the four variables with your subscription and preferred names. The same generic <code>course-cpu</code> cluster can serve later labs; bootstrap creates the Olist raw asset because the repository setup is shared, even though this lab trains on its own data.</p>
@@ -676,9 +696,9 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <h2>Code files</h2>
 <p>The actual code for this exercise is here:</p>
 <ul>
-<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../src/train.py"><code>train.py</code></a></li>
-<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../jobs/train-job.yml"><code>train-job.yml</code></a></li>
-<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../../.github/workflows/train-freight.yml"><code>train-freight.yml</code></a></li>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../src/train.py"><code>src/train.py</code></a></li>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../jobs/train-job.yml"><code>jobs/train-job.yml</code></a></li>
+<li><a href="11-Automate-Model-Training-GitHub-Actions/Instruction/../../.github/workflows/train-freight.yml"><code>.github/workflows/train-freight.yml</code></a></li>
 </ul>
 <p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
 <h2>Before you start</h2>
@@ -698,9 +718,9 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
    az ad sp create --id $APP_ID
    $SP_OBJECT_ID = az ad sp show --id $APP_ID --query id -o tsv
    $WORKSPACE_ID = az ml workspace show -n $WS -g $RG --query id -o tsv
-   az role assignment create --assignee-object-id $SP_OBJECT_ID `
+   $ROLE_ASSIGNMENT_ID = az role assignment create --assignee-object-id $SP_OBJECT_ID `
      --assignee-principal-type ServicePrincipal --role &#x27;AzureML Data Scientist&#x27; `
-     --scope $WORKSPACE_ID
+     --scope $WORKSPACE_ID --query id -o tsv
    $OWNER_ID = gh api &quot;repos/$OWNER/$REPO&quot; --jq &#x27;.owner.id&#x27;
    $REPO_ID = gh api &quot;repos/$OWNER/$REPO&quot; --jq &#x27;.id&#x27;
    $credential = @{
@@ -713,7 +733,7 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
    az ad app federated-credential create --id $APP_ID --parameters .\github-oidc.json
    Remove-Item .\github-oidc.json
    az account show --query tenantId -o tsv</code></pre>
-<p>Use <code>$APP_ID</code> for <code>AZURE_CLIENT_ID</code>, the last command&#x27;s tenant ID for <code>AZURE_TENANT_ID</code>, and <code>az account show --query id -o tsv</code> for the subscription.</p>
+<p>Record <code>$APP_ID</code> and <code>$ROLE_ASSIGNMENT_ID</code> for cleanup. Use <code>$APP_ID</code> for <code>AZURE_CLIENT_ID</code>, the last command&#x27;s tenant ID for <code>AZURE_TENANT_ID</code>, and <code>az account show --query id -o tsv</code> for the subscription.</p>
 <ol start="5">
 <li>In GitHub <strong>Settings → Secrets and variables → Actions</strong>, add repository secrets <code>AZURE_CLIENT_ID</code>, <code>AZURE_TENANT_ID</code>, and <code>AZURE_SUBSCRIPTION_ID</code> from that application and subscription. Add repository variables <code>AZURE_RESOURCE_GROUP</code> and <code>AZURE_ML_WORKSPACE</code> with <code>$RG</code> and <code>$WS</code> above. These IDs are not passwords, but keep them in GitHub settings so the workflow can be reused.</li>
 </ol>
@@ -731,8 +751,18 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
     git push student main</code></pre>
 <ol start="11">
 <li>Commit a change outside the three watched paths, such as this instruction file, and push it to <code>student main</code>. Verify that the freight training workflow does not start for that commit.</li>
-<li>Set <code>ENABLE_AZURE_TRAINING</code> back to <code>false</code> when finished. The shared compute scales to zero; delete only job outputs or identity permissions that you own and no longer need.</li>
+<li>Set <code>ENABLE_AZURE_TRAINING</code> back to <code>false</code> when finished. The shared compute scales to zero. For a one-time classroom run, remove the temporary GitHub settings and identity using the values saved in step 4:</li>
 </ol>
+<pre><code>    $LAB_REPO = &quot;$OWNER/$REPO&quot;
+    gh variable delete ENABLE_AZURE_TRAINING -R $LAB_REPO
+    gh variable delete AZURE_RESOURCE_GROUP -R $LAB_REPO
+    gh variable delete AZURE_ML_WORKSPACE -R $LAB_REPO
+    gh secret delete AZURE_CLIENT_ID -R $LAB_REPO
+    gh secret delete AZURE_TENANT_ID -R $LAB_REPO
+    gh secret delete AZURE_SUBSCRIPTION_ID -R $LAB_REPO
+    az role assignment delete --ids $ROLE_ASSIGNMENT_ID
+    az ad sp delete --id $APP_ID
+    az ad app delete --id $APP_ID</code></pre>
 <h2>If a run fails</h2>
 <ul>
 <li><strong>Login failed:</strong> compare the exact subject printed in <code>AADSTS700213</code> with the federated credential, including numeric IDs in an immutable subject. Also check client, tenant, and subscription IDs.</li>
@@ -741,4 +771,4 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <li><strong>Azure ML logs are needed:</strong> use Studio or `az ml job download -n JOB_NAME -g RESOURCE_GROUP -w WORKSPACE --all`. The workflow polls job status; it does not depend on the CLI log-stream command, which can fail with <code>Incorrect padding</code>.</li>
 </ul>
 <h2>Validation status</h2>
-<p>An earlier version of this workflow completed a live GitHub Actions → Azure ML training run in the course test workspace on 11 November 2026. The temporary identity, GitHub settings, and test compute were removed afterward. The current standalone paths and generic compute name have not yet been rerun live. Each learner must configure their own repository identity and Azure ML resources. See <code>../../SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md</code> for the run record.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The current standalone workflow completed a live GitHub Actions → Azure ML training run on 11 November 2026. Its job used <code>course-cpu</code> and completed; the GitHub run finished green. The temporary identity and GitHub settings were removed afterward. Each learner must configure their own repository identity and Azure ML resources. See the standalone validation report in the repository root for the run record.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

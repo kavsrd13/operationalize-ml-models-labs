@@ -16,7 +16,14 @@ The GitHub Actions workflow points to exercise 11's copy.
 - Submitted exercise 08's own job definition and training code as
   `calm_rhythm_vkz0b867rk`. The job used `azureml:course-cpu` and completed.
 - Registered that job's MLflow output as `olist-freight-cost:3`.
-- Generated all 12 separate HTML pages and the combined index. Checked 175
+- The revised exercise 11 workflow completed as GitHub Actions run
+  [42976817478](https://github.com/kavsrd13/operationalize-ml-models-labs/actions/runs/42976817478).
+  Its OIDC sign-in and resource checks passed. It submitted Azure ML job
+  `patient_sugar_x127hkz7gw` from exercise 11's own files; the job completed
+  on `course-cpu`, and the GitHub run finished green. The temporary GitHub
+  secrets/variables, Entra app/service principal, and workspace role were
+  deleted afterward.
+- Generated all 12 separate HTML pages and the combined index. Checked all
   local HTML links; all targets exist. Python source compiled and `git diff
   --check` found no content errors.
 - Windows bootstrap extracted and verified all nine Olist CSVs, installed the
@@ -38,8 +45,6 @@ the workspace endpoint list was empty afterward. The standalone training and
 model-registration steps were verified live; deployment with the newly
 registered model was not.
 
-The earlier GitHub Actions workflow ran end to end (see
-`SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md`). The revised workflow
-paths and generic compute name require a new live run before being described
-as verified. The explicit IMDB and Delhi scoring deployments also remain
-unverified live.
+The earlier GitHub Actions workflow also ran end to end (see
+`SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md`). The explicit IMDB and
+Delhi scoring deployments remain unverified live.

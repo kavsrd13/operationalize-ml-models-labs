@@ -40,13 +40,16 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
 
 The actual code for this exercise is here:
 
-- [`train.py`](../src/train.py)
-- [`train-job.yml`](../jobs/train-job.yml)
-- [`score.py`](../deploy/score.py)
-- [`endpoint.yml`](../deploy/endpoint.yml)
-- [`deployment.yml`](../deploy/deployment.yml)
-- [`sample-request.json`](../deploy/sample-request.json)
-- [`app.py`](../app/app.py)
+- [`src/train.py`](../src/train.py)
+- [`jobs/train-job.yml`](../jobs/train-job.yml)
+- [`deploy/score.py`](../deploy/score.py)
+- [`deploy/endpoint.yml`](../deploy/endpoint.yml)
+- [`deploy/deployment.yml`](../deploy/deployment.yml)
+- [`deploy/conda.yaml`](../deploy/conda.yaml)
+- [`deploy/sample-request.json`](../deploy/sample-request.json)
+- [`deploy/sample-invalid-request.json`](../deploy/sample-invalid-request.json)
+- [`app/app.py`](../app/app.py)
+- [`app/requirements.txt`](../app/requirements.txt)
 
 Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
 
