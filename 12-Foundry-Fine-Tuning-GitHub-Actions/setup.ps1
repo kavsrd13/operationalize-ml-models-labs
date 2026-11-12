@@ -27,10 +27,15 @@ function Ask([string]$Value, [string]$Label, [string]$Default) {
 }
 
 function Select-AzureSubscription {
-    $subscriptions = @(az account list --all -o json | ConvertFrom-Json |
-        Where-Object { $_.state -eq 'Enabled' } |
-        Sort-Object name, id)
+    $subscriptionJson = az account list --all -o json
     Assert-LastExitCode 'List Azure subscriptions'
+    $parsedSubscriptions = ConvertFrom-Json -InputObject ($subscriptionJson -join [Environment]::NewLine)
+    $subscriptions = @(
+        foreach ($subscription in $parsedSubscriptions) {
+            if ($subscription.state -eq 'Enabled' -and $subscription.name -ne 'N/A(tenant level account)') { $subscription }
+        }
+    )
+    $subscriptions = @($subscriptions | Sort-Object name, id)
     if ($subscriptions.Count -eq 0) {
         throw 'No enabled Azure subscriptions are available to the signed-in user.'
     }
@@ -51,10 +56,15 @@ function Select-AzureSubscription {
 }
 
 function Select-ExistingFoundryAccount {
-    $accounts = @(az cognitiveservices account list --subscription $SubscriptionId -o json | ConvertFrom-Json |
-        Where-Object { $_.kind -in @('AIServices', 'OpenAI') } |
-        Sort-Object resourceGroup, name)
+    $accountJson = az cognitiveservices account list --subscription $SubscriptionId -o json
     Assert-LastExitCode 'List existing Azure AI resources'
+    $parsedAccounts = ConvertFrom-Json -InputObject ($accountJson -join [Environment]::NewLine)
+    $accounts = @(
+        foreach ($azureAccount in $parsedAccounts) {
+            if ($azureAccount.kind -in @('AIServices', 'OpenAI')) { $azureAccount }
+        }
+    )
+    $accounts = @($accounts | Sort-Object resourceGroup, name)
     if ($accounts.Count -eq 0) {
         throw "No Azure AI Services or Azure OpenAI resources were found in subscription $SubscriptionId. Rerun and choose New."
     }
@@ -140,8 +150,10 @@ if ($ResourceMode -eq 'Existing') {
     $ResourceGroup = $selectedAccount.resourceGroup
     $Location = $selectedAccount.location
 
-    $deployments = @(az cognitiveservices account deployment list --subscription $SubscriptionId --resource-group $ResourceGroup --name $AccountName -o json | ConvertFrom-Json)
+    $deploymentJson = az cognitiveservices account deployment list --subscription $SubscriptionId --resource-group $ResourceGroup --name $AccountName -o json
     Assert-LastExitCode "List model deployments on $AccountName"
+    $parsedDeployments = ConvertFrom-Json -InputObject ($deploymentJson -join [Environment]::NewLine)
+    $deployments = @(foreach ($deployment in $parsedDeployments) { $deployment })
     $baseline = $deployments | Where-Object { $_.name -eq 'medtriage-base' } | Select-Object -First 1
     if ($baseline) {
         if ($baseline.properties.model.name -ne 'gpt-4o-mini' -or $baseline.properties.model.version -ne '2024-07-18') {
