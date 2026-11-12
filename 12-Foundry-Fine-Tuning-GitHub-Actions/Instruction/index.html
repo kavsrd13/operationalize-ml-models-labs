@@ -1,50 +1,76 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Exercise 12: Automatic Foundry fine-tuning from GitHub | Operationalize Machine Learning Models</title>
+<title>Exercise 12: Automatic Foundry fine-tuning from your GitHub fork | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 12: Automatic Foundry fine-tuning from GitHub</h1>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 12: Automatic Foundry fine-tuning from your GitHub fork</h1>
 <h2>Goal</h2>
-<p>Change one fine-tuning hyperparameter, push the change through GitHub, and watch GitHub Actions create and monitor a supervised fine-tuning job in Microsoft Foundry.</p>
-<p>The instructor configures Azure, GitHub OIDC, quota, and the base-model deployment once. Students do <strong>not</strong> create Azure resources, service principals, secrets, or role assignments.</p>
+<p>Fork the course repository, connect your fork to your Microsoft Foundry project once, change <code>n_epochs</code> from 2 to 3, and push to <code>main</code>. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.</p>
 <h2>Student workflow</h2>
-<pre><code>Fork the course repository
+<pre><code>Fork and clone the course repository
         ↓
-Clone your fork
+Run setup.ps1 once for your fork and Azure account
         ↓
 Change n_epochs from 2 to 3
         ↓
-Validate, commit, and push
+Validate, commit, and push to your fork&#x27;s main branch
         ↓
-Open a pull request
-        ↓
-Instructor reviews and merges
-        ↓
-GitHub Actions creates and monitors the Foundry job</code></pre>
+GitHub Actions automatically creates and monitors the Foundry job</code></pre>
 <h2>Before you start</h2>
-<p>Install:</p>
+<p>You need:</p>
 <ul>
-<li>Git</li>
-<li>Python 3.10 or later</li>
-<li>A code editor such as Visual Studio Code</li>
+<li>A GitHub account.</li>
+<li>An Azure account with an enabled subscription.</li>
+<li>Permission to create or reuse a Foundry resource, create a managed identity, assign the <strong>Foundry User</strong> role, and create a model deployment. <strong>Owner</strong> on the exercise subscription is the simplest classroom option.</li>
+<li>Available <code>gpt-4.1-mini</code> fine-tuning quota in the selected Azure region.</li>
+<li>Git, Python 3.10 or later, PowerShell, <a href="https://learn.microsoft.com/cli/azure/install-azure-cli">Azure CLI</a>, and <a href="https://cli.github.com/">GitHub CLI</a>.</li>
 </ul>
-<p>You also need a GitHub account so you can create a fork and push your change. You do not need Azure CLI or GitHub CLI for the student steps.</p>
+<p>Fine-tuning is billable. Use an exercise subscription and delete resources when the class is complete.</p>
 <h2>Step 1: Fork and clone the repository</h2>
 <ol start="1">
 <li>Sign in to <a href="https://github.com/">GitHub</a>.</li>
 <li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
-<li>Select <strong>Fork</strong> and then <strong>Create fork</strong>.</li>
-<li>Replace <code>YOUR-GITHUB-USERNAME</code> below and run:</li>
+<li>Select <strong>Fork</strong>, and then select <strong>Create fork</strong>.</li>
+<li>Replace <code>YOUR-GITHUB-USERNAME</code> and run:</li>
 </ol>
 <pre><code>git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git switch -c exercise-12-three-epochs</code></pre>
-<p>Cloning the public course repository does not require a login. Git asks you to sign in only when you create the fork in the browser or push to your fork.</p>
-<h2>Step 2: Change the number of epochs</h2>
+git branch --show-current</code></pre>
+<p>The final command must show <code>main</code>. The <code>origin</code> remote now points to your fork, so the setup script configures your repository rather than the instructor&#x27;s repository.</p>
+<h2>Step 2: Sign in and configure your fork once</h2>
+<p>Sign in from the repository root:</p>
+<pre><code>az login --use-device-code
+gh auth login</code></pre>
+<p>For <code>gh auth login</code>, select:</p>
+<ol start="1">
+<li><code>GitHub.com</code></li>
+<li><code>HTTPS</code></li>
+<li><code>Login with a web browser</code></li>
+</ol>
+<p>Run the guided setup:</p>
+<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code></pre>
+<p>The script detects your fork automatically. Follow the numbered choices shown in the terminal:</p>
+<ol start="1">
+<li>Select the Azure subscription by entering its displayed number.</li>
+<li>Enter <code>1</code> to reuse an existing Foundry resource, <code>2</code> to create a new resource, or <code>3</code> to exit.</li>
+<li>If you select an existing resource, enter the displayed resource and project numbers.</li>
+<li>Review the Bicep preview. Enter <code>1</code> to deploy, <code>2</code> to display the preview again, or <code>3</code> to exit.</li>
+</ol>
+<p>Setup performs the one-time platform work:</p>
+<ul>
+<li>Selects or creates the Foundry resource and project.</li>
+<li>Checks fine-tuning quota.</li>
+<li>Reuses or creates the <code>medtriage-base</code> deployment.</li>
+<li>Creates an identity trusted only by your fork&#x27;s <code>main</code> branch.</li>
+<li>Assigns <strong>Foundry User</strong> only at the Foundry project scope.</li>
+<li>Enables GitHub Actions and the Exercise 12 workflow in your fork.</li>
+<li>Adds the required secrets and variables to your fork.</li>
+</ul>
+<p>Continue only after the terminal reports <code>Automation is ready</code> and displays the Actions URL for your fork.</p>
+<h2>Step 3: Change the number of epochs</h2>
 <p>Open:</p>
 <p><code>12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json</code></p>
-<p>Find this section:</p>
+<p>Find:</p>
 <pre><code>&quot;hyperparameters&quot;: {
   &quot;n_epochs&quot;: 2,
   &quot;batch_size&quot;: 4,
@@ -56,87 +82,72 @@ git switch -c exercise-12-three-epochs</code></pre>
   &quot;batch_size&quot;: 4,
   &quot;learning_rate_multiplier&quot;: 0.5
 }</code></pre>
-<p>Do not change the model, training type, batch size, learning-rate multiplier, or seed in this exercise. Changing one value at a time makes the experiment easy to compare with the two-epoch reference run.</p>
-<h2>Step 3: Validate the configuration</h2>
-<p>Run this command from the repository root:</p>
+<p>Keeping all other values unchanged makes the three-epoch experiment comparable with the two-epoch reference run.</p>
+<h2>Step 4: Validate the change</h2>
+<p>Run from the repository root:</p>
 <pre><code>python .\12-Foundry-Fine-Tuning-GitHub-Actions\scripts\validate_config.py `
   .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json</code></pre>
-<p>The final line must report <code>n_epochs: 3</code>. Fix any error before pushing.</p>
-<h2>Step 4: Commit and push the change</h2>
-<p>First confirm that Git shows only the intended change:</p>
+<p>The final line must report <code>n_epochs: 3</code>.</p>
+<p>Confirm that only the intended configuration changed:</p>
 <pre><code>git diff -- .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json</code></pre>
-<p>Commit and push your branch:</p>
+<h2>Step 5: Push and trigger fine-tuning</h2>
+<p>Commit directly to your fork&#x27;s <code>main</code> branch:</p>
 <pre><code>git add .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
 git commit -m &quot;Exercise 12: compare three training epochs&quot;
-git push -u origin exercise-12-three-epochs</code></pre>
-<p>Complete the Git Credential Manager browser sign-in if Git requests it.</p>
-<h2>Step 5: Open a pull request</h2>
+git push origin main</code></pre>
+<p>That push automatically triggers the workflow because a file under the Exercise 12 <code>config</code> folder changed. You do not open a pull request, and no instructor merge or approval is required.</p>
+<h2>Step 6: Watch the automated experiment</h2>
 <ol start="1">
 <li>Open your fork on GitHub.</li>
-<li>Select <strong>Compare &amp; pull request</strong>.</li>
-<li>Confirm the base repository is <code>kavsrd13/operationalize-ml-models-labs</code> and the base branch is <code>main</code>.</li>
-<li>In the description, write: <code>Changed n_epochs from 2 to 3.</code></li>
-<li>Select <strong>Create pull request</strong>.</li>
+<li>Select <strong>Actions</strong>.</li>
+<li>Select <strong>Exercise 12 - Fine-tune MedTriage model</strong>.</li>
+<li>Open the run created by your push.</li>
 </ol>
-<p>The workflow does not use Azure from your fork. The instructor first reviews the change and then merges it into the upstream <code>main</code> branch. That merge starts the paid experiment automatically.</p>
-<h2>Step 6: Watch the automated experiment</h2>
-<p>After the instructor merges the pull request, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs/actions">GitHub Actions</a> and select <strong>Exercise 12 - Fine-tune MedTriage model</strong>.</p>
-<p>The run performs these steps:</p>
+<p>The workflow:</p>
 <ol start="1">
-<li>Validates the configuration and the existing reviewed datasets.</li>
-<li>Signs in to Azure through GitHub OIDC without a stored password.</li>
+<li>Validates the configuration and datasets.</li>
+<li>Signs in to Azure through repository-specific GitHub OIDC without a client secret.</li>
 <li>Evaluates ten held-out examples against <code>medtriage-base</code>.</li>
 <li>Uploads the training and validation files through the Azure AI Projects SDK.</li>
 <li>Calls <code>fine_tuning.jobs.create()</code> with the supervised hyperparameters.</li>
-<li>Displays the new Foundry job ID in the GitHub summary.</li>
+<li>Writes the Foundry job ID to the workflow summary.</li>
 <li>Monitors the job until it succeeds, fails, or is cancelled.</li>
-<li>Records checkpoints and uploads the experiment evidence as a GitHub artifact.</li>
+<li>Uploads the baseline and fine-tuning evidence as a GitHub artifact.</li>
 </ol>
-<p>The base-model evaluation usually takes a few minutes. Fine-tuning takes longer. Do not push another experiment while the current run is active.</p>
+<p>The baseline takes several minutes and fine-tuning takes longer. Do not push another data or configuration experiment while this run is active.</p>
 <h2>Step 7: Confirm the Foundry job</h2>
-<p>In Microsoft Foundry:</p>
+<p>Use the resource, project, and Actions URL printed by your setup script:</p>
 <ol start="1">
-<li>Open resource group <code>Krishna</code>.</li>
-<li>Open the Azure AI Services resource <code>Finetunning121</code>.</li>
-<li>Open project <code>proj-default</code>.</li>
+<li>Open your Foundry project.</li>
 <li>Open <strong>Fine-tuning</strong>.</li>
-<li>Match the job ID with the GitHub Actions summary.</li>
-<li>Confirm the base model is <code>gpt-4.1-mini-2025-04-14</code> and the job uses three epochs.</li>
+<li>Match the job ID to the ID in the GitHub Actions summary.</li>
+<li>Confirm the base model is <code>gpt-4.1-mini-2025-04-14</code>.</li>
+<li>Confirm the job uses three epochs.</li>
 </ol>
-<p>A created job proves that automation works. It does not prove that the model is better or safe to deploy.</p>
-<h2>Step 8: Review and deploy only after approval</h2>
-<p>After the job succeeds, the instructor compares its checkpoints and held-out results with the recorded base-model metrics. If the result is approved:</p>
+<p>A created job proves that the automation works. It does not prove that the fine-tuned model is better or safe to deploy.</p>
+<h2>Step 8: Evaluate before deployment</h2>
+<p>After training succeeds, compare its checkpoints and held-out results with the base-model metrics stored in the GitHub artifact. Deploy only if the result improves the intended behavior without introducing unsafe or incorrect responses.</p>
+<p>If you deploy for testing:</p>
 <ol start="1">
-<li>Open the successful job in Foundry.</li>
+<li>Open the successful fine-tuning job in Foundry.</li>
 <li>Select <strong>Deploy</strong> and then <strong>Serverless</strong>.</li>
 <li>Use a name such as <code>medtriage-ft-v1</code>.</li>
-<li>Choose <strong>Global Standard</strong>.</li>
+<li>Select <strong>Global Standard</strong> if quota is available.</li>
 <li>Test with prompts that were not used for training or validation.</li>
 <li>Delete the serving deployment after the exercise to stop its hosting cost.</li>
 </ol>
 <h2>Optional future experiments</h2>
-<p>The automation also starts when an instructor-approved pull request changes files under the Exercise 12 <code>data</code> or <code>config</code> folder. A later experiment may replace the reviewed training and validation files or change a different approved hyperparameter. This student exercise changes only <code>n_epochs</code>.</p>
+<p>Any later push to your fork&#x27;s <code>main</code> branch that changes Exercise 12 <code>data/<strong></code> or <code>config/</strong></code> starts another billable run. You may later replace the reviewed datasets or change a different supported hyperparameter. This exercise changes only <code>n_epochs</code>.</p>
 <h2>Troubleshooting</h2>
 <ul>
-<li><strong>Fork is unavailable:</strong> Sign in to GitHub and confirm the instructor made the repository public.</li>
-<li><strong>Push is rejected:</strong> Confirm <code>origin</code> points to your fork by running <code>git remote -v</code>.</li>
-<li><strong>No workflow runs in your fork:</strong> This is expected. Forks cannot use the instructor&#x27;s Azure configuration.</li>
-<li><strong>No upstream workflow appears:</strong> Confirm the instructor merged the pull request into <code>main</code>.</li>
-<li><strong>Validation fails:</strong> Correct the value or JSON syntax and push another commit to the same branch.</li>
-<li><strong>No Foundry job appears immediately:</strong> Wait for the base-model evaluation and the <strong>Upload data and submit supervised fine-tuning</strong> step to finish.</li>
-<li><strong>Azure sign-in or configuration fails:</strong> Notify the instructor. Students should not recreate secrets, identities, or Azure resources.</li>
-<li><strong>Quota error:</strong> The instructor must check the selected model, region, training tier, and fine-tuned deployment quota before retrying.</li>
+<li><strong>Fork is unavailable:</strong> Sign in to GitHub and confirm the source repository allows forks.</li>
+<li><strong>Setup reports that you are not an administrator:</strong> Confirm <code>origin</code> points to your own fork with <code>git remote -v</code>.</li>
+<li><strong>Setup requires <code>main</code>:</strong> Run <code>git switch main</code>, and then rerun setup.</li>
+<li><strong>No workflow run appears:</strong> Confirm you pushed the configuration change to your fork&#x27;s <code>main</code> branch. Rerun <code>setup.ps1</code> to enable Actions and the Exercise 12 workflow in the fork.</li>
+<li><strong>Azure configuration is missing:</strong> Run <code>setup.ps1</code> from your fork and complete the deployment before pushing again.</li>
+<li><strong>OIDC sign-in fails:</strong> Rerun <code>setup.ps1</code> from the same fork. OIDC trust is repository-specific and does not transfer from the source repository.</li>
+<li><strong>No Foundry job appears immediately:</strong> Wait for the baseline step and the <strong>Upload data and submit supervised fine-tuning</strong> step to finish.</li>
+<li><strong>Quota error:</strong> Select a subscription or region with available <code>gpt-4.1-mini</code> fine-tuning quota.</li>
+<li><strong>Push starts another paid run:</strong> This is expected whenever Exercise 12 data or configuration changes on <code>main</code>. Wait for the active run before pushing another experiment.</li>
 </ul>
-<h2>Instructor setup</h2>
-<p>Only the instructor runs:</p>
-<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code></pre>
-<p>The script selects or creates the Foundry resource and project, verifies quota, deploys the reusable <code>medtriage-base</code> model, creates GitHub OIDC trust, assigns Foundry User only at project scope, and configures the GitHub secrets and variables.</p>
-<p>Before class, the instructor must:</p>
-<ol start="1">
-<li>Make the course repository public.</li>
-<li>Complete <code>setup.ps1</code> once.</li>
-<li>Confirm <code>medtriage-base</code> is healthy.</li>
-<li>Confirm the workflow can create a test job.</li>
-<li>Review every pull request before merging because a merge can start paid training.</li>
-</ol>
-<p>The implementation follows the official <a href="https://learn.microsoft.com/python/api/overview/azure/ai-projects-readme">Azure AI Projects Python client</a> and <a href="https://learn.microsoft.com/azure/ai-foundry/openai/how-to/fine-tuning">Microsoft Foundry supervised fine-tuning</a> patterns. See <a href="../LAB12_VALIDATION.md">LAB12_VALIDATION.md</a> for the tested environment and live evidence.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The implementation follows the official <a href="https://learn.microsoft.com/python/api/overview/azure/ai-projects-readme">Azure AI Projects Python client</a> and <a href="https://learn.microsoft.com/azure/ai-foundry/openai/how-to/fine-tuning">Microsoft Foundry supervised fine-tuning</a> patterns. See <a href="../LAB12_VALIDATION.md">LAB12_VALIDATION.md</a> for tested evidence and the live-validation boundary.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

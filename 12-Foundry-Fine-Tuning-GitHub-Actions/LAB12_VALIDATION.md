@@ -15,7 +15,8 @@
 - `MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT` is configured as `https://Finetunning121.services.ai.azure.com/api/projects/proj-default`.
 - The reusable `medtriage-base` deployment is healthy at 10K TPM. Bicep preserves the existing content-safety policy and model-upgrade setting.
 - The workflow trigger covers all committed changes under `data/**` and `config/**`; dataset filenames are resolved at runtime instead of being hardcoded in the workflow.
-- The Azure job is guarded by the canonical repository name, so pushes in public forks cannot attempt to use upstream OIDC settings or Azure configuration.
+- The workflow can run inside a student's fork after `setup.ps1` creates repository-specific OIDC trust and configures that fork's Actions secrets and variables. GitHub does not copy the original repository's secrets into forks.
+- The setup script enables GitHub Actions and the Exercise 12 workflow in the fork before configuring Azure, removing the manual fork-workflow approval step.
 - GitHub workflow YAML parses locally.
 - PowerShell setup script parses locally.
 - New-resource and existing-resource Bicep entry points compile locally.

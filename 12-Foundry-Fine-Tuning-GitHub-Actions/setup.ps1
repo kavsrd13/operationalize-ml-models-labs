@@ -177,6 +177,15 @@ if ($rulesets.Count -gt 0) {
 }
 Write-Host 'GitHub push check: origin/main has no branch protection or repository rulesets.'
 
+gh api --method PUT "repos/$GitHubRepo/actions/permissions" `
+    -F enabled=true `
+    -f allowed_actions=all `
+    --silent
+Assert-LastExitCode 'Enable GitHub Actions in the fork'
+gh workflow enable fine-tune-medtriage.yml --repo $GitHubRepo
+Assert-LastExitCode 'Enable the Exercise 12 workflow in the fork'
+Write-Host 'GitHub Actions check: Exercise 12 workflow is enabled in this fork.'
+
 if (-not $OidcSubject) {
     if ([datetime]$repo.created_at -ge [datetime]'2026-07-15') {
         $OidcSubject = "repo:$($repo.owner.login)@$($repo.owner.id)/$($repo.name)@$($repo.id):ref:refs/heads/main"
