@@ -1,136 +1,194 @@
-# Exercise 11: GitHub training automation with Bicep and MLflow
+# Automate model training with GitHub Actions
 
-## Outcome
+As your machine learning solution matures, you move from running ad-hoc experiments in Azure Machine Learning to automating repeatable training workflows. GitHub Actions lets you run Azure Machine Learning jobs whenever you need them, using secure, traceable workflows that fit into your existing source control practices.
 
-Provision a reusable Azure ML environment, push a training change to GitHub, and compare the resulting MLflow experiments. Infrastructure setup runs once. Training runs automatically for each relevant push to main. This exercise is independent: it includes cloning, infrastructure, data registration, training and results. Model serving is covered in Exercise 08.
+In this exercise, you automate model training with GitHub Actions in three phases:
 
-This lab uses industry practices: versioned infrastructure, a deployment preview, passwordless GitHub OIDC, a workspace-scoped training identity, versioned data, and commit-linked experiments. It uses public service endpoints for classroom simplicity; private networking and production deployment approvals are outside this lab.
+- Configure secure access from GitHub to your Azure Machine Learning workspace by using a service principal and GitHub secrets.
+- Run an Azure Machine Learning command job from a manually triggered GitHub Actions workflow.
+- Use feature-based development and branch protection so that model training runs as part of a pull request workflow.
 
-## 1. Prepare access and tools
+Along the way, you review how workspace networking and source control settings influence how you design secure automation for model training.
 
-Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. The public course repository can be inspected or cloned without signing in:
+## Before you start
 
-```powershell
-git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
-```
+You need:
 
-For infrastructure setup, use an Azure account permitted to create resource groups and resources and assign roles (for example subscription Owner). An instructor can perform setup for students who only have workspace access. Ensure the selected region has at least four available E-series v4 CPU cores for Standard_E4ds_v4, or pass an available size using `-VmSize`.
+- An [Azure subscription](https://azure.microsoft.com/free?azure-portal=true) in which you have administrative-level access.
+- A [GitHub](https://github.com/) account with permission to create repositories and configure GitHub Actions.
 
-## 2. Fork and clone into your GitHub account
+## Provision an Azure Machine Learning workspace
 
-1. Sign in at [GitHub](https://github.com/).
-2. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-3. Select **Fork**, keep the repository name, and select **Create fork**.
-4. Clone your fork by replacing `YOUR-GITHUB-USERNAME` below:
+First, you create the Azure Machine Learning workspace and compute resources you'll use from your GitHub workflows.
 
-```powershell
-git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git remote -v
-$LAB_REPO = 'YOUR-GITHUB-USERNAME/operationalize-ml-models-labs'
-```
+1. In a browser, open the Azure portal at `https://portal.azure.com/` and sign in with your Microsoft account.
+1. Select the **[>_]** (**Cloud Shell**) button at the top of the page to open Cloud Shell, and choose **Bash** if you're prompted.
+1. Make sure the correct subscription is selected and that **No storage account required** is selected. Then select **Apply**.
+1. In the Cloud Shell terminal, clone this course repo and run the setup script:
 
-No `gh auth login` command is needed to clone. The fork is your student repository, `origin` points to it, and `upstream` points to the instructor repository. Keep `main` as the default branch. The initial workflow is skipped because setup enables training only after Azure resources and access are ready.
+   ```azurecli
+   rm -r operationalize-ml-models-labs -f
+   git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git operationalize-ml-models-labs
+   cd operationalize-ml-models-labs/infra
+   ./setup.sh
+   ```
 
-## 3. Run guided setup
+   Ignore any messages that say that extensions couldn't be installed.
 
-```powershell
-az login
-az bicep install
-gh auth login
-.\11-Automate-Model-Training-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO
-```
+1. Wait for the script to finish. It creates a resource group, an Azure Machine Learning workspace, and compute resources.
+1. In the Azure portal, go to **Resource groups** and open the `rg-ai300-...` resource group that was created.
+1. Select the Azure Machine Learning workspace (for example, `mlw-ai300-...`) and then select **Launch studio** to open Azure Machine Learning studio.
 
-The GitHub CLI sign-in here is not needed for cloning. Exercise 11 needs it only because the setup script must configure Actions secrets, variables, and passwordless OIDC trust in **your fork**. Complete the browser sign-in with the GitHub account that owns the fork.
+With a workspace in place, you can now create your own GitHub repository and configure secure access.
 
-The script asks for subscription, region, resource group and workspace. Use a dedicated course group, for example rg-course-anna and mlw-course-anna. Keep those names for subsequent labs. Students sharing a subscription need separate groups and workspaces.
+## Create your GitHub repository from the template
 
-Compute stays course-cpu. Storage, Key Vault and monitoring names are generated consistently from the resource group, so rerunning setup uses the same names. Read the Bicep preview before typing deploy. Do not point this template at an unrelated existing workspace: workspace storage and Key Vault associations cannot be changed in place.
+Next, you create your own GitHub repository from this lab source so you can use GitHub Actions.
 
-The script performs these steps:
+1. In a browser, go to `https://github.com/kavsrd13/operationalize-ml-models-labs`.
+1. In the upper-right corner, select **Use this template** and then choose **Create a new repository**.
+1. In the **Owner** field, select your GitHub account. In the **Repository name** field, enter a name such as `operationalize-ml-models-labs`.
+1. Select **Create repository from template**.
+1. In your new repository that was created from the template, go to the **Actions** tab and enable GitHub Actions if prompted.
+1. Note the clone URL for your new repository (for example, `https://github.com/<your-alias>/operationalize-ml-models-labs.git`). You use this URL when you work with the repository locally or from a development environment.
 
-1. Checks Azure and GitHub sign-in and your repository permissions.
-2. Saves the deployment parameters in an ignored local .lab11.parameters.json file.
-3. Runs Bicep what-if to show the resources and role assignments.
-4. Creates the resource group, storage, Key Vault, monitoring, workspace and course-cpu cluster (minimum zero nodes, maximum one).
-5. Creates a managed identity with GitHub federation for this repository's main branch and AzureML Data Scientist access on this workspace. No application password is created.
-6. Extracts the included Olist ZIP and registers olist-ecommerce-raw:1. Existing version 1 is reused.
-7. Sets GitHub's Azure IDs and workspace variables, then enables automatic training.
-8. Prints GitHub Actions and Azure ML Studio links.
+With your template-based repository in place, you can now connect GitHub securely to Azure.
 
-For repeatable unattended provisioning, pass the same choices explicitly. Preview first; -Yes accepts deployment without the interactive question.
+## Configure GitHub integration with Azure Machine Learning
 
-```powershell
-.\11-Automate-Model-Training-GitHub-Actions\setup.ps1 `
-  -SubscriptionId YOUR_SUBSCRIPTION_ID `
-  -ResourceGroup rg-course-anna -Workspace mlw-course-anna `
-  -Location eastus -GitHubRepo $LAB_REPO -PreviewOnly
-```
+To let GitHub Actions authenticate to Azure Machine Learning, you use a service principal. The credentials for this service principal are stored as an encrypted secret in your GitHub repository.
 
-Rerun without -PreviewOnly to deploy. Keep the same region and names on subsequent runs. The saved parameter file can also be reviewed and supplied to an infrastructure deployment pipeline; personal login and terminal prompts are the classroom bootstrap, while production pipelines supply approved parameters noninteractively.
+1. In the Azure portal, select the **[>_]** (**Cloud Shell**) button at the top of the page to open Cloud Shell.
+1. Select **Bash** if you are prompted to choose a shell type.
+1. Make sure the correct subscription is selected for your Azure Machine Learning workspace.
+1. In Cloud Shell, create a service principal that has **Contributor** access to the resource group that contains your Azure Machine Learning workspace. Replace `<service-principal-name>`, `<subscription-id>`, and `<your-resource-group-name>` with your own values before you run the command. Use a descriptive name such as `sp-mslearn-mlops-github`:
 
-## 4. Locate and understand the actual code
+   ```azurecli
+   az ad sp create-for-rbac --name "<service-principal-name>" --role contributor \
+       --scopes /subscriptions/<subscription-id>/resourceGroups/<your-resource-group-name> \
+       --json-auth
+   ```
 
-- [setup.ps1](../setup.ps1): guided provisioning and GitHub configuration.
-- [infra/main.bicep](../infra/main.bicep): subscription deployment and resource group.
-- [infra/resources.bicep](../infra/resources.bicep): workspace, cluster, identity and GitHub trust. Supporting resources reuse the shared Bicep modules included in this clone.
-- [src/train.py](../src/train.py): feature preparation and baseline, ridge and gradient boosting models.
-- [jobs/train-job.yml](../jobs/train-job.yml): pinned training environment, dataset version, compute and parameters.
-- [GitHub workflow](../../.github/workflows/train-freight.yml): push trigger, Azure login, job submission and final status checking.
+1. Copy the full JSON output of the command to a safe location. You use the values in the next steps and in later challenges.
+1. In the GitHub repository you created from the template, navigate to **Settings** > **Secrets and variables** > **Actions**.
+1. Select **New repository secret**.
+1. Enter `AZURE_CREDENTIALS` as the **Name** of the secret.
+1. Paste the JSON output from the `az ad sp create-for-rbac` command into the **Value** field and select **Add secret**.
+1. Select the **Variables** tab and then select **New repository variable**.
+1. Enter `AZURE_RESOURCE_GROUP` as the **Name** and your resource group name (for example, `rg-ai300-l<suffix>`) as the **Value**. Select **Add variable**.
+1. Select **New repository variable** again. Enter `AZURE_WORKSPACE_NAME` as the **Name** and your Azure Machine Learning workspace name (for example, `mlw-ai300-l<suffix>`) as the **Value**. Select **Add variable**.
 
-The workflow must remain in .github/workflows at repository root. GitHub submits the job; the model actually trains on Azure ML course-cpu. Azure ML supplies the MLflow tracking connection to the job.
+Your GitHub repository now has an encrypted secret that GitHub-hosted runners can use to sign in to Azure and submit jobs to your Azure Machine Learning workspace.
 
-## 5. Run a baseline from GitHub
+The service principal is scoped to your Azure Machine Learning resource group. In a production scenario, you would further restrict its permissions and combine it with network controls, such as private endpoints and self-hosted runners, to limit how and where jobs can be submitted.
 
-```powershell
-gh workflow run train-freight.yml --repo $LAB_REPO --ref main
-gh repo view $LAB_REPO --web
-```
+## Review workspace network access options
 
-Open Actions and select the run. Wait for the Azure ML job to finish; initial compute startup can take several minutes. The GitHub summary links to Studio and records the Git commit and job name. A green GitHub run means Azure ML reported Completed.
+Before you automate training from GitHub, review how your Azure Machine Learning workspace controls network access.
 
-In Studio, open Jobs, experiment olist-freight-cost, then the job. Inspect Metrics and Outputs + logs. Record boosting_mae, boosting_rmse, boosting_r2 and mae_improvement_vs_baseline. Confirm parameters include learning_rate and max_iter. MLflow tags include git_commit, github_run_url and data_asset. Artifacts contain prediction plots, feature importance, results/metrics.json and results/model in MLflow format. The model is also retained under outputs/model; saving a model does not automatically register a model version or deploy an endpoint.
+1. In **Azure Portal** on your Azure Machine Learning workspace, select **Settings** in the left navigation and then select **Networking**.
+1. Review the **Public access** and the **Private endpoints** settings. Note how you can:
+   - Allow public network access from all networks.
+   - Restrict access to specific IP ranges.
+   - Disable public network access and rely on private endpoints.
+1. For this lab, keep the default public access settings so that GitHub-hosted runners can reach your workspace. In a production environment, you would typically:
+   - Use private endpoints and virtual networks.
+   - Run GitHub Actions on self-hosted runners that can reach those private networks.
+   - Combine role-based access control (RBAC) with network rules to tightly control who can submit jobs.
 
-## 6. Change the model and push
+Now that you understand the network options, you are ready to automate a training job from GitHub.
 
-Open jobs/train-job.yml in Lab 11. Change learning_rate from 0.05 to 0.10, then:
+## Automate model training with a manually triggered workflow
 
-```powershell
-git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
-git commit -m "Experiment: compare learning rate 0.10"
-git push origin main
-```
+In this section, you connect your GitHub workflow to Azure Machine Learning and run a command job to train a model. The workflow uses the `AZURE_CREDENTIALS` secret you created earlier.
 
-Open Actions. A new run starts automatically; do not click Run workflow again. Select both jobs in the Studio experiment to compare metrics. Check that the MLflow git_commit tag matches each GitHub commit. Record whether MAE improved; lower is better. A parameter change does not guarantee improvement.
+1. Clone your `operationalize-ml-models-labs` repository that you created from the template to a development environment where you can edit files and push changes back to GitHub.
 
-## 7. Validate what you learned
+   If Git prompts you for your identity when you commit from this machine, configure it once before continuing:
 
-- Both GitHub runs are green and both Azure ML jobs are Completed.
-- Each job references a different commit and the same versioned dataset.
-- The second run records learning_rate=0.10.
-- Metrics, plots, feature importance and the model artifact are visible.
-- A documentation-only change does not start training because the workflow watches only its own file, Lab 11 training source and job YAML.
+   ```powershell
+   git config --global user.name "Your GitHub Username"
+   git config --global user.email "your-email@example.com"
+   ```
 
-## 8. Stop automatic training and clean up
+1. In the cloned repository, open `src/job.yml` and replace the placeholder values for the `training_data` input so the command job uses the single file data asset created by the setup script:
 
-```powershell
-gh variable set ENABLE_AZURE_TRAINING --body false --repo $LAB_REPO
-```
+   ```yml
+   inputs:
+     training_data:
+       type: uri_file
+       path: azureml:diabetes-data@latest
+   ```
+1. In the cloned repository, locate the `.github/workflows/manual-trigger-job.yml` workflow file.
+1. Open `manual-trigger-job.yml` and review the existing steps. The workflow should:
+   - Check out the repository code.
+   - Install the Azure Machine Learning CLI extension.
+   - Use the `AZURE_CREDENTIALS` secret to sign in to Azure via `azure/login@v2`.
+1. At the end of the workflow, add a new step that submits the Azure Machine Learning job defined in `src/job.yml`. The command requires explicit `--resource-group` and `--workspace-name` flags, supplied from the GitHub Actions variables you created:
 
-Let running jobs complete, or cancel them in Azure ML Studio. Cancelling GitHub alone does not cancel a submitted Azure job. course-cpu scales to zero when idle; storage and monitoring can still incur charges. Keep the shared course resources for later labs. When the course is finished, remove the dedicated course resource group through Azure Portal after checking its contents; this also removes its managed identity and workspace role. Remove the three AZURE_* repository secrets and the workspace/group/training variables from GitHub Settings when access is no longer needed.
+   ```yml
+   - name: Run Azure Machine Learning training job
+     run: az ml job create -f src/job.yml --stream --resource-group ${{vars.AZURE_RESOURCE_GROUP}} --workspace-name ${{vars.AZURE_WORKSPACE_NAME}}
+   ```
 
-## Troubleshooting
+1. Save your changes, commit them to your local repository, and push the changes to the **main** branch of your fork.
 
-- Setup permission error: an administrator must provision resources and role assignments; training uses a narrower workspace role.
-- Quota error: select a region and VM size with capacity, then rerun setup with the same intended names.
-- AADSTS700213: GitHub's presented subject must match exactly. New repositories use numeric owner/repository IDs. Older, renamed, transferred or customized repositories can differ. Rerun setup with -OidcSubject followed by the exact presented subject from the failed login. See [GitHub OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).
-- First-run authorization error: role assignments can take a few minutes to propagate. Retry the workflow after propagation.
-- Workflow skipped: verify ENABLE_AZURE_TRAINING is true in your student repository.
-- No push run: verify you pushed to `origin/main` in your fork and changed a watched path.
-- Training failed: open the Azure job's user_logs/std_log.txt. GitHub reports the Azure final status.
-- GitHub timed out or was cancelled: inspect the Azure job before retrying to avoid duplicate jobs.
+1. In GitHub, go to the **Actions** tab for your repository.
+1. Select the workflow defined in `manual-trigger-job.yml` and use **Run workflow** to start it manually.
+1. Wait for the workflow run to complete. Verify that the **Run Azure Machine Learning training job** step completes successfully.
+1. In Azure Machine Learning studio, select **Jobs** and confirm that a new job based on `src/job.yml` has run successfully. Review the job inputs, metrics, and logs.
 
-## Validation status
+You have now automated the training job by using a GitHub Actions workflow that you can run on demand.
 
-The previous training workflow was live-tested on 11 November 2026. The Bicep-managed identity setup and additional MLflow artifacts are a new revision. See LAB11_VALIDATION.md in this exercise for the checks actually completed; previous live evidence does not validate the new setup.
+## Use feature-based development to trigger workflows
+
+Running workflows manually is useful for initial testing, but in a team environment you usually want training workflows to run automatically when someone proposes a change. Next, you update the existing workflow so it runs for pull requests, and then you use feature branches and branch protection rules to control when the workflow runs.
+
+1. In your GitHub repository, open the `.github/workflows/manual-trigger-job.yml` workflow file.
+1. Update the `on` section so that the workflow can run both manually and when a pull request targets the **main** branch. For example:
+
+   ```yml
+   on:
+     workflow_dispatch:
+     pull_request:
+       branches:
+         - main
+   ```
+
+1. Commit the updated workflow file and push it to the **main** branch of your repository.
+1. In GitHub, go to **Settings** > **Branches** and select **Add branch protection rule**.
+1. Configure a rule for the **main** branch that prevents direct pushes. At a minimum, select:
+   - **Branch name pattern**: `main`.
+   - **Protect matching branches**.
+1. Save the branch protection rule.
+1. In your local clone of the repository, create a new branch for a feature change. For example:
+
+   ```bash
+   git checkout -b feature/update-parameters
+   ```
+
+1. Make a small, safe change to the training configuration. For example, adjust a hyperparameter value in `src/train-model-parameters.py` or in `src/job.yml`.
+1. Commit your change to the feature branch and push the branch to GitHub:
+
+   ```bash
+   git add .
+   git commit -m "Adjust training parameters"
+   git push --set-upstream origin feature/update-parameters
+   ```
+
+1. In GitHub, create a pull request from your feature branch into **main**.
+1. On the pull request page, observe that the workflow defined in `manual-trigger-job.yml` runs automatically because of the `pull_request` trigger you added.
+1. After the workflow completes successfully, review the results and then complete the pull request to merge your changes into **main**.
+
+By using feature branches, branch protection rules, and pull request-triggered workflows with the same training workflow definition, you ensure that model training automation is tied to controlled changes in source control.
+
+## Clean up Azure resources
+
+When you finish exploring Azure Machine Learning and GitHub Actions, you should delete the resources you created to avoid unnecessary Azure costs.
+
+1. Close the Azure Machine Learning studio tab and return to the Azure portal.
+1. In the Azure portal, on the **Home** page, select **Resource groups**.
+1. Select the **rg-ai300-...** resource group that contains your Azure Machine Learning workspace.
+1. At the top of the **Overview** page for your resource group, select **Delete resource group**.
+1. Enter the resource group name to confirm you want to delete it, and select **Delete**.
+1. In GitHub, you can also delete the repository you created from the `operationalize-ml-models-labs` template if you no longer need the workflows or sample code.
