@@ -128,8 +128,14 @@ $currentBranch = (git branch --show-current).Trim()
 Assert-LastExitCode 'Read current Git branch'
 if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
 
-gh api --silent "repos/$GitHubRepo/branches/main/protection" 2>$null
-if ($LASTEXITCODE -eq 0) {
+$branchProtectionQuery = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){branchProtectionRules(first:100){totalCount}}}'
+$branchProtectionCount = gh api graphql `
+    -f query=$branchProtectionQuery `
+    -F "owner=$($repo.owner.login)" `
+    -F "name=$($repo.name)" `
+    --jq '.data.repository.branchProtectionRules.totalCount'
+Assert-LastExitCode 'Read GitHub branch-protection rules'
+if ([int]$branchProtectionCount -gt 0) {
     throw 'The main branch has a branch-protection rule. Remove it for this classroom repository before rerunning setup.'
 }
 $rulesetJson = gh api "repos/$GitHubRepo/rulesets"
