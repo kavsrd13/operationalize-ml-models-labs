@@ -7,7 +7,6 @@ on:
     paths:
       - '12-Foundry-Fine-Tuning-GitHub-Actions/data/**'
       - '12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json'
-      - '12-Foundry-Fine-Tuning-GitHub-Actions/scripts/**'
 
 permissions:
   contents: read
@@ -23,6 +22,11 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate supported model configuration
+        run: |
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_config.py \
+            12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json
 
       - name: Validate versioned datasets
         run: |

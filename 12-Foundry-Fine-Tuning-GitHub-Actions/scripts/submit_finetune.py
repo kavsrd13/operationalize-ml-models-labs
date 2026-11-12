@@ -12,6 +12,10 @@ from pathlib import Path
 import requests
 
 
+APPROVED_MODEL = "gpt-4.1-mini-2025-04-14"
+APPROVED_TRAINING_TYPE = "globalStandard"
+
+
 def api_url(endpoint: str, path: str, api_version: str) -> str:
     return f"{endpoint.rstrip('/')}/openai/{path}?api-version={api_version}"
 
@@ -67,6 +71,10 @@ def main() -> None:
     if not args.token:
         raise SystemExit("Provide --token or set AZURE_ACCESS_TOKEN.")
     config = json.loads(args.config.read_text(encoding="utf-8"))
+    if config.get("model") != APPROVED_MODEL:
+        raise SystemExit(f"Exercise 12 requires model={APPROVED_MODEL}.")
+    if config.get("training_type") != APPROVED_TRAINING_TYPE:
+        raise SystemExit(f"Exercise 12 requires training_type={APPROVED_TRAINING_TYPE}.")
     train_id = upload(args.endpoint, args.token, args.api_version, args.training_file)
     validation_id = upload(args.endpoint, args.token, args.api_version, args.validation_file)
     wait_for_file(args.endpoint, args.token, args.api_version, train_id)

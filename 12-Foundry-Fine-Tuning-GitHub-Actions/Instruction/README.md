@@ -18,6 +18,10 @@ Edit config/finetune.json
 Commit and push to origin/main
       ↓
 GitHub validates → evaluates baseline → submits fine-tuning
+      ↓
+Monitor and evaluate the new model
+      ↓
+Deploy the approved model with Global Standard
 ```
 
 ## 1. Clone the repository
@@ -75,6 +79,8 @@ Open `12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json`:
 
 For the first run, keep the model and training type unchanged. Give `suffix` a short experiment name. Change epochs or learning rate only when the experiment has a clear comparison objective.
 
+> Important: the earlier completed `gpt-4o-mini-2024-07-18` job cannot be changed into a `gpt-4.1-mini` model. Its fine-tuned deployment quota is zero in the teaching subscription. You must submit a new job with the configuration above. The workflow now rejects any other model before uploading data or starting paid training.
+
 ## 4. Push and start fine-tuning automatically
 
 Stage only the two data files and configuration:
@@ -103,12 +109,13 @@ gh repo view kavsrd13/operationalize-ml-models-labs --web
 
 Open **Actions → Exercise 12 - Fine-tune MedTriage model**. The workflow performs these steps:
 
-1. Validates every JSONL line and checks that training and validation questions do not overlap.
-2. Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.
-3. Evaluates ten held-out examples against the `medtriage-base` deployment.
-4. Uploads the training and validation files.
-5. Submits one supervised fine-tuning job using the committed configuration.
-6. Saves `baseline_metrics.json` and `fine_tuning_job.json` as a GitHub artifact.
+1. Confirms the configuration uses `gpt-4.1-mini-2025-04-14` with `globalStandard` training.
+2. Validates every JSONL line and checks that training and validation questions do not overlap.
+3. Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.
+4. Evaluates ten held-out examples against the `medtriage-base` deployment.
+5. Uploads the training and validation files.
+6. Submits one supervised fine-tuning job using the committed configuration.
+7. Saves `baseline_metrics.json` and `fine_tuning_job.json` as a GitHub artifact.
 
 The GitHub summary records the commit and Foundry job ID. A green GitHub run means submission succeeded; Foundry training continues asynchronously.
 
@@ -116,7 +123,21 @@ The GitHub summary records the commit and Foundry job ID. A green GitHub run mea
 
 Open the Azure AI Services resource `Finetunning121` in resource group `Krishna`, then open its fine-tuning jobs. Match the job ID with the GitHub summary and monitor it to a terminal status.
 
-Do not deploy the resulting model merely because training completed. Compare it with the recorded baseline, inspect checkpoints and safety behavior, confirm deployment quota, and require instructor approval before deployment.
+Confirm the job's base model is `gpt-4.1-mini-2025-04-14`. Do not deploy it merely because training completed. Compare it with the recorded baseline, inspect checkpoints and safety behavior, and require instructor approval before deployment.
+
+## 7. Deploy the approved fine-tuned model
+
+After the instructor approves the evaluation:
+
+1. Open the completed `gpt-4.1-mini` fine-tuning job in Microsoft Foundry.
+2. Select **Deploy**, then select **Serverless**.
+3. Enter a deployment name such as `medtriage-ft-v1`.
+4. Select **Global Standard**. Do not select the old `gpt-4o-mini` model and do not use **Data Zone Standard** for this lab.
+5. Start with the smallest capacity offered by the portal, confirm it is within the displayed quota, and create the deployment.
+6. Wait for provisioning to finish, select the fine-tuned deployment in the playground, and test it with held-out prompts that were not in either JSONL file.
+7. Record the deployment name and evaluation result, then delete the serving deployment after the lab to stop its hourly hosting charge.
+
+The live check on 12 November 2026 found 500K TPM of East US Global Standard fine-tuned quota for `gpt-4.1-mini`. Quota is subscription-specific, so students must use the instructor-configured subscription and resource. Microsoft Foundry also supports cross-region and cross-subscription deployment when the destination supports fine-tuning and the deploying identity can access both resources, but this lab intentionally stays on `Krishna/Finetunning121`.
 
 ## Files students edit
 
@@ -135,14 +156,15 @@ All Bicep, OIDC and setup files are instructor-maintained. The GitHub workflow i
 - Validation fails: open the failed step; fix the reported JSONL line, output schema, urgency label or train/validation overlap, then push a correction.
 - Azure login fails: notify the instructor; students should not recreate secrets or identities.
 - Fine-tuning submission reports quota or model availability: notify the instructor before retrying to avoid duplicate jobs.
+- Deployment says insufficient quota: verify the completed job is based on `gpt-4.1-mini`, choose **Global Standard**, and confirm you are using the instructor's East US resource. The old `gpt-4o-mini` result has zero fine-tuned deployment quota in this subscription.
 - GitHub is green while Foundry is still running: expected—the workflow submits the asynchronous training job but does not wait for completion.
 
 ## One-time instructor setup
 
-Only an instructor or repository administrator runs `12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1`. It creates or selects the Azure AI resource, deploys `gpt-4.1-mini` version `2025-04-14` as `medtriage-base`, creates the managed identity and GitHub OIDC trust, assigns the scoped Azure role, and configures repository secrets and resource variables.
+Only an instructor or repository administrator runs `12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1`. It creates or selects the Azure AI resource, verifies that the selected subscription and region have Global Standard fine-tuned `gpt-4.1-mini` quota, deploys version `2025-04-14` as `medtriage-base`, creates the managed identity and GitHub OIDC trust, assigns the scoped Azure role, and configures repository secrets and resource variables.
 
 The current repository is configured for `origin/main`, resource group `Krishna`, Azure AI resource `Finetunning121`, and East US. Run setup again only if those instructor-managed resources change.
 
 ## Validation status
 
-The dataset validator, Python syntax, workflow YAML, PowerShell setup and both Bicep paths passed. On 12 November 2026, the Azure `what-if` accepted the current base model in East US, and the selected subscription reported base and fine-tuning quota. The existing resource and `medtriage-base` deployment were subsequently provisioned and GitHub OIDC secrets were configured. A new paid fine-tuning job has not yet been submitted through this simplified push flow.
+The dataset validator, pinned-model configuration validator, Python syntax, workflow YAML, PowerShell setup and both Bicep paths passed. On 12 November 2026, the Azure `what-if` accepted `gpt-4.1-mini` in East US. The selected subscription reported 5,000K TPM of Global Standard base quota and 500K TPM of Global Standard fine-tuned deployment quota for that model. The existing resource and `medtriage-base` deployment were provisioned and GitHub OIDC secrets were configured. The earlier successful `gpt-4o-mini` fine-tuning job remains undeployed because its Global Standard and Data Zone Standard fine-tuned quota is zero; a new paid `gpt-4.1-mini` job must be submitted through the push flow.

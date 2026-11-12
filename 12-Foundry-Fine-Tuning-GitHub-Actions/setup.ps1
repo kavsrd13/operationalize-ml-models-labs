@@ -214,6 +214,21 @@ if ($ResourceMode -eq 'Existing') {
     $template = Join-Path $PSScriptRoot 'infra/main.bicep'
 }
 
+$usageJson = az cognitiveservices usage list --subscription $SubscriptionId --location $Location -o json
+Assert-LastExitCode "Read Azure AI quota in $Location"
+$usageItems = ConvertFrom-Json -InputObject ($usageJson -join [Environment]::NewLine)
+$fineTuneQuota = $usageItems | Where-Object {
+    $_.name.value -eq 'OpenAI.GlobalStandard.gpt4.1-mini-finetune'
+} | Select-Object -First 1
+if (-not $fineTuneQuota) {
+    throw "Global Standard fine-tuned gpt-4.1-mini quota was not reported in $Location. Select a region with confirmed quota."
+}
+$availableFineTuneQuota = [double]$fineTuneQuota.limit - [double]$fineTuneQuota.currentValue
+if ($availableFineTuneQuota -le 0) {
+    throw "No Global Standard fine-tuned gpt-4.1-mini quota is available in $Location. Select another subscription or region before training."
+}
+Write-Host ("Quota check:    {0}K TPM available for Global Standard fine-tuned gpt-4.1-mini" -f $availableFineTuneQuota)
+
 Write-Host ''
 Write-Host "Resource mode:  $ResourceMode"
 Write-Host "Subscription:   $SubscriptionId"
