@@ -836,7 +836,9 @@ Dataset validation passed.</code></pre>
   -GitHubRepo $LAB_REPO -PreviewOnly</code></pre>
 <p>The script lists the subscriptions visible to the signed-in Azure user and asks for a subscription ID. It then asks:</p>
 <pre><code>[1] Use an existing Azure AI Services / Azure OpenAI resource
-[2] Create a new dedicated Azure AI Services resource</code></pre>
+[2] Create a new dedicated Azure AI Services resource
+[3] Exit setup without deploying anything</code></pre>
+<p>Every setup run displays this menu, including runs that use <code>-Yes</code>. Enter exactly <code>1</code>, <code>2</code>, or <code>3</code>. An invalid entry displays all three choices again. Option <code>3</code> stops before Bicep deployment or GitHub configuration.</p>
 <h3>Option 1: existing resource</h3>
 <p>The script lists compatible resources in the selected subscription. Select one by number. It uses the selected resource&#x27;s group, name and region and does not recreate or retag that resource.</p>
 <p>If <code>medtriage-base</code> already deploys <code>gpt-4o-mini</code> version <code>2024-07-18</code>, it is reused. If that deployment is missing, Bicep proposes creating it. If the name belongs to a different model or version, setup stops instead of overwriting it.</p>
@@ -856,11 +858,10 @@ Dataset validation passed.</code></pre>
 <li><code>MEDTRIAGE_AZURE_SUBSCRIPTION_ID</code></li>
 </ul>
 <p>It also configures the Foundry endpoint, Azure resource names and two safety variables. Both safety variables initially remain <code>false</code>, so setup cannot accidentally submit a paid job.</p>
-<p>For repeatable setup, pass all choices explicitly:</p>
+<p>For repeatable setup, pass the resource details explicitly. The script still displays the required <code>1</code>/<code>2</code>/<code>3</code> menu so the learner consciously chooses whether an existing or new resource will be affected:</p>
 <pre><code># Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -SubscriptionId YOUR_SUBSCRIPTION_ID `
-  -ResourceMode Existing `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
   -AccountName YOUR_EXISTING_AI_RESOURCE `
   -GitHubRepo $LAB_REPO -Yes
@@ -868,7 +869,6 @@ Dataset validation passed.</code></pre>
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -SubscriptionId YOUR_SUBSCRIPTION_ID `
-  -ResourceMode New `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
   -AccountName YOUR_GLOBALLY_UNIQUE_NAME `

@@ -120,7 +120,10 @@ The script lists the subscriptions visible to the signed-in Azure user and asks 
 ```text
 [1] Use an existing Azure AI Services / Azure OpenAI resource
 [2] Create a new dedicated Azure AI Services resource
+[3] Exit setup without deploying anything
 ```
+
+Every setup run displays this menu, including runs that use `-Yes`. Enter exactly `1`, `2`, or `3`. An invalid entry displays all three choices again. Option `3` stops before Bicep deployment or GitHub configuration.
 
 ### Option 1: existing resource
 
@@ -156,13 +159,12 @@ After deployment the script configures these GitHub secrets:
 
 It also configures the Foundry endpoint, Azure resource names and two safety variables. Both safety variables initially remain `false`, so setup cannot accidentally submit a paid job.
 
-For repeatable setup, pass all choices explicitly:
+For repeatable setup, pass the resource details explicitly. The script still displays the required `1`/`2`/`3` menu so the learner consciously chooses whether an existing or new resource will be affected:
 
 ```powershell
 # Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -SubscriptionId YOUR_SUBSCRIPTION_ID `
-  -ResourceMode Existing `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
   -AccountName YOUR_EXISTING_AI_RESOURCE `
   -GitHubRepo $LAB_REPO -Yes
@@ -170,7 +172,6 @@ For repeatable setup, pass all choices explicitly:
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -SubscriptionId YOUR_SUBSCRIPTION_ID `
-  -ResourceMode New `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
   -AccountName YOUR_GLOBALLY_UNIQUE_NAME `

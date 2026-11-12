@@ -5,8 +5,6 @@ param(
     [string]$ResourceGroup,
     [string]$AccountName,
     [string]$Location,
-    [ValidateSet('New', 'Existing')]
-    [string]$ResourceMode,
     [string]$GitHubRepo,
     [string]$OidcSubject,
     [switch]$PreviewOnly,
@@ -83,17 +81,23 @@ if (-not $OidcSubject) {
 }
 $identityName = "id-medtriage-ft-gh-$($repo.id)"
 
-if (-not $ResourceMode) {
+do {
     Write-Host ''
-    Write-Host 'Choose the Azure resource strategy:'
+    Write-Host 'Choose what Exercise 12 should do:'
     Write-Host '  [1] Use an existing Azure AI Services / Azure OpenAI resource'
     Write-Host '  [2] Create a new dedicated Azure AI Services resource'
-    do {
-        $modeSelection = Read-Host 'Select [1-2]'
-        if ($modeSelection -notin @('1', '2')) { Write-Warning 'Enter 1 or 2.' }
-    } until ($modeSelection -in @('1', '2'))
-    $ResourceMode = if ($modeSelection -eq '1') { 'Existing' } else { 'New' }
+    Write-Host '  [3] Exit setup without deploying anything'
+    $modeSelection = Read-Host 'Enter 1, 2, or 3'
+    if ($modeSelection -notin @('1', '2', '3')) {
+        Write-Warning 'Invalid choice. You must enter 1, 2, or 3.'
+    }
+} until ($modeSelection -in @('1', '2', '3'))
+
+if ($modeSelection -eq '3') {
+    Write-Host 'Setup cancelled. No Azure resources or GitHub settings were changed.'
+    return
 }
+$ResourceMode = if ($modeSelection -eq '1') { 'Existing' } else { 'New' }
 
 $createBaselineDeployment = $true
 if ($ResourceMode -eq 'Existing') {
