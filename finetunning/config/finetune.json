@@ -1,0 +1,7 @@
+{
+  "model": "gpt-4o-mini-2024-07-18",
+  "training_type": "globalStandard",
+  "n_epochs": 2,
+  "learning_rate_multiplier": 1.0,
+  "suffix": "medtriage-json"
+}

@@ -8,6 +8,7 @@
 **/.mlflow/
 **/mlruns/
 **/mlflow-local.db
+finetunning/.parameters.json
 /datasets/olist/Ecommerce Dataset/
 
 **/.lab11.parameters.json

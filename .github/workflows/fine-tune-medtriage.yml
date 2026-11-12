@@ -1,0 +1,73 @@
+name: Fine-tune MedTriage model
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'finetunning/data/**'
+      - 'finetunning/config/finetune.json'
+      - 'finetunning/scripts/**'
+      - '.github/workflows/fine-tune-medtriage.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: medtriage-finetuning-main
+  cancel-in-progress: false
+
+jobs:
+  validate-and-submit:
+    if: vars.ENABLE_MEDTRIAGE_FINETUNING == 'true' && vars.MEDTRIAGE_DATA_REVIEWED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate versioned datasets
+        run: |
+          python finetunning/scripts/validate_dataset.py \
+            finetunning/data/medical_triage_training_300.jsonl \
+            finetunning/data/medical_triage_validation_300.jsonl
+
+      - name: Sign in to Azure with GitHub OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.MEDTRIAGE_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.MEDTRIAGE_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.MEDTRIAGE_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Upload data and submit fine-tuning job
+        env:
+          FOUNDRY_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_ENDPOINT }}
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r finetunning/requirements.txt
+          TOKEN=$(az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv)
+          export AZURE_ACCESS_TOKEN="$TOKEN"
+          python finetunning/scripts/evaluate_baseline.py \
+            --endpoint "$FOUNDRY_ENDPOINT" \
+            --validation-file finetunning/data/medical_triage_validation_300.jsonl \
+            --output baseline_metrics.json
+          python finetunning/scripts/submit_finetune.py \
+            --endpoint "$FOUNDRY_ENDPOINT" \
+            --config finetunning/config/finetune.json \
+            --training-file finetunning/data/medical_triage_training_300.jsonl \
+            --validation-file finetunning/data/medical_triage_validation_300.jsonl \
+            --output fine_tuning_job.json
+          JOB_ID=$(python -c "import json; print(json.load(open('fine_tuning_job.json'))['job']['id'])")
+          echo "### MedTriage fine-tuning submitted" >> "$GITHUB_STEP_SUMMARY"
+          echo "Job ID: \`$JOB_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Baseline metrics:" >> "$GITHUB_STEP_SUMMARY"
+          cat baseline_metrics.json >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve submitted job details
+        uses: actions/upload-artifact@v4
+        with:
+          name: fine-tuning-job
+          path: |
+            fine_tuning_job.json
+            baseline_metrics.json
