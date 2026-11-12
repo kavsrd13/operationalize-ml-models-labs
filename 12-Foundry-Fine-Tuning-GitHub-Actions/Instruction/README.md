@@ -55,19 +55,17 @@ az bicep install
 
 Device-code authentication is completed in the same terminal session that will run setup. A login completed in another machine or agent session does not transfer its Azure CLI token.
 
-## 2. Clone the course code and create a student repository
+## 2. Clone the repository and use `origin/main`
 
 ```powershell
 gh repo clone kavsrd13/operationalize-ml-models-labs
 Set-Location .\operationalize-ml-models-labs
-
-$OWNER = gh api user --jq '.login'
-$REPO = 'my-foundry-finetuning-lab'
-$LAB_REPO = "$OWNER/$REPO"
-gh repo create $LAB_REPO --private --source . --remote student --push
+git switch main
+git pull --ff-only origin main
+$LAB_REPO = gh repo view --json nameWithOwner --jq '.nameWithOwner'
 ```
 
-Keep `main` as the default branch. `origin` points to the instructor repository and `student` points to your private exercise repository. Setup automatically detects the repository from Git remotes: it uses `student` when present and otherwise uses `origin`. The detected repository is printed before OIDC configuration; the learner does not type `OWNER/REPOSITORY`.
+The exercise uses only the repository connected as `origin` and only its `main` branch. Setup detects `OWNER/REPOSITORY` from `origin`, verifies that the current local branch is `main`, confirms repository administrator permission, and stops if `main` has branch protection or the repository has a ruleset. The course repository currently has neither, so a permitted user can push directly to `origin/main`.
 
 ## 3. Inspect the actual code
 
@@ -201,7 +199,7 @@ Open `12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json`. Change the su
 ```powershell
 git add .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
 git commit -m "Exercise 12: submit reviewed fine-tuning experiment"
-git push student main
+git push origin main
 ```
 
 The push triggers the workflow because the configuration is a watched path. Open the run:
@@ -211,7 +209,7 @@ gh run list --workflow fine-tune-medtriage.yml --repo $LAB_REPO
 gh repo view $LAB_REPO --web
 ```
 
-The workflow first validates the files, then obtains a short-lived Azure token through OIDC. It evaluates ten validation examples on `medtriage-base`, uploads both JSONL files, waits for file processing, and submits one supervised fine-tuning job.
+Every watched push to `main` starts the workflow and runs dataset validation. If both paid-training gates are `true`, the second job obtains a short-lived Azure token through OIDC, evaluates ten validation examples on `medtriage-base`, uploads both JSONL files, waits for file processing, and submits one supervised fine-tuning job. If either gate is `false`, validation still runs and the paid submission job is shown as skipped.
 
 ## 9. Verify the submitted job
 
@@ -248,13 +246,14 @@ Deletion is intentionally not automated by the setup script because the existing
 
 - `AADSTS50020` or `AADSTS500341`: the Azure CLI is using an identity from the wrong tenant or a stale account. Run `az logout`, sign in to the subscription's tenant in the same terminal, and verify `az account show` before rerunning setup.
 - `./setup.ps1` is not recognized: check `Get-Location` and `Test-Path .\setup.ps1`. From the repository root, run `.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1`; from inside the Exercise 12 folder, run `.\setup.ps1`. The script does not change the terminal's current directory, so it can be rerun from the same location.
-- Wrong GitHub repository detected: setup prefers the remote named `student`; otherwise it uses `origin`. Check `git remote -v`. Add or correct the `student` remote before rerunning setup.
+- Wrong GitHub repository detected: setup uses only `origin`. Check `git remote -v` and correct the origin URL before rerunning setup.
+- Branch protection or ruleset error: this classroom flow requires direct pushes to `origin/main`. Remove the rule only if this is a dedicated teaching repository and your repository owner approves that policy.
 - No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.
 - Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.
 - Base deployment quota error: choose an existing compatible `medtriage-base` deployment or a region with base-model capacity.
 - OIDC login failure: compare the subject in the GitHub error with the subject printed by setup. Rerun setup with `-OidcSubject 'THE_EXACT_SUBJECT'` if the repository uses a customized subject format.
 - First-run authorization error: Azure role propagation can take several minutes. Retry the same workflow after propagation; verify that a previous fine-tuning job was not already submitted.
-- Workflow skipped: both `ENABLE_MEDTRIAGE_FINETUNING` and `MEDTRIAGE_DATA_REVIEWED` must equal `true` in the student repository.
+- Paid submission job skipped: dataset validation still runs on the push, but both `ENABLE_MEDTRIAGE_FINETUNING` and `MEDTRIAGE_DATA_REVIEWED` must equal `true` before the fine-tuning job is submitted.
 - Workflow green but training still running: GitHub submits the asynchronous job and preserves its ID; monitor the job in Foundry.
 
 ## Validation status

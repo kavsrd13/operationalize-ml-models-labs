@@ -19,10 +19,9 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate-and-submit:
-    if: vars.ENABLE_MEDTRIAGE_FINETUNING == 'true' && vars.MEDTRIAGE_DATA_REVIEWED == 'true'
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +30,14 @@ jobs:
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_dataset.py \
             12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl \
             12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl
+
+  baseline-and-submit:
+    needs: validate
+    if: vars.ENABLE_MEDTRIAGE_FINETUNING == 'true' && vars.MEDTRIAGE_DATA_REVIEWED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
 
       - name: Sign in to Azure with GitHub OIDC
         uses: azure/login@v2

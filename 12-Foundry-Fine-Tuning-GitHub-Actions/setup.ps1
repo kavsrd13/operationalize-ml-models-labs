@@ -28,16 +28,12 @@ function Ask([string]$Value, [string]$Label, [string]$Default) {
 function Get-GitHubRepositoryFromGit {
     $remotes = @(git remote)
     Assert-LastExitCode 'Read Git remotes'
-    if ($remotes -contains 'student') {
-        $remoteName = 'student'
-    } elseif ($remotes -contains 'origin') {
-        $remoteName = 'origin'
-    } else {
-        throw "No 'student' or 'origin' Git remote was found. Add the GitHub repository as a remote, then rerun setup."
+    if ($remotes -notcontains 'origin') {
+        throw "No 'origin' Git remote was found. Clone the GitHub repository or add its URL as origin, then rerun setup."
     }
 
-    $remoteUrl = (git remote get-url $remoteName).Trim()
-    Assert-LastExitCode "Read the $remoteName Git remote"
+    $remoteUrl = (git remote get-url origin).Trim()
+    Assert-LastExitCode 'Read the origin Git remote'
     $repository = $remoteUrl `
         -replace '^https://github\.com/', '' `
         -replace '^git@github\.com:', '' `
@@ -45,9 +41,9 @@ function Get-GitHubRepositoryFromGit {
         -replace '\.git$', '' `
         -replace '/$', ''
     if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
-        throw "The $remoteName remote is not a supported GitHub URL: $remoteUrl"
+        throw "The origin remote is not a supported GitHub URL: $remoteUrl"
     }
-    Write-Host "Detected GitHub repository from the '$remoteName' remote: $repository"
+    Write-Host "Detected GitHub repository from origin: $repository"
     return $repository
 }
 
@@ -125,9 +121,25 @@ if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select $Subscrip
 $GitHubRepo = Get-GitHubRepositoryFromGit
 $repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
 Assert-LastExitCode 'Read GitHub repository'
-if (-not $repo.permissions.admin) { throw 'Administrator access to the student repository is required to set Actions secrets and variables.' }
+if (-not $repo.permissions.admin) { throw 'Administrator access to the origin repository is required to set Actions secrets and variables.' }
 if ($repo.default_branch -ne 'main') { throw 'The automation expects main as the default branch.' }
 $GitHubRepo = $repo.full_name
+$currentBranch = (git branch --show-current).Trim()
+Assert-LastExitCode 'Read current Git branch'
+if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
+
+gh api --silent "repos/$GitHubRepo/branches/main/protection" 2>$null
+if ($LASTEXITCODE -eq 0) {
+    throw 'The main branch has a branch-protection rule. Remove it for this classroom repository before rerunning setup.'
+}
+$rulesetJson = gh api "repos/$GitHubRepo/rulesets"
+Assert-LastExitCode 'Read GitHub repository rulesets'
+$parsedRulesets = ConvertFrom-Json -InputObject ($rulesetJson -join [Environment]::NewLine)
+$rulesets = @(foreach ($ruleset in $parsedRulesets) { $ruleset })
+if ($rulesets.Count -gt 0) {
+    throw 'This repository has one or more rulesets. Remove them for this classroom repository before rerunning setup.'
+}
+Write-Host 'GitHub push check: origin/main has no branch protection or repository rulesets.'
 
 if (-not $OidcSubject) {
     if ([datetime]$repo.created_at -ge [datetime]'2026-07-15') {
