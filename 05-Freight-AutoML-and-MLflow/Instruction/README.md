@@ -97,4 +97,8 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    compare them to validation. If the test result differs, discuss time drift.
 10. Reset the three submission flags to `False` in your saved notebook.
 
-Do not delete the shared cluster or assets while later exercises need them.
+## Next exercise
+
+Keep the same workspace, data assets, and scale-to-zero `course-cpu` cluster.
+Continue with [Exercise 06](../../06-Late-Delivery-Responsible-AI/Instruction/README.md).
+Do not delete the resource group or rerun shared setup.

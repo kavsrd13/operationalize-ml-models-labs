@@ -44,6 +44,10 @@ def inline(value: str, link_prefix: str = "") -> str:
         label, target = match.groups()
         if not (target.startswith(("https://", "http://", "../", "./"))):
             return match.group(0)
+        # GitHub renders README.md links naturally. On the generated course site,
+        # send cross-lab instruction links to the rendered HTML page instead.
+        if target.endswith("/Instruction/README.md"):
+            target = target.removesuffix("README.md") + "index.html"
         href = target if target.startswith(("https://", "http://")) else link_prefix + target
         return f'<a href="{html.escape(href, quote=True)}">{label}</a>'
 

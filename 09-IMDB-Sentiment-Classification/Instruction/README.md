@@ -148,3 +148,10 @@ The explicit scoring script and inference environment passed a live East US
 deployment and sample invocation on 11 November 2026. The sample returned one
 positive and one negative prediction. The custom image build took several
 minutes. See the standalone validation report in the repository root.
+
+## Next exercise
+
+Confirm the IMDB endpoint has been deleted, but keep the Azure ML workspace and
+`course-cpu`. Continue with
+[Exercise 10](../../10-Delhi-Climate-Time-Series/Instruction/README.md), which
+registers its own climate data assets and model in the same workspace.

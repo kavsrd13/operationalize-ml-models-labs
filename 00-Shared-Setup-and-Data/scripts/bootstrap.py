@@ -101,14 +101,19 @@ def extract_data():
         raise BootstrapError("Could not extract the Olist ZIP; check that it is intact and readable.") from exc
 
 
-def run(command, error):
+def run(command, error, *, show_output=False):
     try:
-        result = subprocess.run(command, capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            command,
+            capture_output=not show_output,
+            text=True,
+            check=False,
+        )
     except OSError as exc:
         raise BootstrapError(error) from exc
     if result.returncode != 0:
         raise BootstrapError(f"{error} (exit code {result.returncode}).")
-    return result.stdout
+    return result.stdout or ""
 
 
 def install_environment():
@@ -130,8 +135,12 @@ def install_environment():
     ).strip()
     if version not in ("3.10", "3.11"):
         raise BootstrapError("Existing .venv must use Python 3.10 or 3.11. Move it before rerunning.")
-    print("Installing Python dependencies into .venv (this may take a few minutes)")
-    run([str(python), "-m", "pip", "install", "-r", str(REQUIREMENTS)], "Dependency installation failed")
+    print("Installing Python dependencies into .venv (this may take a few minutes)", flush=True)
+    run(
+        [str(python), "-m", "pip", "install", "-r", str(REQUIREMENTS)],
+        "Dependency installation failed",
+        show_output=True,
+    )
     run(
         [
             str(python), "-m", "ipykernel", "install", "--user",
@@ -201,6 +210,7 @@ def configure_azure(args):
     if show_or_missing(az(args, "data", "show", "--name", "olist-ecommerce-raw", "--version", "1"), asset):
         print(f"Data asset {asset} already exists; leaving it unchanged")
     else:
+        print(f"Registering data asset {asset}; wait for Azure ML to finish...", flush=True)
         run(
             az(
                 args, "data", "create", "--file", str(ASSET_YAML),
@@ -216,6 +226,7 @@ def configure_azure(args):
         if show_or_missing(az(args, "compute", "show", "--name", cluster), cluster):
             print(f"Compute {cluster} already exists; leaving it unchanged")
         else:
+            print(f"Creating scale-to-zero compute {cluster}; this can take several minutes...", flush=True)
             run(az(args, "compute", "create", "--file", str(COMPUTE_YAML)),
                 f"Could not create {cluster}; check regional CPU quota")
             print(f"Created scale-to-zero compute {cluster}")

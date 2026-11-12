@@ -80,14 +80,23 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    python .\00-Shared-Setup-and-Data\scripts\submit.py delivery
    ```
 
-6. Copy the pipeline job name, then wait and check it:
+6. Copy the pipeline job name, then run the status command every few minutes
+   until it says `Completed`:
 
    ```powershell
-   az ml job stream -n YOUR_PIPELINE_JOB -g $RG -w $WS
    az ml job show -n YOUR_PIPELINE_JOB -g $RG -w $WS --query status -o tsv
    ```
+
+   Streaming is optional because some Azure CLI versions fail with `Incorrect
+   padding` even when the Azure job succeeds.
 
 7. In Studio inspect both child jobs, their logs, metrics, and `trained_model`.
    Explain why `train` cannot start before `prep` finishes.
 
 The `../extended-demo/` folder is supplemental source material with older paths.
+
+## Next exercise
+
+Keep the same workspace, raw data asset, and `course-cpu` cluster. Continue with
+[Exercise 05](../../05-Freight-AutoML-and-MLflow/Instruction/README.md). Do not
+delete the resource group or rerun shared setup.

@@ -3,7 +3,7 @@
 <title>Exercise 07: Tune late-delivery classification | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">? All exercises</a></nav><article><h1>Exercise 07: Tune late-delivery classification</h1>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 07: Tune late-delivery classification</h1>
 <h2>Goal</h2>
 <p>Tune logistic regression on pre-April training and April–May validation data. Keep June–August test labels out of selection.</p>
 <h2>Fork and clone the public repository</h2>
@@ -55,10 +55,12 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 </ol>
 <pre><code>   $SMOKE_JOB = az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
      -g $RG -w $WS --query name -o tsv
-   az ml job stream -n $SMOKE_JOB -g $RG -w $WS
    az ml job show -n $SMOKE_JOB -g $RG -w $WS --query status -o tsv</code></pre>
+<p>Repeat the status command until it says <code>Completed</code>. Streaming is optional; some Azure CLI versions report <code>Incorrect padding</code> after a successful job.</p>
 <ol start="6">
 <li>Set <code>SUBMIT_SWEEP = True</code> in notebook step 1 and run the sweep submission cell once. The job name is saved in ignored <code>.sweep-run-id.json</code> to avoid duplicate submissions. Alternatively submit <code>../jobs/sweep.yml</code> with <code>az ml job create -f</code> using the same group and workspace.</li>
 <li>In Studio inspect average precision and late-class precision/recall for every trial. Record the selected settings and explain why validation results are not a final future-period test.</li>
 <li>Reset the notebook submission flags to <code>False</code> after the run.</li>
-</ol></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+</ol>
+<h2>Next exercise</h2>
+<p>Keep the same workspace, assets, environment, and <code>course-cpu</code> cluster. Continue with <a href="../../08-Online-Model-Serving/Instruction/index.html">Exercise 08</a>. Exercise 08 trains and registers its own model, so it does not depend on Exercise 03.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

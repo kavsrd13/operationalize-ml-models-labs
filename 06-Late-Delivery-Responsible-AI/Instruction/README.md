@@ -93,9 +93,11 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    ```powershell
    $TRAIN_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\train.yml `
      -g $RG -w $WS --query name -o tsv
-   az ml job stream -n $TRAIN_JOB -g $RG -w $WS
    az ml job show -n $TRAIN_JOB -g $RG -w $WS --query status -o tsv
    ```
+
+   Repeat the status command until it says `Completed`. Streaming is optional;
+   some Azure CLI versions report `Incorrect padding` after a successful job.
 
 6. In Studio inspect the full future-period classification metrics. When the
    job is `Completed`, register its MLflow output:
@@ -114,10 +116,17 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    ```powershell
    $DASHBOARD_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\rai-dashboard.yml `
      -g $RG -w $WS --query name -o tsv
-   az ml job stream -n $DASHBOARD_JOB -g $RG -w $WS
    az ml job show -n $DASHBOARD_JOB -g $RG -w $WS --query status -o tsv
    ```
+
+   Repeat the status command until it says `Completed`.
 
 9. Open the dashboard in Studio. Compare error and explanation views across
    cohorts. Observed differences alone do not establish causality or a
    fairness violation.
+
+## Next exercise
+
+Keep the same workspace, registered assets, and `course-cpu` cluster. Continue
+with [Exercise 07](../../07-Late-Delivery-Hyperparameter-Sweep/Instruction/README.md).
+Do not delete the resource group or rerun shared setup.

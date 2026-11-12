@@ -3,7 +3,7 @@
 <title>Exercise 03: Train a freight regression model | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">? All exercises</a></nav><article><h1>Exercise 03: Train a freight regression model</h1>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 03: Train a freight regression model</h1>
 <h2>Goal</h2>
 <p>Predict item freight cost from checkout-time features, compare a median baseline, Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.</p>
 <h2>Fork and clone the public repository</h2>
@@ -58,12 +58,13 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <pre><code>   python .\00-Shared-Setup-and-Data\scripts\submit.py freight --dry-run
    python .\00-Shared-Setup-and-Data\scripts\submit.py freight</code></pre>
 <ol start="7">
-<li>Copy the returned job name. Stream logs and check final status:</li>
+<li>Copy the returned job name. Check its status every few minutes until it says <code>Completed</code>:</li>
 </ol>
-<pre><code>   az ml job stream -n YOUR_JOB_NAME -g $RG -w $WS
-   az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv</code></pre>
-<p>If this CLI version reports <code>Incorrect padding</code> while streaming, the job can still finish normally. Use <code>az ml job show</code> for its final status and <code>az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all</code> to inspect logs, <code>outputs/metrics.json</code>, and the model folder.</p>
+<pre><code>   az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv</code></pre>
+<p><code>az ml job stream</code> is optional. Some Azure CLI versions remain open after the job finishes and then report <code>Incorrect padding</code>. The status command above is the reliable completion check. Download the evidence with <code>az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all</code> and inspect <code>outputs/metrics.json</code>, the plots, and the model folder.</p>
 <ol start="8">
-<li>In Studio compare MAE against the median baseline, inspect the prediction plot and <code>outputs/model</code>, and identify the held-out time period. The model output is used by exercise 08.</li>
+<li>In Studio compare MAE against the median baseline, inspect the prediction plot and <code>outputs/model</code>, and identify the held-out time period. Exercise 08 contains its own training job, so it does not depend on this run.</li>
 </ol>
-<p>The <code>../extended-demo/</code> folder is supplemental source material with older paths.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The <code>../extended-demo/</code> folder is supplemental source material with older paths.</p>
+<h2>Next exercise</h2>
+<p>Keep <code>$SUB</code>, <code>$RG</code>, <code>$WS</code>, <code>olist-ecommerce-raw:1</code>, and the scale-to-zero <code>course-cpu</code> cluster. Continue with <a href="../../04-Delivery-Time-Pipeline/Instruction/index.html">Exercise 04</a>, which reuses this setup and submits a two-step pipeline. Do not run setup again.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

@@ -42,8 +42,10 @@ az group create --name $RG --location $LOCATION</code></pre>
 <p><a href="../azure-ml-infra/README.md"><code>azure-ml-infra/README.md</code></a> is a separate, advanced exercise for learning Azure infrastructure as code. It is not required for the numbered course labs. Follow either its deployment workflow or the shared workspace setup above; do not deploy both unless you intentionally want separate Azure resources.</p>
 <h2>Shared resources</h2>
 <table><thead><tr><th>Resource</th><th>Reused by</th></tr></thead><tbody>
-<tr><td><code>olist-ecommerce-raw:1</code> data asset</td><td>03–07, 11</td></tr>
-<tr><td><code>course-cpu</code> training cluster</td><td>03–07, 09–11</td></tr>
+<tr><td><code>olist-ecommerce-raw:1</code> data asset</td><td>03–08</td></tr>
+<tr><td><code>course-cpu</code> training cluster</td><td>03–10</td></tr>
 <tr><td>Prepared data assets</td><td>Created in the labs that need them</td></tr>
 </tbody></table>
-<p>Managed online endpoints use separate serving compute. Do not commit <code>config.json</code>, credentials, endpoint keys, or <code>.venv</code>.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>Managed online endpoints use separate serving compute. Do not commit <code>config.json</code>, credentials, endpoint keys, or <code>.venv</code>.</p>
+<h2>Course resource lifecycle</h2>
+<p>Create the Azure ML workspace, <code>course-cpu</code>, and <code>olist-ecommerce-raw:1</code> once when you begin Exercise 03. Keep them while you work through Exercises 04–10; each guide ends with a <strong>Next exercise</strong> section telling you exactly what to retain. Managed online endpoints in Exercises 08–10 are deleted immediately after their individual demos. Exercise 10 contains the final command that deletes the shared course resource group and verifies that deletion completed.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

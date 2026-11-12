@@ -96,9 +96,18 @@ Azure resources.
 
 | Resource | Reused by |
 | --- | --- |
-| `olist-ecommerce-raw:1` data asset | 03–07, 11 |
-| `course-cpu` training cluster | 03–07, 09–11 |
+| `olist-ecommerce-raw:1` data asset | 03–08 |
+| `course-cpu` training cluster | 03–10 |
 | Prepared data assets | Created in the labs that need them |
 
 Managed online endpoints use separate serving compute. Do not commit
 `config.json`, credentials, endpoint keys, or `.venv`.
+
+## Course resource lifecycle
+
+Create the Azure ML workspace, `course-cpu`, and `olist-ecommerce-raw:1` once
+when you begin Exercise 03. Keep them while you work through Exercises 04–10;
+each guide ends with a **Next exercise** section telling you exactly what to
+retain. Managed online endpoints in Exercises 08–10 are deleted immediately
+after their individual demos. Exercise 10 contains the final command that
+deletes the shared course resource group and verifies that deletion completed.

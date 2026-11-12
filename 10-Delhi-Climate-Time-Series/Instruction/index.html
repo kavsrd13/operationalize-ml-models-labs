@@ -3,7 +3,7 @@
 <title>Exercise 10: Delhi climate time-series regression | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">? All exercises</a></nav><article><h1>Exercise 10: Delhi climate time-series regression</h1>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 10: Delhi climate time-series regression</h1>
 <h2>Goal</h2>
 <p>Create lag-based climate features, train and track a forecasting model locally, then register, deploy, and invoke it through Azure ML.</p>
 <h2>Fork and clone the public repository</h2>
@@ -104,4 +104,14 @@ az ml online-endpoint invoke -n $ENDPOINT `
   -g $RG -w $WS
 az ml online-endpoint delete -n $ENDPOINT --yes `
   -g $RG -w $WS</code></pre>
-<p>The explicit scoring script and inference environment passed a live East US deployment and sample invocation on 11 November 2026. The sample returned a temperature prediction. The custom image build took several minutes. See the standalone validation report in the repository root.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The explicit scoring script and inference environment passed a live East US deployment and sample invocation on 11 November 2026. The sample returned a temperature prediction. The custom image build took several minutes. See the standalone validation report in the repository root.</p>
+<h2>Finish and clean up the shared Azure setup</h2>
+<p>Exercises 03–10 are now complete. First confirm the Delhi endpoint deletion has finished. Then delete the single course resource group created in Exercise</p>
+<ol start="3">
+<li>This removes the workspace, scale-to-zero cluster, storage, registered</li>
+</ol>
+<p>assets, models, and supporting resources together:</p>
+<pre><code>Write-Host &quot;Deleting the shared course resource group: $RG&quot;
+az group delete --name $RG --subscription $SUB --yes
+az group exists --name $RG --subscription $SUB</code></pre>
+<p>The final command must print <code>false</code>. Check the displayed resource-group name before running the delete command; never substitute a production resource group.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

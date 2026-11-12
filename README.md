@@ -45,6 +45,11 @@ Use one Azure ML workspace and resource group for all cloud exercises. Keep the
 register models with exercise-specific names and use unique endpoint names so students
 in a shared workspace do not collide.
 
+Create that shared setup when Exercise 03 begins. At the end of each guide from
+03 through 09, follow the **Next exercise** section and keep the named resources.
+Delete each managed online endpoint immediately after its serving demo. Exercise
+10 contains the final shared resource-group deletion and verification commands.
+
 ## First-time setup
 
 Start with the local setup. It is enough for exercises 01 and 02 and does not

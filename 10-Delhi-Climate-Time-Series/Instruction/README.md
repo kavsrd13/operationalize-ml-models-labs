@@ -156,3 +156,20 @@ The explicit scoring script and inference environment passed a live East US
 deployment and sample invocation on 11 November 2026. The sample returned a
 temperature prediction. The custom image build took several minutes. See the
 standalone validation report in the repository root.
+
+## Finish and clean up the shared Azure setup
+
+Exercises 03–10 are now complete. First confirm the Delhi endpoint deletion
+has finished. Then delete the single course resource group created in Exercise
+03. This removes the workspace, scale-to-zero cluster, storage, registered
+assets, models, and supporting resources together:
+
+```powershell
+Write-Host "Deleting the shared course resource group: $RG"
+az group delete --name $RG --subscription $SUB --yes
+az group exists --name $RG --subscription $SUB
+```
+
+The final command must print `false`. Check the displayed resource-group name
+before running the delete command; never substitute a production resource
+group.

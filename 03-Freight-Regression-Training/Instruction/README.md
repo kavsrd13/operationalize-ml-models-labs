@@ -85,20 +85,27 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    python .\00-Shared-Setup-and-Data\scripts\submit.py freight
    ```
 
-7. Copy the returned job name. Stream logs and check final status:
+7. Copy the returned job name. Check its status every few minutes until it says
+   `Completed`:
 
    ```powershell
-   az ml job stream -n YOUR_JOB_NAME -g $RG -w $WS
    az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv
    ```
 
-   If this CLI version reports `Incorrect padding` while streaming, the job
-   can still finish normally. Use `az ml job show` for its final status and
-   `az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all` to inspect logs,
-   `outputs/metrics.json`, and the model folder.
+   `az ml job stream` is optional. Some Azure CLI versions remain open after
+   the job finishes and then report `Incorrect padding`. The status command
+   above is the reliable completion check. Download the evidence with
+   `az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all` and inspect
+   `outputs/metrics.json`, the plots, and the model folder.
 
 8. In Studio compare MAE against the median baseline, inspect the prediction
-   plot and `outputs/model`, and identify the held-out time period. The model
-   output is used by exercise 08.
+   plot and `outputs/model`, and identify the held-out time period. Exercise 08
+   contains its own training job, so it does not depend on this run.
 
 The `../extended-demo/` folder is supplemental source material with older paths.
+
+## Next exercise
+
+Keep `$SUB`, `$RG`, `$WS`, `olist-ecommerce-raw:1`, and the scale-to-zero
+`course-cpu` cluster. Continue with [Exercise 04](../../04-Delivery-Time-Pipeline/Instruction/README.md),
+which reuses this setup and submits a two-step pipeline. Do not run setup again.

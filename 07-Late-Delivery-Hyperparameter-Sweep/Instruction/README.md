@@ -83,9 +83,11 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    ```powershell
    $SMOKE_JOB = az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
      -g $RG -w $WS --query name -o tsv
-   az ml job stream -n $SMOKE_JOB -g $RG -w $WS
    az ml job show -n $SMOKE_JOB -g $RG -w $WS --query status -o tsv
    ```
+
+   Repeat the status command until it says `Completed`. Streaming is optional;
+   some Azure CLI versions report `Incorrect padding` after a successful job.
 
 6. Set `SUBMIT_SWEEP = True` in notebook step 1 and run the sweep submission
    cell once. The job name is saved in ignored `.sweep-run-id.json` to avoid
@@ -95,3 +97,9 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
    every trial. Record the selected settings and explain why validation
    results are not a final future-period test.
 8. Reset the notebook submission flags to `False` after the run.
+
+## Next exercise
+
+Keep the same workspace, assets, environment, and `course-cpu` cluster. Continue
+with [Exercise 08](../../08-Online-Model-Serving/Instruction/README.md). Exercise
+08 trains and registers its own model, so it does not depend on Exercise 03.

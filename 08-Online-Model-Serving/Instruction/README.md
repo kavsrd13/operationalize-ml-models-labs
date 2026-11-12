@@ -134,6 +134,13 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
      -g $RG -w $WS
    ```
 
+## Next exercise
+
+Confirm the endpoint deletion finishes, but keep the Azure ML workspace,
+`olist-ecommerce-raw:1`, and `course-cpu`. Continue with
+[Exercise 09](../../09-IMDB-Sentiment-Classification/Instruction/README.md).
+Exercise 09 creates its own data asset and model in the same workspace.
+
 Never copy endpoint keys into source files or instructional screenshots.
 
 The freight endpoint, sample invocation, and malformed-request check completed in a

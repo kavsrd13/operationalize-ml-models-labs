@@ -3,7 +3,7 @@
 <title>Exercise 08: Online model serving | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">? All exercises</a></nav><article><h1>Exercise 08: Online model serving</h1>
+<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 08: Online model serving</h1>
 <h2>Goal</h2>
 <p>Deploy the freight model to a managed online endpoint, validate requests, invoke the endpoint, and test a small Gradio client.</p>
 <h2>Fork and clone the public repository</h2>
@@ -90,5 +90,7 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 </ol>
 <pre><code>   az ml online-endpoint delete -n $ENDPOINT --yes `
      -g $RG -w $WS</code></pre>
+<h2>Next exercise</h2>
+<p>Confirm the endpoint deletion finishes, but keep the Azure ML workspace, <code>olist-ecommerce-raw:1</code>, and <code>course-cpu</code>. Continue with <a href="../../09-IMDB-Sentiment-Classification/Instruction/index.html">Exercise 09</a>. Exercise 09 creates its own data asset and model in the same workspace.</p>
 <p>Never copy endpoint keys into source files or instructional screenshots.</p>
 <p>The freight endpoint, sample invocation, and malformed-request check completed in a temporary East US workspace on 11 November 2026. This exercise&#x27;s own training job and model registration completed in West US. A new West US endpoint attempt failed with a subscription registration error; the temporary endpoint was removed. See the endpoint and standalone validation reports in the repository root.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
