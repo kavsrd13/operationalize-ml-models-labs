@@ -1,0 +1,53 @@
+name: Deploy student exercise site
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Build public instruction artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site
+          cp index.html _site/index.html
+          cp -R assets _site/assets
+          while IFS= read -r page; do
+            destination="_site/$(dirname "$page")"
+            mkdir -p "$destination"
+            cp "$page" "$destination/index.html"
+          done < <(find . -path './[0-9][0-9]-*/Instruction/index.html' -print | sort)
+          touch _site/.nojekyll
+          test "$(find _site -path '*/Instruction/index.html' | wc -l)" -eq 13
+
+      - name: Upload course site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy course site
+        id: deployment
+        uses: actions/deploy-pages@v4
