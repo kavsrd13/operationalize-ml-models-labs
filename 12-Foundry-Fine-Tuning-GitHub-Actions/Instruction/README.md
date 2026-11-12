@@ -67,7 +67,7 @@ $LAB_REPO = "$OWNER/$REPO"
 gh repo create $LAB_REPO --private --source . --remote student --push
 ```
 
-Keep `main` as the default branch. `origin` points to the instructor repository and `student` points to your private exercise repository. Setup uses `$LAB_REPO` when it creates the OIDC trust and GitHub settings.
+Keep `main` as the default branch. `origin` points to the instructor repository and `student` points to your private exercise repository. Setup automatically detects the repository from Git remotes: it uses `student` when present and otherwise uses `origin`. The detected repository is printed before OIDC configuration; the learner does not type `OWNER/REPOSITORY`.
 
 ## 3. Inspect the actual code
 
@@ -111,8 +111,7 @@ Do not enable training merely because structural validation passes. A qualified 
 Run the setup from the repository root:
 
 ```powershell
-.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -GitHubRepo $LAB_REPO -PreviewOnly
+.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -PreviewOnly
 ```
 
 The script lists every enabled subscription visible to the signed-in Azure user with a number. Enter the displayed number, not the subscription ID. For example, if the intended subscription is shown as `[2]`, enter `2`. Invalid input displays the numbered list again.
@@ -148,7 +147,7 @@ Read the entire `what-if` output. `-PreviewOnly` creates no Azure or GitHub reso
 Rerun without `-PreviewOnly`:
 
 ```powershell
-.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO
+.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1
 ```
 
 Choose the same subscription and resource strategy. After the preview, the script displays:
@@ -175,15 +174,13 @@ For repeatable setup, pass the resource details explicitly. Subscription selecti
 # Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
-  -AccountName YOUR_EXISTING_AI_RESOURCE `
-  -GitHubRepo $LAB_REPO
+  -AccountName YOUR_EXISTING_AI_RESOURCE
 
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
-  -AccountName YOUR_GLOBALLY_UNIQUE_NAME `
-  -GitHubRepo $LAB_REPO
+  -AccountName YOUR_GLOBALLY_UNIQUE_NAME
 ```
 
 ## 7. Review and enable the controlled training gates
@@ -251,6 +248,7 @@ Deletion is intentionally not automated by the setup script because the existing
 
 - `AADSTS50020` or `AADSTS500341`: the Azure CLI is using an identity from the wrong tenant or a stale account. Run `az logout`, sign in to the subscription's tenant in the same terminal, and verify `az account show` before rerunning setup.
 - `./setup.ps1` is not recognized: check `Get-Location` and `Test-Path .\setup.ps1`. From the repository root, run `.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1`; from inside the Exercise 12 folder, run `.\setup.ps1`. The script does not change the terminal's current directory, so it can be rerun from the same location.
+- Wrong GitHub repository detected: setup prefers the remote named `student`; otherwise it uses `origin`. Check `git remote -v`. Add or correct the `student` remote before rerunning setup.
 - No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.
 - Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.
 - Base deployment quota error: choose an existing compatible `medtriage-base` deployment or a region with base-model capacity.

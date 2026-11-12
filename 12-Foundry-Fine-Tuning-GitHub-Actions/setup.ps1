@@ -4,7 +4,6 @@ param(
     [string]$ResourceGroup,
     [string]$AccountName,
     [string]$Location,
-    [string]$GitHubRepo,
     [string]$OidcSubject,
     [switch]$PreviewOnly
 )
@@ -24,6 +23,32 @@ function Ask([string]$Value, [string]$Label, [string]$Default) {
     }
     if ($answer) { return $answer.Trim() }
     return $Default
+}
+
+function Get-GitHubRepositoryFromGit {
+    $remotes = @(git remote)
+    Assert-LastExitCode 'Read Git remotes'
+    if ($remotes -contains 'student') {
+        $remoteName = 'student'
+    } elseif ($remotes -contains 'origin') {
+        $remoteName = 'origin'
+    } else {
+        throw "No 'student' or 'origin' Git remote was found. Add the GitHub repository as a remote, then rerun setup."
+    }
+
+    $remoteUrl = (git remote get-url $remoteName).Trim()
+    Assert-LastExitCode "Read the $remoteName Git remote"
+    $repository = $remoteUrl `
+        -replace '^https://github\.com/', '' `
+        -replace '^git@github\.com:', '' `
+        -replace '^ssh://git@github\.com/', '' `
+        -replace '\.git$', '' `
+        -replace '/$', ''
+    if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+        throw "The $remoteName remote is not a supported GitHub URL: $remoteUrl"
+    }
+    Write-Host "Detected GitHub repository from the '$remoteName' remote: $repository"
+    return $repository
 }
 
 function Select-AzureSubscription {
@@ -84,7 +109,7 @@ function Select-ExistingFoundryAccount {
     return $accounts[$selection - 1]
 }
 
-foreach ($tool in @('az', 'gh')) { Get-Command $tool -ErrorAction Stop | Out-Null }
+foreach ($tool in @('az', 'gh', 'git')) { Get-Command $tool -ErrorAction Stop | Out-Null }
 az account show --output none
 Assert-LastExitCode 'Azure sign-in (run az login first)'
 gh auth status
@@ -97,8 +122,7 @@ Assert-LastExitCode 'Select Azure subscription'
 $account = az account show -o json | ConvertFrom-Json
 if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select $SubscriptionId." }
 
-$GitHubRepo = Ask $GitHubRepo 'Enter your student GitHub repository as OWNER/REPOSITORY' ''
-if ($GitHubRepo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Use OWNER/REPO for GitHubRepo.' }
+$GitHubRepo = Get-GitHubRepositoryFromGit
 $repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
 Assert-LastExitCode 'Read GitHub repository'
 if (-not $repo.permissions.admin) { throw 'Administrator access to the student repository is required to set Actions secrets and variables.' }

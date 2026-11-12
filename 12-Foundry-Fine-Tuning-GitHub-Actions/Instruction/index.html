@@ -53,7 +53,7 @@ $OWNER = gh api user --jq &#x27;.login&#x27;
 $REPO = &#x27;my-foundry-finetuning-lab&#x27;
 $LAB_REPO = &quot;$OWNER/$REPO&quot;
 gh repo create $LAB_REPO --private --source . --remote student --push</code></pre>
-<p>Keep <code>main</code> as the default branch. <code>origin</code> points to the instructor repository and <code>student</code> points to your private exercise repository. Setup uses <code>$LAB_REPO</code> when it creates the OIDC trust and GitHub settings.</p>
+<p>Keep <code>main</code> as the default branch. <code>origin</code> points to the instructor repository and <code>student</code> points to your private exercise repository. Setup automatically detects the repository from Git remotes: it uses <code>student</code> when present and otherwise uses <code>origin</code>. The detected repository is printed before OIDC configuration; the learner does not type <code>OWNER/REPOSITORY</code>.</p>
 <h2>3. Inspect the actual code</h2>
 <ul>
 <li><a href="../setup.ps1">setup.ps1</a>: guided subscription, resource, Bicep and GitHub configuration.</li>
@@ -82,8 +82,7 @@ Dataset validation passed.</code></pre>
 <p>Do not enable training merely because structural validation passes. A qualified reviewer must confirm clinical labels, emergency escalation language, jurisdiction, consent to use the data, and absence of personal health information. This is a teaching dataset, not a clinical decision-support system.</p>
 <h2>5. Preview the guided Azure setup</h2>
 <p>Run the setup from the repository root:</p>
-<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -GitHubRepo $LAB_REPO -PreviewOnly</code></pre>
+<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -PreviewOnly</code></pre>
 <p>The script lists every enabled subscription visible to the signed-in Azure user with a number. Enter the displayed number, not the subscription ID. For example, if the intended subscription is shown as <code>[2]</code>, enter <code>2</code>. Invalid input displays the numbered list again.</p>
 <p>After selecting a subscription, the script asks:</p>
 <pre><code>[1] Use an existing Azure AI Services / Azure OpenAI resource
@@ -100,7 +99,7 @@ Dataset validation passed.</code></pre>
 <p>Read the entire <code>what-if</code> output. <code>-PreviewOnly</code> creates no Azure or GitHub resources.</p>
 <h2>6. Apply the setup</h2>
 <p>Rerun without <code>-PreviewOnly</code>:</p>
-<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO</code></pre>
+<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code></pre>
 <p>Choose the same subscription and resource strategy. After the preview, the script displays:</p>
 <pre><code>[1] Deploy the resources shown above
 [2] Show the Bicep what-if preview again
@@ -117,15 +116,13 @@ Dataset validation passed.</code></pre>
 <pre><code># Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
-  -AccountName YOUR_EXISTING_AI_RESOURCE `
-  -GitHubRepo $LAB_REPO
+  -AccountName YOUR_EXISTING_AI_RESOURCE
 
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
-  -AccountName YOUR_GLOBALLY_UNIQUE_NAME `
-  -GitHubRepo $LAB_REPO</code></pre>
+  -AccountName YOUR_GLOBALLY_UNIQUE_NAME</code></pre>
 <h2>7. Review and enable the controlled training gates</h2>
 <p>Only after the required data review, enable both repository variables:</p>
 <pre><code>gh variable set MEDTRIAGE_DATA_REVIEWED --body true --repo $LAB_REPO
@@ -162,6 +159,7 @@ gh repo view $LAB_REPO --web</code></pre>
 <ul>
 <li><code>AADSTS50020</code> or <code>AADSTS500341</code>: the Azure CLI is using an identity from the wrong tenant or a stale account. Run <code>az logout</code>, sign in to the subscription&#x27;s tenant in the same terminal, and verify <code>az account show</code> before rerunning setup.</li>
 <li><code>./setup.ps1</code> is not recognized: check <code>Get-Location</code> and <code>Test-Path .\setup.ps1</code>. From the repository root, run <code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code>; from inside the Exercise 12 folder, run <code>.\setup.ps1</code>. The script does not change the terminal&#x27;s current directory, so it can be rerun from the same location.</li>
+<li>Wrong GitHub repository detected: setup prefers the remote named <code>student</code>; otherwise it uses <code>origin</code>. Check <code>git remote -v</code>. Add or correct the <code>student</code> remote before rerunning setup.</li>
 <li>No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.</li>
 <li>Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.</li>
 <li>Base deployment quota error: choose an existing compatible <code>medtriage-base</code> deployment or a region with base-model capacity.</li>
