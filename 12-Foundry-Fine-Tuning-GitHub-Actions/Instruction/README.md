@@ -242,6 +242,7 @@ Deletion is intentionally not automated by the setup script because the existing
 ## Troubleshooting
 
 - `AADSTS50020` or `AADSTS500341`: the Azure CLI is using an identity from the wrong tenant or a stale account. Run `az logout`, sign in to the subscription's tenant in the same terminal, and verify `az account show` before rerunning setup.
+- `./setup.ps1` is not recognized: check `Get-Location` and `Test-Path .\setup.ps1`. From the repository root, run `.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1`; from inside the Exercise 12 folder, run `.\setup.ps1`. The script does not change the terminal's current directory, so it can be rerun from the same location.
 - No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.
 - Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.
 - Base deployment quota error: choose an existing compatible `medtriage-base` deployment or a region with base-model capacity.

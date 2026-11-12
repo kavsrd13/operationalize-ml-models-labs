@@ -908,6 +908,7 @@ gh repo view $LAB_REPO --web</code></pre>
 <h2>Troubleshooting</h2>
 <ul>
 <li><code>AADSTS50020</code> or <code>AADSTS500341</code>: the Azure CLI is using an identity from the wrong tenant or a stale account. Run <code>az logout</code>, sign in to the subscription&#x27;s tenant in the same terminal, and verify <code>az account show</code> before rerunning setup.</li>
+<li><code>./setup.ps1</code> is not recognized: check <code>Get-Location</code> and <code>Test-Path .\setup.ps1</code>. From the repository root, run <code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code>; from inside the Exercise 12 folder, run <code>.\setup.ps1</code>. The script does not change the terminal&#x27;s current directory, so it can be rerun from the same location.</li>
 <li>No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.</li>
 <li>Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.</li>
 <li>Base deployment quota error: choose an existing compatible <code>medtriage-base</code> deployment or a region with base-model capacity.</li>
