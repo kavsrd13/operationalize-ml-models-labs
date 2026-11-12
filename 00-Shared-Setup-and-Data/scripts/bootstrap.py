@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare a cloned Olist course repo on an Azure ML compute instance."""
+"""Prepare the local Olist course environment and optionally configure Azure ML."""
 
 import argparse
 import json

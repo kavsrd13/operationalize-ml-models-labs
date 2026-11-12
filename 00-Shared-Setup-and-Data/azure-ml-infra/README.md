@@ -1,5 +1,10 @@
 # Module 1 — Azure Machine Learning Infrastructure as Code (Bicep)
 
+> **Optional advanced exercise:** the numbered course labs use the shared setup
+> in [`00-Shared-Setup-and-Data/Instruction`](../Instruction/README.md). Follow
+> this Bicep workflow only if you want to learn infrastructure as code; deploying
+> both workflows can create separate Azure resources.
+>
 > **Students:** open **[lab-guide.html](lab-guide.html)** in your browser for the step-by-step exercise.
 > This README is the full reference.
 
@@ -115,9 +120,14 @@ azure-ml-infra/
     └── deploy-azureml-infra.yml      ← optional CI/CD pipeline (OIDC, what-if on PR)
 ```
 
-`03-upload-data.ps1` looks for a folder named `Ecommerce Dataset` in the folders above the
-project, for example `course-folder\Ecommerce Dataset` next to `course-folder\project-1-freight-cost`.
-Use `-SourceFolder` if yours is elsewhere.
+Before uploading, extract the bundled data once from the collection root:
+
+```powershell
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-install --skip-azure
+```
+
+The upload script reads `datasets\olist\Ecommerce Dataset` by default. Pass
+`-SourceFolder` only if you keep the extracted CSVs somewhere else.
 
 ---
 

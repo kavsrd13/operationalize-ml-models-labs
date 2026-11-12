@@ -291,9 +291,9 @@ footer .wrap { padding-block: 1.75rem; font-size: 0.88rem; color: var(--muted); 
 
 <header class="hero">
   <div class="wrap">
-    <span class="eyebrow">Operationalize Machine Learning Models · Lab 1</span>
+    <span class="eyebrow">Operationalize Machine Learning Models · Optional Bicep exercise</span>
     <h1>Build your Azure ML environment from code</h1>
-    <p class="lede">You will create a complete Azure Machine Learning workspace with one Bicep template, upload the Olist e-commerce dataset, and open it in a cloud notebook. Every click you would normally make in the Azure portal is replaced by code you can read, rerun and share.</p>
+    <p class="lede">This optional advanced exercise teaches Azure infrastructure as code. It creates billable Azure resources and is separate from the shared setup used by the numbered course labs.</p>
     <ul class="facts">
       <li><span class="k">Time</span><span class="v">About 90 minutes</span></li>
       <li><span class="k">Cost</span><span class="v">Usually under US$2 if you clean up at the end</span></li>
@@ -483,19 +483,18 @@ footer .wrap { padding-block: 1.75rem; font-size: 0.88rem; color: var(--muted); 
         <li><b>Visual Studio Code</b> with the <b>Bicep</b> extension by Microsoft (Extensions panel → search "Bicep"). It gives you colour, autocomplete and error checking in <code>.bicep</code> files.</li>
         <li><b>Azure CLI 2.61 or newer.</b> Install on Windows with <code>winget install -e --id Microsoft.AzureCLI</code>, then reopen VS Code. Check with <code>az version</code>.</li>
         <li><b>PowerShell.</b> Windows PowerShell 5.1 (built into Windows) or PowerShell 7 on Windows, macOS or Linux.</li>
-        <li><b>The dataset.</b> Download it from <a href="https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce" target="_blank" rel="noopener">Kaggle: Brazilian E-Commerce by Olist</a> (free account needed), unzip it, and name the folder <code>Ecommerce Dataset</code>.</li>
+        <li><b>The bundled Olist dataset.</b> No separate Kaggle download is needed. From the collection root, run <code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-install --skip-azure</code> to extract it.</li>
       </ul>
-      <p class="prose">Put the folders like this. The upload script searches the folders above the project for one named <code>Ecommerce Dataset</code>.</p>
+      <p class="prose">The upload script reads the extracted folder from the standard collection layout:</p>
       <div class="out">
         <div class="out-head" style="color: var(--muted)">Folder layout</div>
-<pre class="tree">Any parent folder\
-├── Ecommerce Dataset\                ← the 9 Olist CSV files
-│   ├── olist_orders_dataset.csv
-│   └── … 8 more files
-└── project-1-freight-cost\
-    └── azure-ml-infra\               ← this part of the project
+<pre class="tree">operationalize-ml-models-labs\
+├── datasets\
+│   └── olist\
+│       └── Ecommerce Dataset\        ← extracted by bootstrap
+└── 00-Shared-Setup-and-Data\
+    └── azure-ml-infra\
         ├── lab-guide.html            ← you are reading this
-        ├── README.md
         ├── infra\
         ├── data\
         └── scripts\</pre>
@@ -871,8 +870,8 @@ Resource changes: <span class="ok">11 to create</span>.
               <div class="term-head"><span>PowerShell</span><button type="button" class="copy">Copy</button></div>
 <pre><code>.\scripts\03-upload-data.ps1
 
-<span class="c"># Dataset somewhere else? Point to it:</span>
-<span class="c"># .\scripts\03-upload-data.ps1 -SourceFolder "D:\datasets\olist"</span></code></pre>
+<span class="c"># If you moved the extracted data, pass its folder:</span>
+<span class="c"># .\scripts\03-upload-data.ps1 -SourceFolder 'D:\datasets\Ecommerce Dataset'</span></code></pre>
             </div>
             <div class="out">
               <div class="out-head">You should see</div>

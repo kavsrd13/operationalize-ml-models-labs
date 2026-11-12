@@ -46,22 +46,20 @@ in a shared workspace do not collide.
 
 ## First-time setup
 
-From a cloned copy, first create or choose a resource group and Azure ML workspace
-as described in the exercise you want to run. Then run:
+Start with the local setup. It is enough for exercises 01 and 02 and does not
+need an Azure subscription:
 
 ```powershell
-python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
-  --subscription YOUR_SUBSCRIPTION_ID `
-  --resource-group YOUR_RESOURCE_GROUP `
-  --workspace YOUR_WORKSPACE --create-cluster
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure
 ```
 
-The shared cluster is created once and reused by exercises 03–07 and 09–11.
-Exercise 12 is independent and uses Azure AI Services/Foundry rather than the
-Azure ML workspace and `course-cpu` cluster.
-For local-only exercises 01 and 02, run bootstrap with `--skip-azure` instead.
-Each student instruction names its additional prepared data assets. Managed online
-endpoints use separate serving compute and need globally unique names.
+When you reach a cloud exercise (03–11), create or choose one Azure ML workspace
+and run bootstrap with its subscription, resource group, and workspace names plus
+`--create-cluster`. This registers the shared data asset and creates `course-cpu`
+once; reuse those resources between labs. See Exercise 00 for the exact commands.
+Exercise 12 is independent and uses Azure AI Services/Foundry instead. Each lab
+lists any additional prepared data assets. Managed online endpoints use separate
+serving compute and need globally unique names.
 
 ## Validation boundary
 

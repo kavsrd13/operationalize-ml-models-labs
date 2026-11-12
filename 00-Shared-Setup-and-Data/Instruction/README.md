@@ -1,30 +1,60 @@
-# Exercise 00: One shared Azure ML setup
+# Exercise 00: Set up Python and shared data
 
-## Goal
+## What you will do
 
-Use one workspace, one scale-to-zero CPU cluster, and named data assets throughout
-the course. Exercises 01 and 02 run locally; cloud exercises 03–11 reuse this setup.
+Set up the local Python environment and unpack the shared Olist dataset. You do
+not need Azure for exercises 01 and 02. Set up Azure only when you are ready to
+start a cloud exercise.
 
-## Fork and clone the public repository
+## 1. Install the basics
 
-Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:
+Install Python 3.10 or 3.11 and Git. If you use VS Code, install its **Python**
+and **Jupyter** extensions. Azure CLI is only needed for the cloud setup below.
+
+## 2. Clone the course
+
+You can clone the public repository without signing in:
 
 ```powershell
 git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 ```
 
-To save your exercise work in your own GitHub account, sign in at [GitHub](https://github.com/), open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, and then select **Create fork**. Clone your fork instead of the upstream repository:
+To keep your own changes in GitHub, fork the repository first and clone your
+fork instead. Forking and pushing require a GitHub account; cloning does not.
+
+## 3. Set up locally
+
+Run this once from the repository root:
 
 ```powershell
-git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git remote -v
+python --version
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure
 ```
 
-No `gh auth login` command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.
+Bootstrap extracts the nine Olist CSVs, creates `.venv`, installs the packages
+listed in [`scripts/requirements.txt`](../scripts/requirements.txt), and registers
+the **Python (Olist Azure ML)** notebook kernel. No separate `pip install` is
+needed.
 
-Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named `course-cpu`. Reuse the same names in later labs. Check regional quota for `Standard_E4ds_v4`.
+Check that the data can be read:
+
+```powershell
+.\.venv\Scripts\python.exe -c "from pathlib import Path; import pandas as pd; d=Path('datasets/olist/Ecommerce Dataset'); print('CSV files:', len(list(d.glob('*.csv')))); print('Orders:', pd.read_csv(d/'olist_orders_dataset.csv').shape)"
+```
+
+The expected output starts with `CSV files: 9` and `Orders: (99441, 8)`.
+In VS Code, open a notebook and select **Python (Olist Azure ML)**. Exercises
+01 and 02 now run locally and do not submit Azure jobs.
+
+## 4. Set up Azure when you need a cloud exercise
+
+Skip this section until you start exercises 03–11. You need an Azure
+subscription with permission to create a resource group, workspace, and compute.
+The shared cluster uses `Standard_E4ds_v4`; check that your chosen region has
+quota for it. Cloud resources can incur charges while they are running.
+
+Install Azure CLI, sign in, and select your subscription:
 
 ```powershell
 $SUB = 'YOUR_SUBSCRIPTION_ID'
@@ -34,61 +64,41 @@ $LOCATION = 'eastus'
 az login
 az account set --subscription $SUB
 az extension add --name ml --yes
-az group create -n $RG -l $LOCATION
-az ml workspace show -n $WS -g $RG --subscription $SUB 2>$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
-}
-python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
-  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
-az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
-az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
+az group create --name $RG --location $LOCATION
 ```
 
-## Code files
+If you do not already have a workspace, create one:
 
-The actual code for this exercise is here:
+```powershell
+az ml workspace create --name $WS --resource-group $RG --location $LOCATION --subscription $SUB
+```
 
-- [`scripts/bootstrap.py`](../scripts/bootstrap.py)
-- [`scripts/compute.yml`](../scripts/compute.yml)
-- [`scripts/requirements.txt`](../scripts/requirements.txt)
-- [`datasets/olist/olist-data-asset.yml`](../../datasets/olist/olist-data-asset.yml)
-- [`azure-ml-infra/infra/main.bicep`](../azure-ml-infra/infra/main.bicep)
-- [`azure-ml-infra/README.md`](../azure-ml-infra/README.md)
+Then register the shared data asset and create the reusable, scale-to-zero
+training cluster:
 
-Run commands from the repository root. Olist's source ZIP is stored once in `datasets/olist` and extracted by setup.
+```powershell
+python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
+  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
+```
 
+Bootstrap checks for existing resources and reuses them. Keep the same
+subscription, resource group, and workspace for later cloud exercises.
 
-## Steps
+## Optional: Bicep infrastructure exercise
 
-1. Check `python --version` and `az version`. The commands above clone the
-   code, create or reuse the resource group and workspace, extract Olist data,
-   install the notebook kernel, register `olist-ecommerce-raw:1`, and create
-   `course-cpu` only if absent.
-2. Check the reusable resources:
+[`azure-ml-infra/README.md`](../azure-ml-infra/README.md) is a separate, advanced
+exercise for learning Azure infrastructure as code. It is not required for the
+numbered course labs. Follow either its deployment workflow or the shared
+workspace setup above; do not deploy both unless you intentionally want separate
+Azure resources.
 
-   ```powershell
-   az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
-   az ml compute show -n course-cpu -g $RG -w $WS `
-     --query '{name:name,min:min_instances,max:max_instances}' -o json
-   ```
+## Shared resources
 
-3. Open a local notebook, select **Python (Olist Azure ML)**, and run its first
-   import and data-loading cells. Labs 01 and 02 submit no cloud jobs.
-4. On a second machine, clone the materials and rerun the setup with the **same**
-   subscription, group, and workspace. Existing assets are checked and reused.
+| Resource | Reused by |
+| --- | --- |
+| `olist-ecommerce-raw:1` data asset | 03–07, 11 |
+| `course-cpu` training cluster | 03–07, 09–11 |
+| Prepared data assets | Created in the labs that need them |
 
-## Naming map
-
-| Resource | Name | Reused by |
-| --- | --- | --- |
-| Azure ML workspace | `$WS`, created or reused above | 03–11 |
-| CPU training cluster | `course-cpu` | 03–07, 09–11 |
-| Olist raw data asset | `olist-ecommerce-raw:1` | 03–07, 11 |
-| Freight prepared assets | `olist-freight-*` | 05 |
-| Late-delivery prepared assets | `olist-late-*` | 06–07 |
-| IMDB/Delhi assets | `course-imdb-data:1`, `course-delhi-*` | 09–10 |
-
-Managed online endpoints have their own serving compute; the training cluster
-cannot host them. Endpoint names must be globally unique. Do not commit
+Managed online endpoints use separate serving compute. Do not commit
 `config.json`, credentials, endpoint keys, or `.venv`.

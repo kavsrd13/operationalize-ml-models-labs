@@ -20,8 +20,7 @@
     .\scripts\03-upload-data.ps1 -DataVersion 2
 #>
 param(
-    # Default: the first folder named "Ecommerce Dataset" found above this project
-    # (works for course-folder\Ecommerce Dataset next to course-folder\project-N\azure-ml-infra).
+    # Default: the dataset extracted by the shared bootstrap script.
     [string]$SourceFolder = '',
     [string]$DataAssetName = 'olist-ecommerce-raw',
     [string]$DataVersion = '1'
@@ -30,10 +29,12 @@ param(
 . "$PSScriptRoot\common.ps1"
 
 if (-not $SourceFolder) {
-    $dir = Split-Path $RepoRoot -Parent
-    while ($dir -and -not (Test-Path (Join-Path $dir 'Ecommerce Dataset'))) { $dir = Split-Path $dir -Parent }
-    if (-not $dir) { throw "Could not find an 'Ecommerce Dataset' folder above $RepoRoot. Pass -SourceFolder <path>." }
-    $SourceFolder = Join-Path $dir 'Ecommerce Dataset'
+    $setupRoot = Split-Path -Parent $RepoRoot
+    $collectionRoot = Split-Path -Parent $setupRoot
+    $SourceFolder = Join-Path $collectionRoot 'datasets\olist\Ecommerce Dataset'
+    if (-not (Test-Path $SourceFolder)) {
+        throw "Olist data not found at $SourceFolder. Run the shared bootstrap script first or pass -SourceFolder <path>."
+    }
 }
 
 $outputs       = Get-DeploymentOutputs
