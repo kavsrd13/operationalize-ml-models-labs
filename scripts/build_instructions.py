@@ -13,6 +13,19 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LABS = sorted(p for p in ROOT.iterdir() if p.is_dir() and re.match(r"^\d\d-", p.name))
+RECOMMENDED_ORDER = [
+    "01-Olist-EDA-and-Feature-Engineering",
+    "02-Delivery-Demand-Hotspots",
+    "00-Shared-Setup-and-Data",
+]
+
+
+def ordered_labs() -> list[Path]:
+    by_name = {lab.name: lab for lab in LABS}
+    ordered = [by_name[name] for name in RECOMMENDED_ORDER if name in by_name]
+    ordered_names = {lab.name for lab in ordered}
+    ordered.extend(lab for lab in LABS if lab.name not in ordered_names)
+    return ordered
 
 
 def inline(value: str, link_prefix: str = "") -> str:
@@ -123,7 +136,8 @@ def page(title: str, body: str, stylesheet: str, nav: str) -> str:
 
 def main() -> None:
     cards = []
-    for lab in LABS:
+    labs = ordered_labs()
+    for lab in labs:
         source = lab / "Instruction" / "README.md"
         if not source.is_file():
             raise SystemExit(f"Missing instruction: {source}")
@@ -139,9 +153,9 @@ def main() -> None:
     repo_url = "https://github.com/kavsrd13/operationalize-ml-models-labs"
     body = f'''<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>Select an exercise below to open its complete instructions.</p></div>
 <section class="repo-panel"><h2>Clone the course code</h2><p>GitHub repository: <a href="{repo_url}">{repo_url}</a></p><pre><code>git clone {repo_url}.git</code></pre><a class="repo-button" href="{repo_url}">Open GitHub repository →</a></section>
-<h2 class="exercise-heading">Exercises</h2><div class="cards">''' + "\n".join(cards) + '</div>'
+<h2 class="exercise-heading">Exercises</h2><p>Recommended sequence: 01 → 02 → 00 (shared Azure setup) → 03 onward.</p><div class="cards">''' + "\n".join(cards) + '</div>'
     (ROOT / "index.html").write_text(page("All exercises", body, "assets/site.css", "index.html"), encoding="utf-8", newline="\n")
-    print(f"Built {len(LABS)} exercise pages and one button-only index")
+    print(f"Built {len(labs)} exercise pages and one button-only index")
 
 
 if __name__ == "__main__":

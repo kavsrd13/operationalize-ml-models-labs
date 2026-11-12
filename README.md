@@ -6,10 +6,10 @@ excluded.
 
 ## Folder order
 
-1. `00-Shared-Setup-and-Data` prepares the common Python environment, Azure ML
-   workspace configuration, Olist data asset, and optional infrastructure.
-2. `01-Olist-EDA-and-Feature-Engineering` explores and prepares freight features.
-3. `02-Delivery-Demand-Hotspots` maps and clusters customer-order demand.
+1. `01-Olist-EDA-and-Feature-Engineering` explores and prepares freight features.
+2. `02-Delivery-Demand-Hotspots` maps and clusters customer-order demand.
+3. `00-Shared-Setup-and-Data` sets up Python and shared data first, then Azure
+   workspace resources right before the first cloud lab.
 4. `03-Freight-Regression-Training` trains freight-cost models locally or as an
    Azure ML command job.
 5. `04-Delivery-Time-Pipeline` prepares order-level data and trains through an
