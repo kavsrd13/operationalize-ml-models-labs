@@ -4,13 +4,54 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import json
 import os
 from pathlib import Path
+import time
 
 import requests
 
 EXPECTED_KEYS = {"urgency", "department", "reason", "next_step"}
+MAX_RATE_LIMIT_RETRIES = 5
+MAX_RETRY_DELAY_SECONDS = 60
+
+
+def retry_delay(response: requests.Response, attempt: int) -> float:
+    retry_after_ms = response.headers.get("retry-after-ms")
+    if retry_after_ms is not None:
+        try:
+            return min(max(float(retry_after_ms) / 1000, 0), MAX_RETRY_DELAY_SECONDS)
+        except ValueError:
+            pass
+
+    retry_after = response.headers.get("retry-after")
+    if retry_after is not None:
+        try:
+            delay = float(retry_after)
+        except ValueError:
+            try:
+                delay = (parsedate_to_datetime(retry_after) - datetime.now(timezone.utc)).total_seconds()
+            except (TypeError, ValueError, OverflowError):
+                delay = None
+        if delay is not None:
+            return min(max(delay, 0), MAX_RETRY_DELAY_SECONDS)
+
+    return min(2**attempt, 30)
+
+
+def post_with_rate_limit_retries(url: str, *, headers: dict, json_body: dict) -> requests.Response:
+    attempt = 0
+    while True:
+        response = requests.post(url, headers=headers, json=json_body, timeout=90)
+        if response.status_code != 429:
+            response.raise_for_status()
+            return response
+        if attempt == MAX_RATE_LIMIT_RETRIES:
+            response.raise_for_status()
+        time.sleep(retry_delay(response, attempt))
+        attempt += 1
 
 
 def main() -> None:
@@ -29,13 +70,11 @@ def main() -> None:
     results = []
     for row in rows[:args.samples]:
         expected = json.loads(row["messages"][-1]["content"])
-        response = requests.post(
+        response = post_with_rate_limit_retries(
             f"{args.endpoint.rstrip('/')}/openai/deployments/{args.deployment}/chat/completions?api-version={args.api_version}",
             headers={"Authorization": f"Bearer {args.token}", "Content-Type": "application/json"},
-            json={"messages": row["messages"][:-1], "temperature": 0, "response_format": {"type": "json_object"}},
-            timeout=90,
+            json_body={"messages": row["messages"][:-1], "temperature": 0, "response_format": {"type": "json_object"}},
         )
-        response.raise_for_status()
         content = response.json()["choices"][0]["message"]["content"]
         try:
             actual = json.loads(content)
