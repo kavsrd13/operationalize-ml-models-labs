@@ -115,7 +115,9 @@ Run the setup from the repository root:
   -GitHubRepo $LAB_REPO -PreviewOnly
 ```
 
-The script lists the subscriptions visible to the signed-in Azure user and asks for a subscription ID. It then asks:
+The script lists every enabled subscription visible to the signed-in Azure user with a number. Enter the displayed number, not the subscription ID. For example, if the intended subscription is shown as `[2]`, enter `2`. Invalid input displays the numbered list again.
+
+After selecting a subscription, the script asks:
 
 ```text
 [1] Use an existing Azure AI Services / Azure OpenAI resource
@@ -123,7 +125,7 @@ The script lists the subscriptions visible to the signed-in Azure user and asks 
 [3] Exit setup without deploying anything
 ```
 
-Every setup run displays this menu, including runs that use `-Yes`. Enter exactly `1`, `2`, or `3`. An invalid entry displays all three choices again. Option `3` stops before Bicep deployment or GitHub configuration.
+Every setup run displays this menu. Enter exactly `1`, `2`, or `3`. An invalid entry displays all three choices again. Option `3` stops before Bicep deployment or GitHub configuration.
 
 ### Option 1: existing resource
 
@@ -149,7 +151,15 @@ Rerun without `-PreviewOnly`:
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO
 ```
 
-Choose the same subscription and resource strategy. Review the preview and type `deploy` only when the proposed resources are correct.
+Choose the same subscription and resource strategy. After the preview, the script displays:
+
+```text
+[1] Deploy the resources shown above
+[2] Show the Bicep what-if preview again
+[3] Exit without deploying
+```
+
+Enter `1` only when the proposed resources are correct. Enter `2` to inspect the preview again or `3` to stop.
 
 After deployment the script configures these GitHub secrets:
 
@@ -159,23 +169,21 @@ After deployment the script configures these GitHub secrets:
 
 It also configures the Foundry endpoint, Azure resource names and two safety variables. Both safety variables initially remain `false`, so setup cannot accidentally submit a paid job.
 
-For repeatable setup, pass the resource details explicitly. The script still displays the required `1`/`2`/`3` menu so the learner consciously chooses whether an existing or new resource will be affected:
+For repeatable setup, pass the resource details explicitly. Subscription selection, resource strategy and final deployment approval remain numbered interactive choices:
 
 ```powershell
 # Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -SubscriptionId YOUR_SUBSCRIPTION_ID `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
   -AccountName YOUR_EXISTING_AI_RESOURCE `
-  -GitHubRepo $LAB_REPO -Yes
+  -GitHubRepo $LAB_REPO
 
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -SubscriptionId YOUR_SUBSCRIPTION_ID `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
   -AccountName YOUR_GLOBALLY_UNIQUE_NAME `
-  -GitHubRepo $LAB_REPO -Yes
+  -GitHubRepo $LAB_REPO
 ```
 
 ## 7. Review and enable the controlled training gates

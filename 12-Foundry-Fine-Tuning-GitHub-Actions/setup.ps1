@@ -1,14 +1,12 @@
 # Run from a cloned student repository after az login and gh auth login.
 [CmdletBinding()]
 param(
-    [string]$SubscriptionId,
     [string]$ResourceGroup,
     [string]$AccountName,
     [string]$Location,
     [string]$GitHubRepo,
     [string]$OidcSubject,
-    [switch]$PreviewOnly,
-    [switch]$Yes
+    [switch]$PreviewOnly
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,9 +17,37 @@ function Assert-LastExitCode([string]$Step) {
 
 function Ask([string]$Value, [string]$Label, [string]$Default) {
     if ($Value) { return $Value }
-    $answer = Read-Host "$Label [$Default]"
+    if ($Default) {
+        $answer = Read-Host "$Label. Press Enter to use '$Default', or type a different value"
+    } else {
+        $answer = Read-Host "$Label (required; example: owner/repository)"
+    }
     if ($answer) { return $answer.Trim() }
     return $Default
+}
+
+function Select-AzureSubscription {
+    $subscriptions = @(az account list --all -o json | ConvertFrom-Json |
+        Where-Object { $_.state -eq 'Enabled' } |
+        Sort-Object name, id)
+    Assert-LastExitCode 'List Azure subscriptions'
+    if ($subscriptions.Count -eq 0) {
+        throw 'No enabled Azure subscriptions are available to the signed-in user.'
+    }
+
+    do {
+        Write-Host ''
+        Write-Host 'Available Azure subscriptions:'
+        for ($index = 0; $index -lt $subscriptions.Count; $index++) {
+            $candidate = $subscriptions[$index]
+            Write-Host ("  [{0}] {1} | Subscription: {2} | Tenant: {3}" -f ($index + 1), $candidate.name, $candidate.id, $candidate.tenantId)
+        }
+        $selectionText = Read-Host "Enter the subscription number shown above (1-$($subscriptions.Count))"
+        $selection = 0
+        $validSelection = [int]::TryParse($selectionText, [ref]$selection) -and $selection -ge 1 -and $selection -le $subscriptions.Count
+        if (-not $validSelection) { Write-Warning "Invalid choice. Enter a number from 1 to $($subscriptions.Count)." }
+    } until ($validSelection)
+    return $subscriptions[$selection - 1]
 }
 
 function Select-ExistingFoundryAccount {
@@ -33,36 +59,35 @@ function Select-ExistingFoundryAccount {
         throw "No Azure AI Services or Azure OpenAI resources were found in subscription $SubscriptionId. Rerun and choose New."
     }
 
-    Write-Host ''
-    Write-Host 'Available Azure AI resources:'
-    for ($index = 0; $index -lt $accounts.Count; $index++) {
-        $candidate = $accounts[$index]
-        Write-Host ("  [{0}] {1} | {2} | {3} | {4}" -f ($index + 1), $candidate.name, $candidate.resourceGroup, $candidate.location, $candidate.kind)
-    }
     do {
-        $selectionText = Read-Host "Select a resource [1-$($accounts.Count)]"
+        Write-Host ''
+        Write-Host 'Available Azure AI resources:'
+        for ($index = 0; $index -lt $accounts.Count; $index++) {
+            $candidate = $accounts[$index]
+            Write-Host ("  [{0}] {1} | Resource group: {2} | Region: {3} | Type: {4}" -f ($index + 1), $candidate.name, $candidate.resourceGroup, $candidate.location, $candidate.kind)
+        }
+        $selectionText = Read-Host "Enter the Azure AI resource number shown above (1-$($accounts.Count))"
         $selection = 0
         $validSelection = [int]::TryParse($selectionText, [ref]$selection) -and $selection -ge 1 -and $selection -le $accounts.Count
-        if (-not $validSelection) { Write-Warning 'Enter one of the displayed numbers.' }
+        if (-not $validSelection) { Write-Warning "Invalid choice. Enter a number from 1 to $($accounts.Count)." }
     } until ($validSelection)
     return $accounts[$selection - 1]
 }
 
 foreach ($tool in @('az', 'gh')) { Get-Command $tool -ErrorAction Stop | Out-Null }
-$currentAccount = az account show -o json | ConvertFrom-Json
+az account show --output none
 Assert-LastExitCode 'Azure sign-in (run az login first)'
 gh auth status
 Assert-LastExitCode 'GitHub sign-in (run gh auth login first)'
 
-az account list --query '[].{Name:name,Subscription:id,Tenant:tenantId}' -o table
-Assert-LastExitCode 'List Azure subscriptions'
-$SubscriptionId = Ask $SubscriptionId 'Subscription ID' $currentAccount.id
+$selectedSubscription = Select-AzureSubscription
+$SubscriptionId = $selectedSubscription.id
 az account set --subscription $SubscriptionId
 Assert-LastExitCode 'Select Azure subscription'
 $account = az account show -o json | ConvertFrom-Json
 if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select $SubscriptionId." }
 
-$GitHubRepo = Ask $GitHubRepo 'Your student GitHub repository (OWNER/REPO)' ''
+$GitHubRepo = Ask $GitHubRepo 'Enter your student GitHub repository as OWNER/REPOSITORY' ''
 if ($GitHubRepo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Use OWNER/REPO for GitHubRepo.' }
 $repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
 Assert-LastExitCode 'Read GitHub repository'
@@ -127,10 +152,10 @@ if ($ResourceMode -eq 'Existing') {
     }
     $template = Join-Path $PSScriptRoot 'infra/existing-main.bicep'
 } else {
-    $ResourceGroup = Ask $ResourceGroup 'New resource group' 'rg-medtriage-finetuning'
-    $Location = Ask $Location 'Azure region with fine-tuning quota' 'eastus'
+    $ResourceGroup = Ask $ResourceGroup 'New resource-group name (letters, numbers and hyphens)' 'rg-medtriage-finetuning'
+    $Location = Ask $Location 'Azure region name with confirmed fine-tuning quota, such as eastus' 'eastus'
     $generatedName = "medtriageft$((Get-Random -Minimum 100000 -Maximum 999999))"
-    $AccountName = Ask $AccountName 'New globally unique Azure AI Services name' $generatedName
+    $AccountName = Ask $AccountName 'New globally unique Azure AI Services name (lowercase letters and numbers only)' $generatedName
     if ($AccountName -notmatch '^[a-z0-9]{2,64}$') { throw 'AccountName must contain only lowercase letters and digits.' }
     $template = Join-Path $PSScriptRoot 'infra/main.bicep'
 }
@@ -165,7 +190,24 @@ Assert-LastExitCode 'Compile Bicep'
 az deployment sub what-if @deploymentArgs
 Assert-LastExitCode 'Preview Foundry resources'
 if ($PreviewOnly) { return }
-if (-not $Yes -and (Read-Host 'Type deploy to apply the resources shown above') -ne 'deploy') { return }
+do {
+    Write-Host ''
+    Write-Host 'Choose what to do with the Bicep preview:'
+    Write-Host '  [1] Deploy the resources shown above'
+    Write-Host '  [2] Show the Bicep what-if preview again'
+    Write-Host '  [3] Exit without deploying'
+    $deploymentChoice = Read-Host 'Enter 1, 2, or 3'
+    if ($deploymentChoice -eq '2') {
+        az deployment sub what-if @deploymentArgs
+        Assert-LastExitCode 'Repeat Bicep preview'
+    } elseif ($deploymentChoice -notin @('1', '3')) {
+        Write-Warning 'Invalid choice. You must enter 1, 2, or 3.'
+    }
+} until ($deploymentChoice -in @('1', '3'))
+if ($deploymentChoice -eq '3') {
+    Write-Host 'Setup cancelled. No Azure deployment or GitHub configuration was applied.'
+    return
+}
 az deployment sub create @deploymentArgs --output none
 Assert-LastExitCode 'Create Foundry resources'
 $outputs = az deployment sub show --name $deploymentName --query properties.outputs -o json | ConvertFrom-Json

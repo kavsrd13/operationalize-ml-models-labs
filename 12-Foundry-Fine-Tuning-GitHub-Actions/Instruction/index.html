@@ -84,11 +84,12 @@ Dataset validation passed.</code></pre>
 <p>Run the setup from the repository root:</p>
 <pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
   -GitHubRepo $LAB_REPO -PreviewOnly</code></pre>
-<p>The script lists the subscriptions visible to the signed-in Azure user and asks for a subscription ID. It then asks:</p>
+<p>The script lists every enabled subscription visible to the signed-in Azure user with a number. Enter the displayed number, not the subscription ID. For example, if the intended subscription is shown as <code>[2]</code>, enter <code>2</code>. Invalid input displays the numbered list again.</p>
+<p>After selecting a subscription, the script asks:</p>
 <pre><code>[1] Use an existing Azure AI Services / Azure OpenAI resource
 [2] Create a new dedicated Azure AI Services resource
 [3] Exit setup without deploying anything</code></pre>
-<p>Every setup run displays this menu, including runs that use <code>-Yes</code>. Enter exactly <code>1</code>, <code>2</code>, or <code>3</code>. An invalid entry displays all three choices again. Option <code>3</code> stops before Bicep deployment or GitHub configuration.</p>
+<p>Every setup run displays this menu. Enter exactly <code>1</code>, <code>2</code>, or <code>3</code>. An invalid entry displays all three choices again. Option <code>3</code> stops before Bicep deployment or GitHub configuration.</p>
 <h3>Option 1: existing resource</h3>
 <p>The script lists compatible resources in the selected subscription. Select one by number. It uses the selected resource&#x27;s group, name and region and does not recreate or retag that resource.</p>
 <p>If <code>medtriage-base</code> already deploys <code>gpt-4o-mini</code> version <code>2024-07-18</code>, it is reused. If that deployment is missing, Bicep proposes creating it. If the name belongs to a different model or version, setup stops instead of overwriting it.</p>
@@ -100,7 +101,11 @@ Dataset validation passed.</code></pre>
 <h2>6. Apply the setup</h2>
 <p>Rerun without <code>-PreviewOnly</code>:</p>
 <pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO</code></pre>
-<p>Choose the same subscription and resource strategy. Review the preview and type <code>deploy</code> only when the proposed resources are correct.</p>
+<p>Choose the same subscription and resource strategy. After the preview, the script displays:</p>
+<pre><code>[1] Deploy the resources shown above
+[2] Show the Bicep what-if preview again
+[3] Exit without deploying</code></pre>
+<p>Enter <code>1</code> only when the proposed resources are correct. Enter <code>2</code> to inspect the preview again or <code>3</code> to stop.</p>
 <p>After deployment the script configures these GitHub secrets:</p>
 <ul>
 <li><code>MEDTRIAGE_AZURE_CLIENT_ID</code></li>
@@ -108,21 +113,19 @@ Dataset validation passed.</code></pre>
 <li><code>MEDTRIAGE_AZURE_SUBSCRIPTION_ID</code></li>
 </ul>
 <p>It also configures the Foundry endpoint, Azure resource names and two safety variables. Both safety variables initially remain <code>false</code>, so setup cannot accidentally submit a paid job.</p>
-<p>For repeatable setup, pass the resource details explicitly. The script still displays the required <code>1</code>/<code>2</code>/<code>3</code> menu so the learner consciously chooses whether an existing or new resource will be affected:</p>
+<p>For repeatable setup, pass the resource details explicitly. Subscription selection, resource strategy and final deployment approval remain numbered interactive choices:</p>
 <pre><code># Reuse a known resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -SubscriptionId YOUR_SUBSCRIPTION_ID `
   -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
   -AccountName YOUR_EXISTING_AI_RESOURCE `
-  -GitHubRepo $LAB_REPO -Yes
+  -GitHubRepo $LAB_REPO
 
 # Or create a dedicated resource
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -SubscriptionId YOUR_SUBSCRIPTION_ID `
   -ResourceGroup rg-medtriage-finetuning `
   -Location eastus `
   -AccountName YOUR_GLOBALLY_UNIQUE_NAME `
-  -GitHubRepo $LAB_REPO -Yes</code></pre>
+  -GitHubRepo $LAB_REPO</code></pre>
 <h2>7. Review and enable the controlled training gates</h2>
 <p>Only after the required data review, enable both repository variables:</p>
 <pre><code>gh variable set MEDTRIAGE_DATA_REVIEWED --body true --repo $LAB_REPO
