@@ -8,22 +8,23 @@ excluded.
 
 1. `01-Olist-EDA-and-Feature-Engineering` explores and prepares freight features.
 2. `02-Delivery-Demand-Hotspots` maps and clusters customer-order demand.
-3. `00-Shared-Setup-and-Data` sets up Python and shared data first, then Azure
-   workspace resources right before the first cloud lab.
-4. `03-Freight-Regression-Training` trains freight-cost models locally or as an
+3. `03-Freight-Regression-Training` trains freight-cost models locally or as an
    Azure ML command job.
-5. `04-Delivery-Time-Pipeline` prepares order-level data and trains through an
+4. `04-Delivery-Time-Pipeline` prepares order-level data and trains through an
    Azure ML pipeline.
-6. `05-Freight-AutoML-and-MLflow` compares AutoML and tracked manual models.
-7. `06-Late-Delivery-Responsible-AI` trains a classifier and creates an RAI dashboard.
-8. `07-Late-Delivery-Hyperparameter-Sweep` tunes the late-delivery classifier.
-9. `08-Online-Model-Serving` deploys and tests a freight endpoint and Gradio client.
-10. `09-IMDB-Sentiment-Classification` provides local and Azure ML NLP demos.
-11. `10-Delhi-Climate-Time-Series` provides local and Azure ML forecasting demos.
-12. `11-Automate-Model-Training-GitHub-Actions` runs freight training on a GitHub
+5. `05-Freight-AutoML-and-MLflow` compares AutoML and tracked manual models.
+6. `06-Late-Delivery-Responsible-AI` trains a classifier and creates an RAI dashboard.
+7. `07-Late-Delivery-Hyperparameter-Sweep` tunes the late-delivery classifier.
+8. `08-Online-Model-Serving` deploys and tests a freight endpoint and Gradio client.
+9. `09-IMDB-Sentiment-Classification` provides local and Azure ML NLP demos.
+10. `10-Delhi-Climate-Time-Series` provides local and Azure ML forecasting demos.
+11. `11-Automate-Model-Training-GitHub-Actions` runs freight training on a GitHub
     push or manual trigger using OIDC and the shared Azure ML resources.
-13. `12-Foundry-Fine-Tuning-GitHub-Actions` validates a versioned MedTriage
+12. `12-Foundry-Fine-Tuning-GitHub-Actions` validates a versioned MedTriage
     dataset and uses GitHub OIDC to submit a controlled Foundry fine-tuning job.
+
+Shared setup scripts remain in `00-Shared-Setup-and-Data/scripts/` and are
+referenced directly by exercises that need them.
 
 Open `index.html` for the complete offline student guide. Every exercise also has
 its own `Instruction/index.html` and editable `Instruction/README.md`. Each guide
@@ -53,13 +54,11 @@ need an Azure subscription:
 python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure
 ```
 
-When you reach a cloud exercise (03–11), create or choose one Azure ML workspace
-and run bootstrap with its subscription, resource group, and workspace names plus
-`--create-cluster`. This registers the shared data asset and creates `course-cpu`
-once; reuse those resources between labs. See Exercise 00 for the exact commands.
-Exercise 12 is independent and uses Azure AI Services/Foundry instead. Each lab
-lists any additional prepared data assets. Managed online endpoints use separate
-serving compute and need globally unique names.
+Exercises 03–10 now include the exact Azure setup commands needed to create or
+reuse infrastructure in place. Reuse one workspace and `course-cpu` cluster
+between those labs. Exercise 12 is independent and uses Azure AI
+Services/Foundry instead. Managed online endpoints use separate serving compute
+and need globally unique names.
 
 ## Validation boundary
 

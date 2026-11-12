@@ -16,8 +16,16 @@ LABS = sorted(p for p in ROOT.iterdir() if p.is_dir() and re.match(r"^\d\d-", p.
 RECOMMENDED_ORDER = [
     "01-Olist-EDA-and-Feature-Engineering",
     "02-Delivery-Demand-Hotspots",
-    "00-Shared-Setup-and-Data",
+    "03-Freight-Regression-Training",
+    "04-Delivery-Time-Pipeline",
+    "05-Freight-AutoML-and-MLflow",
+    "06-Late-Delivery-Responsible-AI",
+    "07-Late-Delivery-Hyperparameter-Sweep",
+    "08-Online-Model-Serving",
+    "09-IMDB-Sentiment-Classification",
+    "10-Delhi-Climate-Time-Series",
 ]
+OMIT_FROM_INDEX = {"00-Shared-Setup-and-Data"}
 
 
 def ordered_labs() -> list[Path]:
@@ -149,11 +157,12 @@ def main() -> None:
             encoding="utf-8",
             newline="\n",
         )
-        cards.append(f'<a class="card" href="{lab.name}/Instruction/index.html"><small>{lab.name[:2]}</small><strong>{html.escape(title)}</strong><span>Open this exercise →</span></a>')
+        if lab.name not in OMIT_FROM_INDEX:
+            cards.append(f'<a class="card" href="{lab.name}/Instruction/index.html"><small>{lab.name[:2]}</small><strong>{html.escape(title)}</strong><span>Open this exercise →</span></a>')
     repo_url = "https://github.com/kavsrd13/operationalize-ml-models-labs"
     body = f'''<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>Select an exercise below to open its complete instructions.</p></div>
 <section class="repo-panel"><h2>Clone the course code</h2><p>GitHub repository: <a href="{repo_url}">{repo_url}</a></p><pre><code>git clone {repo_url}.git</code></pre><a class="repo-button" href="{repo_url}">Open GitHub repository →</a></section>
-<h2 class="exercise-heading">Exercises</h2><p>Recommended sequence: 01 → 02 → 00 (shared Azure setup) → 03 onward.</p><div class="cards">''' + "\n".join(cards) + '</div>'
+<h2 class="exercise-heading">Exercises</h2><p>Recommended sequence: 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10.</p><div class="cards">''' + "\n".join(cards) + '</div>'
     (ROOT / "index.html").write_text(page("All exercises", body, "assets/site.css", "index.html"), encoding="utf-8", newline="\n")
     print(f"Built {len(labs)} exercise pages and one button-only index")
 

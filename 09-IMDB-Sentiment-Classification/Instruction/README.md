@@ -11,6 +11,7 @@ Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public c
 
 ```powershell
 git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 ```
 
 To save your exercise work in your own GitHub account, sign in at [GitHub](https://github.com/), open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, and then select **Create fork**. Clone your fork instead of the upstream repository:

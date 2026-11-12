@@ -11,6 +11,7 @@ Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public c
 
 ```powershell
 git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 ```
 
 To save your exercise work in your own GitHub account, sign in at [GitHub](https://github.com/), open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, and then select **Create fork**. Clone your fork instead of the upstream repository:
@@ -24,7 +25,12 @@ git remote -v
 
 No `gh auth login` command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.
 
-Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named `course-cpu`. Reuse the same names in later labs. Check regional quota for `Standard_E4ds_v4`.
+## Create or reuse Azure resources for this lab
+
+Set your own subscription, resource group, workspace, and region. The commands
+create the group and workspace if needed, install the shared Olist asset, and
+create one scale-to-zero training cluster named `course-cpu`. Reuse the same
+names in later labs. Check regional quota for `Standard_E4ds_v4`.
 
 ```powershell
 $SUB = 'YOUR_SUBSCRIPTION_ID'
@@ -110,9 +116,9 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 4. Invoke `../deploy/sample-invalid-request.json` with the same endpoint command;
    verify that scoring reports a useful validation error.
 5. In `../app/.env`, set `FREIGHT_ENDPOINT_URL` from
-   `az ml online-endpoint show -n YOUR_UNIQUE_ENDPOINT --query scoring_uri` and
+   `az ml online-endpoint show -n $ENDPOINT --query scoring_uri` and
    `FREIGHT_ENDPOINT_KEY` from
-   `az ml online-endpoint get-credentials -n YOUR_UNIQUE_ENDPOINT --query primaryKey`.
+   `az ml online-endpoint get-credentials -n $ENDPOINT --query primaryKey`.
    Keep this file untracked. Install `../app/requirements.txt`, run
    `python .\08-Online-Model-Serving\app\app.py`, and submit sample fields.
 6. Delete only your own endpoint immediately after the demo:

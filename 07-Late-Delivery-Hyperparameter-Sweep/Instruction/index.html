@@ -3,18 +3,20 @@
 <title>Exercise 07: Tune late-delivery classification | Operationalize Machine Learning Models</title>
 <link rel="stylesheet" href="../../assets/site.css"></head>
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
-<main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 07: Tune late-delivery classification</h1>
+<main><nav><a href="../../index.html">? All exercises</a></nav><article><h1>Exercise 07: Tune late-delivery classification</h1>
 <h2>Goal</h2>
 <p>Tune logistic regression on pre-April training and April–May validation data. Keep June–August test labels out of selection.</p>
 <h2>Fork and clone the public repository</h2>
 <p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:</p>
-<pre><code>git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git</code></pre>
+<pre><code>git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs</code></pre>
 <p>To save your exercise work in your own GitHub account, sign in at <a href="https://github.com/">GitHub</a>, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>, select <strong>Fork</strong>, and then select <strong>Create fork</strong>. Clone your fork instead of the upstream repository:</p>
 <pre><code>git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
 git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
 git remote -v</code></pre>
 <p>No <code>gh auth login</code> command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.</p>
+<h2>Create or reuse Azure resources for this lab</h2>
 <p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
 <pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
 $RG = &#x27;rg-course-ml&#x27;
@@ -52,8 +54,8 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <li>From the collection root, run the smoke job and wait for <code>Completed</code>:</li>
 </ol>
 <pre><code>   az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
-     -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE
-   az ml job stream -n YOUR_SMOKE_JOB -g YOUR_RESOURCE_GROUP -w YOUR_WORKSPACE</code></pre>
+     -g $RG -w $WS
+   az ml job stream -n YOUR_SMOKE_JOB -g $RG -w $WS</code></pre>
 <ol start="6">
 <li>Set <code>SUBMIT_SWEEP = True</code> in notebook step 1 and run the sweep submission cell once. The job name is saved in ignored <code>.sweep-run-id.json</code> to avoid duplicate submissions. Alternatively submit <code>../jobs/sweep.yml</code> with <code>az ml job create -f</code> using the same group and workspace.</li>
 <li>In Studio inspect average precision and late-class precision/recall for every trial. Record the selected settings and explain why validation results are not a final future-period test.</li>
