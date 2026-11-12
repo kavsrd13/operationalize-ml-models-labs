@@ -15,13 +15,28 @@ The workflow baselines the `medtriage-base` deployment against ten held-out vali
 The target is the Pay-As-You-Go subscription `2df30ff1-915d-4d35-974a-3d3155aaa413` in East US. It has available `gpt-4o-mini` base and fine-tuning capacity. Sign in to the tenant that owns that subscription, then run this from the repository root:
 
 ```powershell
-az login --tenant cabf5d06-7e3a-4d14-b7f4-2b5819ed881e
+az login --tenant cabf5d06-7e3a-4d14-b7f4-2b5819ed881e --use-device-code
 az account set --subscription 2df30ff1-915d-4d35-974a-3d3155aaa413
 .\finetunning\setup.ps1 -PreviewOnly
 .\finetunning\setup.ps1
 ```
 
-The setup script creates a dedicated resource group, an Azure AI Services resource, the small base-model deployment used for baseline evaluation, a GitHub managed identity, an OIDC trust for this repository’s `main` branch, and the least-privilege `Cognitive Services OpenAI Contributor` role on that resource. It sets GitHub Actions secrets and variables but leaves training disabled.
+The setup script first asks whether to use an existing Azure AI Services/Azure OpenAI resource or create a new dedicated resource. When **Existing** is selected, it lists compatible resources in the selected subscription and asks for a number. It reuses a compatible `medtriage-base` deployment or creates it when missing; it does not recreate or retag the selected resource. When **New** is selected, it creates the resource group and Azure AI Services resource as before.
+
+Both choices create a GitHub managed identity, an OIDC trust restricted to this repository’s `main` branch, and the least-privilege `Cognitive Services OpenAI Contributor` assignment on the selected resource. The script sets GitHub Actions secrets and variables but leaves training disabled.
+
+For unattended or repeatable setup, pass the choice explicitly:
+
+```powershell
+# Create a new resource
+.\finetunning\setup.ps1 -ResourceMode New -Yes
+
+# Reuse a known resource
+.\finetunning\setup.ps1 -ResourceMode Existing `
+  -ResourceGroup '<existing-resource-group>' `
+  -AccountName '<existing-account-name>' `
+  -Yes
+```
 
 ## Trigger a reviewed training run
 

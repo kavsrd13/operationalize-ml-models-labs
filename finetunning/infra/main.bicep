@@ -14,6 +14,9 @@ param location string = 'eastus'
 @description('Exact GitHub OIDC subject permitted to submit training from main.')
 param githubSubject string
 
+@description('Create the baseline deployment. New resources always pass true; this parameter keeps setup inputs consistent.')
+param createBaselineDeployment bool = true
+
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2025-04-01' = {
   name: resourceGroupName
   location: location
@@ -31,6 +34,7 @@ module resources './resources.bicep' = {
     accountName: accountName
     location: location
     githubSubject: githubSubject
+    createBaselineDeployment: createBaselineDeployment
   }
 }
 

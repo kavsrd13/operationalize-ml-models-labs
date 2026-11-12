@@ -1,6 +1,7 @@
 param accountName string
 param location string
 param githubSubject string
+param createBaselineDeployment bool = true
 
 var tags = {
   course: 'operationalize-ml-models'
@@ -25,7 +26,7 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
 }
 
-resource baselineDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = {
+resource baselineDeployment 'Microsoft.CognitiveServices/accounts/deployments@2025-06-01' = if (createBaselineDeployment) {
   parent: account
   name: 'medtriage-base'
   sku: {
