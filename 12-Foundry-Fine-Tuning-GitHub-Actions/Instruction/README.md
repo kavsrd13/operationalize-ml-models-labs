@@ -40,10 +40,11 @@ The exercise uses the shared course repository and its `main` branch. Do not cre
 
 ## 2. Add your reviewed data
 
-Replace the contents of these two existing files without changing their filenames:
+Add or replace one training JSONL file and one validation JSONL file anywhere under:
 
-- `12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl`
-- `12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl`
+`12-Foundry-Fine-Tuning-GitHub-Actions/data/`
+
+The workflow does not contain fixed dataset filenames. It automatically finds exactly one `.jsonl` filename containing `training` and exactly one containing `validation`. For example, both `medical_triage_training.jsonl` and `my_training_v2.jsonl` are valid. If you intentionally keep more than one training or validation file, add `training_file` and `validation_file` to `config/finetune.json` to select them explicitly.
 
 Each JSONL line must contain exactly three messages in this order:
 
@@ -57,8 +58,8 @@ Optional local check:
 
 ```powershell
 python .\12-Foundry-Fine-Tuning-GitHub-Actions\scripts\validate_dataset.py `
-  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_training_300.jsonl `
-  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_validation_300.jsonl
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_training.jsonl `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_validation.jsonl
 ```
 
 The included example currently reports 255 training records, 45 validation records, one system prompt and zero identical questions across the splits.
@@ -79,23 +80,29 @@ Open `12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json`:
 
 For the first run, keep the model and training type unchanged. Give `suffix` a short experiment name. Change epochs or learning rate only when the experiment has a clear comparison objective.
 
+Dataset paths are optional because automatic discovery is the default. When the `data` folder contains multiple candidate files, add these entries before the `model` entry, using paths relative to the Exercise 12 folder:
+
+```json
+"training_file": "data/my_training_v2.jsonl",
+"validation_file": "data/my_validation_v2.jsonl",
+```
+
 > Important: the earlier completed `gpt-4o-mini-2024-07-18` job cannot be changed into a `gpt-4.1-mini` model. Its fine-tuned deployment quota is zero in the teaching subscription. You must submit a new job with the configuration above. The workflow now rejects any other model before uploading data or starting paid training.
 
 ## 4. Push and start fine-tuning automatically
 
-Stage only the two data files and configuration:
+Stage the changed files under the data and config folders:
 
 ```powershell
-git add `
-  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_training_300.jsonl `
-  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_validation_300.jsonl `
-  .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
+git add -- `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\ `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\config\
 
 git commit -m "Exercise 12: submit fine-tuning experiment"
 git push origin main
 ```
 
-That push is the trigger. Do not run another setup command and do not manually start the workflow.
+That push is the trigger. Any committed change under `data/**` or `config/**` starts the workflow. The workflow itself contains no hardcoded dataset filename. Do not run another setup command and do not manually start the workflow.
 
 ## 5. Watch the automatic workflow
 
@@ -110,12 +117,13 @@ gh repo view kavsrd13/operationalize-ml-models-labs --web
 Open **Actions → Exercise 12 - Fine-tune MedTriage model**. The workflow performs these steps:
 
 1. Confirms the configuration uses `gpt-4.1-mini-2025-04-14` with `globalStandard` training.
-2. Validates every JSONL line and checks that training and validation questions do not overlap.
-3. Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.
-4. Evaluates ten held-out examples against the `medtriage-base` deployment.
-5. Uploads the training and validation files.
-6. Submits one supervised fine-tuning job using the committed configuration.
-7. Saves `baseline_metrics.json` and `fine_tuning_job.json` as a GitHub artifact.
+2. Discovers the training and validation files, or reads their optional paths from the configuration.
+3. Validates every JSONL line and checks that training and validation questions do not overlap.
+4. Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.
+5. Evaluates ten held-out examples against the `medtriage-base` deployment.
+6. Uploads the discovered training and validation files.
+7. Submits one supervised fine-tuning job using the committed configuration.
+8. Saves `baseline_metrics.json` and `fine_tuning_job.json` as a GitHub artifact.
 
 The GitHub summary records the commit and Foundry job ID. A green GitHub run means submission succeeded; Foundry training continues asynchronously.
 
@@ -143,16 +151,16 @@ The live check on 12 November 2026 found 500K TPM of East US Global Standard fin
 
 | File | Student action |
 |---|---|
-| `data/medical_triage_training_300.jsonl` | Replace with reviewed training examples |
-| `data/medical_triage_validation_300.jsonl` | Replace with held-out validation examples |
-| `config/finetune.json` | Set the experiment suffix and approved hyperparameters |
+| `data/*.jsonl` | Add one reviewed training file and one held-out validation file; filenames may change |
+| `config/finetune.json` | Set the experiment suffix and approved hyperparameters; optionally select dataset paths |
 
 All Bicep, OIDC and setup files are instructor-maintained. The GitHub workflow is also instructor-maintained.
 
 ## Troubleshooting
 
 - Push rejected: confirm the instructor granted write access and that you are on `main`.
-- Workflow does not appear: confirm one of the two data files or `config/finetune.json` changed in the pushed commit.
+- Workflow does not appear: confirm the pushed commit changed something under `data/**` or `config/**`.
+- Dataset discovery fails: keep exactly one filename containing `training` and one containing `validation`, or specify both paths in `finetune.json`.
 - Validation fails: open the failed step; fix the reported JSONL line, output schema, urgency label or train/validation overlap, then push a correction.
 - Azure login fails: notify the instructor; students should not recreate secrets or identities.
 - Fine-tuning submission reports quota or model availability: notify the instructor before retrying to avoid duplicate jobs.

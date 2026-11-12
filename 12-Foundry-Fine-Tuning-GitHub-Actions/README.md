@@ -7,7 +7,7 @@ Open [Instruction/README.md](Instruction/README.md) for the editable student gui
 ## Folder map
 
 - `data/`: 255 training and 45 validation JSONL records.
-- `config/finetune.json`: versioned model and hyperparameter choices.
+- `config/finetune.json`: versioned model and hyperparameter choices; optional dataset paths can disambiguate multiple JSONL files.
 - `scripts/validate_dataset.py`: free structural and label validation.
 - `scripts/validate_config.py`: blocks unsupported model or training choices before Azure access.
 - `scripts/evaluate_baseline.py`: held-out base-model baseline.
@@ -16,4 +16,4 @@ Open [Instruction/README.md](Instruction/README.md) for the editable student gui
 - `setup.ps1`: guided Azure selection, fine-tuned-model quota preflight, deployment preview, OIDC and GitHub configuration.
 - `LAB12_VALIDATION.md`: completed checks and the live-validation boundary.
 
-The workflow is stored at repository root in `.github/workflows/fine-tune-medtriage.yml`, as required by GitHub Actions. Infrastructure and OIDC are configured once by the instructor. Students replace the two versioned JSONL files, edit `config/finetune.json`, and push to `main`; validation, baseline evaluation and fine-tuning submission then run automatically.
+The workflow is stored at repository root in `.github/workflows/fine-tune-medtriage.yml`, as required by GitHub Actions. Infrastructure and OIDC are configured once by the instructor. Students add or replace JSONL files under `data/`, optionally select their paths in `config/finetune.json`, and push to `main`; any committed change under `data/**` or `config/**` automatically starts validation, baseline evaluation and fine-tuning submission.

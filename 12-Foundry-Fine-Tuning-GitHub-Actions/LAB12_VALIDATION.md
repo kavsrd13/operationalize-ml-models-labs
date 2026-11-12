@@ -9,6 +9,7 @@
 - Identical user-question overlap across splits: zero.
 - Python scripts compile locally.
 - The configuration validator pins `gpt-4.1-mini-2025-04-14` and `globalStandard` training before any Azure upload.
+- The workflow trigger covers all committed changes under `data/**` and `config/**`; dataset filenames are resolved at runtime instead of being hardcoded in the workflow.
 - GitHub workflow YAML parses locally.
 - PowerShell setup script parses locally.
 - New-resource and existing-resource Bicep entry points compile locally.

@@ -6,7 +6,7 @@ on:
     branches: [main]
     paths:
       - '12-Foundry-Fine-Tuning-GitHub-Actions/data/**'
-      - '12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json'
+      - '12-Foundry-Fine-Tuning-GitHub-Actions/config/**'
 
 permissions:
   contents: read
@@ -26,13 +26,14 @@ jobs:
       - name: Validate supported model configuration
         run: |
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_config.py \
-            12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json
+            12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
+            --github-env "$GITHUB_ENV"
 
-      - name: Validate versioned datasets
+      - name: Validate configured datasets
         run: |
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_dataset.py \
-            12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl \
-            12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl
+            "$MEDTRIAGE_TRAINING_FILE" \
+            "$MEDTRIAGE_VALIDATION_FILE"
 
   baseline-and-submit:
     needs: validate
@@ -40,6 +41,12 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve model and dataset configuration
+        run: |
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_config.py \
+            12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
+            --github-env "$GITHUB_ENV"
 
       - name: Sign in to Azure with GitHub OIDC
         uses: azure/login@v2
@@ -58,13 +65,13 @@ jobs:
           export AZURE_ACCESS_TOKEN="$TOKEN"
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/evaluate_baseline.py \
             --endpoint "$FOUNDRY_ENDPOINT" \
-            --validation-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl \
+            --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
             --output baseline_metrics.json
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/submit_finetune.py \
             --endpoint "$FOUNDRY_ENDPOINT" \
             --config 12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
-            --training-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl \
-            --validation-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl \
+            --training-file "$MEDTRIAGE_TRAINING_FILE" \
+            --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
             --output fine_tuning_job.json
           JOB_ID=$(python -c "import json; print(json.load(open('fine_tuning_job.json'))['job']['id'])")
           echo "### MedTriage fine-tuning submitted" >> "$GITHUB_STEP_SUMMARY"
