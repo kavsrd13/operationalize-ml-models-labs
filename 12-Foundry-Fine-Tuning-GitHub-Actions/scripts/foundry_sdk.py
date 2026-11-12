@@ -11,9 +11,6 @@ from azure.identity import DefaultAzureCredential
 from openai import OpenAI
 
 
-FOUNDRY_API_VERSION = "2025-04-01-preview"
-
-
 @contextmanager
 def open_project_client(project_endpoint: str) -> Iterator[OpenAI]:
     """Yield an Entra-authenticated OpenAI client scoped to one Foundry project."""
@@ -29,10 +26,9 @@ def open_project_client(project_endpoint: str) -> Iterator[OpenAI]:
         AIProjectClient(endpoint=project_endpoint, credential=credential) as project_client,
         # The OpenAI SDK honors Retry-After headers and retries 429/5xx responses.
         # Five retries preserve the throttling protection from the earlier REST client.
-        project_client.get_openai_client(
-            max_retries=5,
-            default_query={"api-version": FOUNDRY_API_VERSION},
-        ) as openai_client,
+        # AIProjectClient appends /openai/v1. The GA v1 route rejects an
+        # api-version query parameter, so do not pass default_query here.
+        project_client.get_openai_client(max_retries=5) as openai_client,
     ):
         yield openai_client
 

@@ -34,10 +34,7 @@ class FoundryClientRetryTests(unittest.TestCase):
         with foundry_sdk.open_project_client("https://example.services.ai.azure.com/api/projects/demo") as client:
             self.assertIs(client, openai_client)
 
-        project_client.get_openai_client.assert_called_once_with(
-            max_retries=5,
-            default_query={"api-version": foundry_sdk.FOUNDRY_API_VERSION},
-        )
+        project_client.get_openai_client.assert_called_once_with(max_retries=5)
 
 
 if __name__ == "__main__":
