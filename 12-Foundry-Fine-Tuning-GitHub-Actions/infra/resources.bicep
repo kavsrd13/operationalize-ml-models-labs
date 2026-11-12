@@ -1,4 +1,5 @@
 param accountName string
+param projectName string
 param location string
 param githubSubject string
 param githubIdentityName string
@@ -19,11 +20,27 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-06-01' = {
   }
   tags: tags
   properties: {
+    allowProjectManagement: true
     customSubDomainName: accountName
+    disableLocalAuth: true
     publicNetworkAccess: 'Enabled'
     networkAcls: {
       defaultAction: 'Allow'
     }
+  }
+}
+
+resource project 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = {
+  parent: account
+  name: projectName
+  location: location
+  tags: tags
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    displayName: projectName
+    description: 'Microsoft Foundry project for the MedTriage fine-tuning exercise'
   }
 }
 
@@ -62,15 +79,16 @@ resource githubFederation 'Microsoft.ManagedIdentity/userAssignedIdentities/fede
 }
 
 resource githubFineTuningRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(account.id, githubIdentity.id, 'CognitiveServicesOpenAIContributor')
-  scope: account
+  name: guid(project.id, githubIdentity.id, 'FoundryUser')
+  scope: project
   properties: {
     principalId: githubIdentity.properties.principalId
     principalType: 'ServicePrincipal'
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'a001fd3d-188f-4b5d-821b-7da978bf7442')
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
   }
 }
 
 output accountEndpoint string = account.properties.endpoint
+output projectEndpoint string = 'https://${accountName}.services.ai.azure.com/api/projects/${projectName}'
 output accountResourceId string = account.id
 output githubClientId string = githubIdentity.properties.clientId

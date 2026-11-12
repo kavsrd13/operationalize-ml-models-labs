@@ -2,41 +2,57 @@
 
 ## Outcome
 
-Replace the training data, edit one configuration file, and push to `main`. GitHub automatically validates the data, measures the base model, signs in to Azure without a password, uploads the files, and submits a Microsoft Foundry supervised fine-tuning job.
+Fork the public course repository, change one hyperparameter in your own GitHub repository, and open a pull request. After instructor review and merge, the upstream GitHub workflow validates the data, measures the base model, signs in to Azure without a password, uploads the files, submits a Microsoft Foundry supervised fine-tuning job through the Azure AI Projects SDK, and monitors it to completion.
 
 The instructor has already completed the one-time Azure infrastructure and GitHub OIDC setup. Students do **not** run `setup.ps1`, create a service principal, create Azure resources, or configure GitHub secrets.
 
 ## The complete student workflow
 
 ```text
-Clone repository
+Open public repository (anonymous read-only access)
       ↓
-Replace training and validation JSONL files
+Sign in to GitHub and fork it
       ↓
-Edit config/finetune.json
+Clone your fork and create a branch
       ↓
-Commit and push to origin/main
+Change hyperparameters.n_epochs from 2 to 3
       ↓
-GitHub validates → evaluates baseline → submits fine-tuning
+Push to your fork and open a pull request
+      ↓
+Instructor reviews and merges into upstream main
+      ↓
+Upstream GitHub validates → evaluates baseline → fine-tunes
       ↓
 Monitor and evaluate the new model
       ↓
 Deploy the approved model with Global Standard
 ```
 
-## 1. Clone the repository
+## 1. Fork and clone the public repository
 
-Ask the instructor for write access to `kavsrd13/operationalize-ml-models-labs`. Install Git and GitHub CLI, then run:
+Anyone can inspect or clone the public course repository without signing in:
 
 ```powershell
-gh auth login
-gh repo clone kavsrd13/operationalize-ml-models-labs
-Set-Location .\operationalize-ml-models-labs
-git switch main
-git pull --ff-only origin main
+git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
 ```
 
-The exercise uses the shared course repository and its `main` branch. Do not create another repository, remote, service principal or Azure resource.
+To complete and submit the exercise, you need your own fork:
+
+1. Sign in to [GitHub](https://github.com/).
+2. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
+3. Select **Fork**.
+4. Keep the repository name `operationalize-ml-models-labs` and select **Create fork**.
+5. Clone your fork by replacing `YOUR-GITHUB-USERNAME` below:
+
+```powershell
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
+git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
+git remote -v
+git switch -c exercise-12-three-epochs
+```
+
+No `gh auth login` command is required. Public cloning is anonymous. GitHub sign-in is required only to create the fork, push to your fork, and open the pull request. Students do not create a service principal, Azure resource, GitHub secret or OIDC configuration.
 
 ## 2. Add your reviewed data
 
@@ -52,7 +68,7 @@ Each JSONL line must contain exactly three messages in this order:
 {"messages":[{"role":"system","content":"..."},{"role":"user","content":"..."},{"role":"assistant","content":"{\"urgency\":\"Routine\",\"department\":\"Primary Care\",\"reason\":\"...\",\"next_step\":\"...\"}"}]}
 ```
 
-The assistant content must be a JSON string containing exactly `urgency`, `department`, `reason`, and `next_step`. This medical demonstration must contain no personal health information. A qualified reviewer must approve its labels and emergency wording before the push because the push starts a paid job automatically.
+The assistant content must be a JSON string containing exactly `urgency`, `department`, `reason`, and `next_step`. This medical demonstration must contain no personal health information. A qualified reviewer must approve its labels and emergency wording before the pull request is merged because the upstream merge starts a paid job automatically.
 
 Optional local check:
 
@@ -71,14 +87,51 @@ Open `12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json`:
 ```json
 {
   "model": "gpt-4.1-mini-2025-04-14",
-  "training_type": "globalStandard",
-  "n_epochs": 2,
-  "learning_rate_multiplier": 1.0,
+  "method": "supervised",
+  "training_type": "GlobalStandard",
+  "hyperparameters": {
+    "n_epochs": 2,
+    "batch_size": 4,
+    "learning_rate_multiplier": 0.5
+  },
+  "seed": 42,
   "suffix": "medtriage-json"
 }
 ```
 
-For the first run, keep the model and training type unchanged. Give `suffix` a short experiment name. Change epochs or learning rate only when the experiment has a clear comparison objective.
+The fields have different engineering responsibilities:
+
+| Field | Purpose |
+|---|---|
+| `model` | Exact trainable base-model version |
+| `method` | Supervised fine-tuning (SFT), because the dataset contains input/output demonstrations |
+| `training_type` | Foundry compute and data placement; it is **not** a model hyperparameter |
+| `hyperparameters.n_epochs` | Number of complete passes through the training set |
+| `hyperparameters.batch_size` | Examples used in each gradient update |
+| `hyperparameters.learning_rate_multiplier` | Scales how aggressively the model weights change |
+| `seed` | Improves repeatability between experiments |
+| `suffix` | Names the resulting model; it does not affect learning |
+
+The committed configuration is the two-epoch reference. In this exercise, change exactly one learning control: set `hyperparameters.n_epochs` from `2` to `3`. Keep `batch_size` at `4`, `learning_rate_multiplier` at `0.5`, and `seed` at `42`. This one-variable-at-a-time design lets you attribute any change in training loss, validation loss or held-out behavior to the additional epoch.
+
+Your edited section must look like this:
+
+```json
+"hyperparameters": {
+  "n_epochs": 3,
+  "batch_size": 4,
+  "learning_rate_multiplier": 0.5
+}
+```
+
+Validate the edited configuration before committing:
+
+```powershell
+python .\12-Foundry-Fine-Tuning-GitHub-Actions\scripts\validate_config.py `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
+```
+
+The successful message must report `n_epochs: 3`. Do not push if validation fails.
 
 Dataset paths are optional because automatic discovery is the default. When the `data` folder contains multiple candidate files, add these entries before the `model` entry, using paths relative to the Exercise 12 folder:
 
@@ -89,43 +142,55 @@ Dataset paths are optional because automatic discovery is the default. When the 
 
 > Important: the earlier completed `gpt-4o-mini-2024-07-18` job cannot be changed into a `gpt-4.1-mini` model. Its fine-tuned deployment quota is zero in the teaching subscription. You must submit a new job with the configuration above. The workflow now rejects any other model before uploading data or starting paid training.
 
-## 4. Push and start fine-tuning automatically
+## 4. Push to your fork and open a pull request
 
-Stage the changed files under the data and config folders:
+First confirm that Git shows the intended `2` to `3` change:
+
+```powershell
+git diff -- .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
+```
+
+Then stage the changed files, commit, and push your exercise branch to your fork:
 
 ```powershell
 git add -- `
   .\12-Foundry-Fine-Tuning-GitHub-Actions\data\ `
   .\12-Foundry-Fine-Tuning-GitHub-Actions\config\
 
-git commit -m "Exercise 12: submit fine-tuning experiment"
-git push origin main
+git commit -m "Exercise 12: train three-epoch experiment"
+git push -u origin exercise-12-three-epochs
 ```
 
-That push is the trigger. Any committed change under `data/**` or `config/**` starts the workflow. The workflow itself contains no hardcoded dataset filename. Do not run another setup command and do not manually start the workflow.
+When Git asks you to authenticate for the push, complete the browser sign-in shown by Git Credential Manager. This is push authentication, not a prerequisite for public cloning.
 
-## 5. Watch the automatic workflow
+After the push:
 
-```powershell
-gh run list `
-  --workflow fine-tune-medtriage.yml `
-  --repo kavsrd13/operationalize-ml-models-labs
+1. Open your fork on GitHub.
+2. Select **Compare & pull request**.
+3. Confirm the base repository is `kavsrd13/operationalize-ml-models-labs`, the base branch is `main`, and the head branch is your `exercise-12-three-epochs` branch.
+4. Explain that you changed only `n_epochs` from two to three.
+5. Select **Create pull request**.
 
-gh repo view kavsrd13/operationalize-ml-models-labs --web
-```
+The push to your fork does **not** receive or use the instructor's Azure settings. Fine-tuning starts only after the instructor reviews the data and configuration and merges the pull request into the upstream `main` branch. This prevents unreviewed fork code from accessing Azure.
 
-Open **Actions → Exercise 12 - Fine-tune MedTriage model**. The workflow performs these steps:
+## 5. Watch the upstream workflow after merge
 
-1. Confirms the configuration uses `gpt-4.1-mini-2025-04-14` with `globalStandard` training.
+Open [upstream GitHub Actions](https://github.com/kavsrd13/operationalize-ml-models-labs/actions), then select **Exercise 12 - Fine-tune MedTriage model**. The workflow appears after the instructor merges the pull request and performs these steps:
+
+1. Confirms the configuration uses `gpt-4.1-mini-2025-04-14`, supervised training and `GlobalStandard` placement.
 2. Discovers the training and validation files, or reads their optional paths from the configuration.
 3. Validates every JSONL line and checks that training and validation questions do not overlap.
-4. Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.
-5. Evaluates ten held-out examples against the `medtriage-base` deployment.
-6. Uploads the discovered training and validation files.
-7. Submits one supervised fine-tuning job using the committed configuration.
-8. Saves `baseline_metrics.json` and `fine_tuning_job.json` as a GitHub artifact.
+4. Uses GitHub OIDC and `DefaultAzureCredential`; no Azure password, client secret or API key is stored.
+5. Creates `AIProjectClient` with the configured Microsoft Foundry project endpoint.
+6. Evaluates ten held-out examples against the `medtriage-base` deployment.
+7. Uploads the discovered training and validation files with `openai_client.files.create()` and waits for processing.
+8. Calls `openai_client.fine_tuning.jobs.create()` with SFT hyperparameters under `method.supervised.hyperparameters`.
+9. Monitors the job to `succeeded`, `failed` or `cancelled`, and collects checkpoint metadata after success.
+10. Saves `baseline_metrics.json`, `fine_tuning_job.json` and `fine_tuning_result.json` as a GitHub artifact.
 
-The GitHub summary records the commit and Foundry job ID. A green GitHub run means submission succeeded; Foundry training continues asynchronously.
+The GitHub summary records the commit, job ID, baseline and final fine-tuned model ID. A green GitHub run now means the Foundry job reached `succeeded`, not merely that it was submitted.
+
+The implementation follows the official [Azure AI Projects client library](https://learn.microsoft.com/python/api/overview/azure/ai-projects-readme) and [Microsoft Foundry supervised fine-tuning](https://learn.microsoft.com/azure/ai-foundry/openai/how-to/fine-tuning) patterns.
 
 ## 6. Monitor the Foundry job
 
@@ -158,20 +223,25 @@ All Bicep, OIDC and setup files are instructor-maintained. The GitHub workflow i
 
 ## Troubleshooting
 
-- Push rejected: confirm the instructor granted write access and that you are on `main`.
-- Workflow does not appear: confirm the pushed commit changed something under `data/**` or `config/**`.
+- Anonymous clone fails: confirm you used the public HTTPS URL and that the instructor has made the repository public.
+- Fork option is unavailable: sign in to GitHub in the browser; forking requires a GitHub account even though cloning a public repository does not.
+- Push rejected: confirm `origin` points to your fork and complete the Git Credential Manager browser sign-in.
+- Workflow does not run in your fork: expected. Fork workflows are blocked from the instructor's Azure environment.
+- Upstream workflow does not appear: confirm the instructor merged the pull request and that the merged change is inside the `data` or `config` folder.
 - Dataset discovery fails: keep exactly one filename containing `training` and one containing `validation`, or specify both paths in `finetune.json`.
 - Validation fails: open the failed step; fix the reported JSONL line, output schema, urgency label or train/validation overlap, then push a correction.
 - Azure login fails: notify the instructor; students should not recreate secrets or identities.
 - Fine-tuning submission reports quota or model availability: notify the instructor before retrying to avoid duplicate jobs.
 - Deployment says insufficient quota: verify the completed job is based on `gpt-4.1-mini`, choose **Global Standard**, and confirm you are using the instructor's East US resource. The old `gpt-4o-mini` result has zero fine-tuned deployment quota in this subscription.
-- GitHub is green while Foundry is still running: expected—the workflow submits the asynchronous training job but does not wait for completion.
+- Workflow runs for a long time: expected—the monitor polls Foundry until training reaches a terminal state. Do not push another experiment while it is running.
 
 ## One-time instructor setup
 
-Only an instructor or repository administrator runs `12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1`. It creates or selects the Azure AI resource, verifies that the selected subscription and region have Global Standard fine-tuned `gpt-4.1-mini` quota, deploys version `2025-04-14` as `medtriage-base`, creates the managed identity and GitHub OIDC trust, assigns the scoped Azure role, and configures repository secrets and resource variables.
+Only an instructor or repository administrator runs `12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1`. It creates or selects the Microsoft Foundry resource and project, verifies that the selected subscription and region have Global Standard fine-tuned `gpt-4.1-mini` quota, deploys version `2025-04-14` as `medtriage-base`, creates the managed identity and GitHub OIDC trust, assigns the scoped Azure role, and configures the project endpoint and other repository settings.
 
-The current repository is configured for `origin/main`, resource group `Krishna`, Azure AI resource `Finetunning121`, and East US. Run setup again only if those instructor-managed resources change.
+Before sharing the exercise, the instructor must set the repository visibility to **Public**. The Azure workflow contains a canonical-repository guard and cannot run against Azure from student forks. GitHub Actions secrets and variables are not inherited by forks.
+
+The current repository is configured for `origin/main`, resource group `Krishna`, Microsoft Foundry resource `Finetunning121`, project `proj-default`, and East US. Run setup again only if those instructor-managed resources change.
 
 ## Validation status
 

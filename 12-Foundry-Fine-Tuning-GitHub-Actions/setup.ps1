@@ -3,6 +3,7 @@
 param(
     [string]$ResourceGroup,
     [string]$AccountName,
+    [string]$ProjectName,
     [string]$Location,
     [string]$OidcSubject,
     [switch]$PreviewOnly
@@ -82,12 +83,12 @@ function Select-ExistingFoundryAccount {
     $parsedAccounts = ConvertFrom-Json -InputObject ($accountJson -join [Environment]::NewLine)
     $accounts = @(
         foreach ($azureAccount in $parsedAccounts) {
-            if ($azureAccount.kind -in @('AIServices', 'OpenAI')) { $azureAccount }
+            if ($azureAccount.kind -eq 'AIServices') { $azureAccount }
         }
     )
     $accounts = @($accounts | Sort-Object resourceGroup, name)
     if ($accounts.Count -eq 0) {
-        throw "No Azure AI Services or Azure OpenAI resources were found in subscription $SubscriptionId. Rerun and choose New."
+        throw "No Microsoft Foundry (AIServices) resources were found in subscription $SubscriptionId. Rerun and choose New."
     }
 
     do {
@@ -103,6 +104,35 @@ function Select-ExistingFoundryAccount {
         if (-not $validSelection) { Write-Warning "Invalid choice. Enter a number from 1 to $($accounts.Count)." }
     } until ($validSelection)
     return $accounts[$selection - 1]
+}
+
+function Get-FoundryProjects([string]$ResourceGroupName, [string]$FoundryAccountName) {
+    $projectsUrl = "https://management.azure.com/subscriptions/$SubscriptionId/resourceGroups/$ResourceGroupName/providers/Microsoft.CognitiveServices/accounts/$FoundryAccountName/projects?api-version=2025-06-01"
+    $projectsJson = az rest --method get --url $projectsUrl -o json
+    Assert-LastExitCode "List Microsoft Foundry projects on $FoundryAccountName"
+    $parsedProjects = ConvertFrom-Json -InputObject ($projectsJson -join [Environment]::NewLine)
+    return @(foreach ($project in $parsedProjects.value) { $project })
+}
+
+function Select-ExistingFoundryProject([array]$Projects) {
+    if ($Projects.Count -eq 1) {
+        Write-Host "Reusing the only Foundry project: $($Projects[0].name.Split('/')[-1])"
+        return $Projects[0]
+    }
+    do {
+        Write-Host ''
+        Write-Host 'Available Microsoft Foundry projects:'
+        for ($index = 0; $index -lt $Projects.Count; $index++) {
+            $candidate = $Projects[$index]
+            $candidateName = $candidate.name.Split('/')[-1]
+            Write-Host ("  [{0}] {1} | Region: {2}" -f ($index + 1), $candidateName, $candidate.location)
+        }
+        $selectionText = Read-Host "Enter the Foundry project number shown above (1-$($Projects.Count))"
+        $selection = 0
+        $validSelection = [int]::TryParse($selectionText, [ref]$selection) -and $selection -ge 1 -and $selection -le $Projects.Count
+        if (-not $validSelection) { Write-Warning "Invalid choice. Enter a number from 1 to $($Projects.Count)." }
+    } until ($validSelection)
+    return $Projects[$selection - 1]
 }
 
 foreach ($tool in @('az', 'gh', 'git')) { Get-Command $tool -ErrorAction Stop | Out-Null }
@@ -175,6 +205,7 @@ if ($modeSelection -eq '3') {
 $ResourceMode = if ($modeSelection -eq '1') { 'Existing' } else { 'New' }
 
 $createBaselineDeployment = $true
+$createProject = $true
 if ($ResourceMode -eq 'Existing') {
     if (($AccountName -and -not $ResourceGroup) -or ($ResourceGroup -and -not $AccountName)) {
         throw 'For noninteractive existing-resource setup, provide both ResourceGroup and AccountName.'
@@ -182,8 +213,8 @@ if ($ResourceMode -eq 'Existing') {
     if ($AccountName) {
         $selectedAccount = az cognitiveservices account show --subscription $SubscriptionId --resource-group $ResourceGroup --name $AccountName -o json | ConvertFrom-Json
         Assert-LastExitCode "Read existing Azure AI resource $AccountName"
-        if ($selectedAccount.kind -notin @('AIServices', 'OpenAI')) {
-            throw "$AccountName is not an Azure AI Services or Azure OpenAI resource."
+        if ($selectedAccount.kind -ne 'AIServices') {
+            throw "$AccountName is not a Microsoft Foundry (AIServices) resource."
         }
     } else {
         $selectedAccount = Select-ExistingFoundryAccount
@@ -191,6 +222,28 @@ if ($ResourceMode -eq 'Existing') {
     $AccountName = $selectedAccount.name
     $ResourceGroup = $selectedAccount.resourceGroup
     $Location = $selectedAccount.location
+    if (-not $selectedAccount.properties.allowProjectManagement) {
+        throw "$AccountName does not allow Microsoft Foundry project management. Select an upgraded AIServices resource or create a new one."
+    }
+
+    $projects = Get-FoundryProjects $ResourceGroup $AccountName
+    if ($ProjectName) {
+        $selectedProject = $projects | Where-Object { $_.name.Split('/')[-1] -eq $ProjectName } | Select-Object -First 1
+        if ($selectedProject) {
+            $createProject = $false
+        } elseif ($projects.Count -eq 0) {
+            $createProject = $true
+        } else {
+            throw "Foundry project '$ProjectName' was not found on $AccountName. Choose one of the existing projects."
+        }
+    } elseif ($projects.Count -gt 0) {
+        $selectedProject = Select-ExistingFoundryProject $projects
+        $ProjectName = $selectedProject.name.Split('/')[-1]
+        $createProject = $false
+    } else {
+        $ProjectName = Ask $ProjectName 'New Microsoft Foundry project name' 'medtriage-project'
+        $createProject = $true
+    }
 
     $deploymentJson = az cognitiveservices account deployment list --subscription $SubscriptionId --resource-group $ResourceGroup --name $AccountName -o json
     Assert-LastExitCode "List model deployments on $AccountName"
@@ -211,7 +264,12 @@ if ($ResourceMode -eq 'Existing') {
     $generatedName = "medtriageft$((Get-Random -Minimum 100000 -Maximum 999999))"
     $AccountName = Ask $AccountName 'New globally unique Azure AI Services name (lowercase letters and numbers only)' $generatedName
     if ($AccountName -notmatch '^[a-z0-9]{2,64}$') { throw 'AccountName must contain only lowercase letters and digits.' }
+    $ProjectName = Ask $ProjectName 'New Microsoft Foundry project name' 'medtriage-project'
+    $createProject = $true
     $template = Join-Path $PSScriptRoot 'infra/main.bicep'
+}
+if ($ProjectName -notmatch '^[A-Za-z0-9][A-Za-z0-9_.-]{1,63}$') {
+    throw 'ProjectName must be 2-64 characters and use only letters, numbers, periods, underscores, or hyphens.'
 }
 
 $usageJson = az cognitiveservices usage list --subscription $SubscriptionId --location $Location -o json
@@ -234,6 +292,7 @@ Write-Host "Resource mode:  $ResourceMode"
 Write-Host "Subscription:   $SubscriptionId"
 Write-Host "Resource group: $ResourceGroup"
 Write-Host "Azure resource: $AccountName"
+Write-Host "Foundry project: $ProjectName"
 Write-Host "Location:       $Location"
 Write-Host 'Base model:    gpt-4.1-mini (2025-04-14)'
 Write-Host "GitHub repo:    $GitHubRepo"
@@ -246,11 +305,15 @@ $parameters = @{
   parameters = @{
     resourceGroupName = @{ value = $ResourceGroup }
     accountName = @{ value = $AccountName }
+    projectName = @{ value = $ProjectName }
     location = @{ value = $Location }
     githubSubject = @{ value = $OidcSubject }
     githubIdentityName = @{ value = $identityName }
     createBaselineDeployment = @{ value = $createBaselineDeployment }
   }
+}
+if ($ResourceMode -eq 'Existing') {
+  $parameters.parameters.createProject = @{ value = $createProject }
 }
 $parameters | ConvertTo-Json -Depth 8 | Set-Content -Path $parameterFile -Encoding utf8
 $deploymentName = "medtriage-finetuning-$($ResourceMode.ToLowerInvariant())-$Location"
@@ -292,14 +355,15 @@ foreach ($item in @{
   Assert-LastExitCode "Set GitHub secret $($item.Key)"
 }
 foreach ($item in @{
-  MEDTRIAGE_FOUNDRY_ENDPOINT = $outputs.accountEndpoint.value
+  MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT = $outputs.projectEndpoint.value
   MEDTRIAGE_RESOURCE_GROUP = $ResourceGroup
   MEDTRIAGE_ACCOUNT_NAME = $AccountName
+  MEDTRIAGE_PROJECT_NAME = $ProjectName
 }.GetEnumerator()) {
   gh variable set $item.Key --body $item.Value --repo $GitHubRepo
   Assert-LastExitCode "Set GitHub variable $($item.Key)"
 }
-Write-Host "Provisioning complete. Foundry endpoint: $($outputs.accountEndpoint.value)"
-Write-Host "Azure resource mode: $ResourceMode ($ResourceGroup/$AccountName)"
+Write-Host "Provisioning complete. Foundry project endpoint: $($outputs.projectEndpoint.value)"
+Write-Host "Azure resource mode: $ResourceMode ($ResourceGroup/$AccountName/$ProjectName)"
 Write-Host "Actions: https://github.com/$GitHubRepo/actions"
-Write-Host 'Automation is ready. A push that changes Exercise 12 data, config, or scripts will submit fine-tuning after validation.'
+Write-Host 'Automation is ready. A push that changes Exercise 12 data or config will submit and monitor fine-tuning after validation.'

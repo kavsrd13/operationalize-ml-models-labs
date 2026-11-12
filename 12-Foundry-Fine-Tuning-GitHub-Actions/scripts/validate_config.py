@@ -5,11 +5,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
 APPROVED_MODEL = "gpt-4.1-mini-2025-04-14"
-APPROVED_TRAINING_TYPE = "globalStandard"
+APPROVED_METHOD = "supervised"
+APPROVED_TRAINING_TYPE = "GlobalStandard"
 
 
 def main() -> None:
@@ -69,16 +71,41 @@ def main() -> None:
         raise SystemExit(
             f"Exercise 12 requires training_type={APPROVED_TRAINING_TYPE}."
         )
-    if not isinstance(config.get("n_epochs"), int) or config["n_epochs"] < 1:
-        raise SystemExit("n_epochs must be a positive integer.")
-    if not isinstance(config.get("learning_rate_multiplier"), (int, float)) or config["learning_rate_multiplier"] <= 0:
-        raise SystemExit("learning_rate_multiplier must be greater than zero.")
-    if not isinstance(config.get("suffix"), str) or not config["suffix"].strip():
-        raise SystemExit("suffix must be a non-empty string.")
+    if config.get("method") != APPROVED_METHOD:
+        raise SystemExit(f"Exercise 12 requires method={APPROVED_METHOD}.")
+
+    hyperparameters = config.get("hyperparameters")
+    if not isinstance(hyperparameters, dict):
+        raise SystemExit("hyperparameters must be a JSON object.")
+    expected_hyperparameters = {"n_epochs", "batch_size", "learning_rate_multiplier"}
+    if set(hyperparameters) != expected_hyperparameters:
+        raise SystemExit(
+            f"hyperparameters must contain exactly {sorted(expected_hyperparameters)}."
+        )
+    n_epochs = hyperparameters["n_epochs"]
+    batch_size = hyperparameters["batch_size"]
+    learning_rate = hyperparameters["learning_rate_multiplier"]
+    if not isinstance(n_epochs, int) or isinstance(n_epochs, bool) or not 1 <= n_epochs <= 5:
+        raise SystemExit("hyperparameters.n_epochs must be an integer from 1 to 5.")
+    if not isinstance(batch_size, int) or isinstance(batch_size, bool) or not 1 <= batch_size <= 32:
+        raise SystemExit("hyperparameters.batch_size must be an integer from 1 to 32.")
+    if (
+        not isinstance(learning_rate, (int, float))
+        or isinstance(learning_rate, bool)
+        or not 0.1 <= learning_rate <= 2.0
+    ):
+        raise SystemExit("hyperparameters.learning_rate_multiplier must be between 0.1 and 2.0.")
+
+    seed = config.get("seed")
+    if not isinstance(seed, int) or isinstance(seed, bool) or not 0 <= seed <= 2_147_483_647:
+        raise SystemExit("seed must be an integer from 0 to 2147483647.")
+    suffix = config.get("suffix")
+    if not isinstance(suffix, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,40}", suffix):
+        raise SystemExit("suffix must be 1-40 letters, numbers, hyphens, or underscores.")
 
     print(
-        f"Configuration valid: model={APPROVED_MODEL}, "
-        f"training_type={APPROVED_TRAINING_TYPE}"
+        f"Configuration valid: model={APPROVED_MODEL}, method={APPROVED_METHOD}, "
+        f"training_type={APPROVED_TRAINING_TYPE}, hyperparameters={hyperparameters}"
     )
     print(f"Training data: {resolved_files['training_file']}")
     print(f"Validation data: {resolved_files['validation_file']}")

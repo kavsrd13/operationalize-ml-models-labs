@@ -8,6 +8,9 @@ param resourceGroupName string
 @maxLength(64)
 param accountName string
 
+@description('Microsoft Foundry project used by the Azure AI Projects SDK.')
+param projectName string = 'medtriage-project'
+
 @description('Azure region for the Foundry resource and fine-tuning workload.')
 param location string = 'eastus'
 
@@ -35,6 +38,7 @@ module resources './resources.bicep' = {
   scope: resourceGroup
   params: {
     accountName: accountName
+    projectName: projectName
     location: location
     githubSubject: githubSubject
     githubIdentityName: githubIdentityName
@@ -43,5 +47,6 @@ module resources './resources.bicep' = {
 }
 
 output accountEndpoint string = resources.outputs.accountEndpoint
+output projectEndpoint string = resources.outputs.projectEndpoint
 output githubClientId string = resources.outputs.githubClientId
 output accountResourceId string = resources.outputs.accountResourceId

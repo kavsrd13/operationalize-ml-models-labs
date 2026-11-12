@@ -1,52 +1,40 @@
-import importlib.util
-from pathlib import Path
+from __future__ import annotations
+
+import sys
 import unittest
-from unittest.mock import Mock, patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 
-SCRIPT = Path(__file__).parents[1] / "scripts" / "evaluate_baseline.py"
-SPEC = importlib.util.spec_from_file_location("evaluate_baseline", SCRIPT)
-evaluate_baseline = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(evaluate_baseline)
+EXERCISE_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(EXERCISE_DIR / "scripts"))
+
+import foundry_sdk  # noqa: E402
 
 
-class PostWithRateLimitRetriesTests(unittest.TestCase):
-    @patch.object(evaluate_baseline.time, "sleep")
-    @patch.object(evaluate_baseline.requests, "post")
-    def test_retries_429_using_retry_after_ms(self, post, sleep):
-        throttled = Mock(status_code=429, headers={"retry-after-ms": "1500"})
-        success = Mock(status_code=200)
-        post.side_effect = [throttled, success]
+class FoundryClientRetryTests(unittest.TestCase):
+    @patch.object(foundry_sdk, "AIProjectClient")
+    @patch.object(foundry_sdk, "DefaultAzureCredential")
+    def test_openai_client_retries_transient_throttling(self, credential_type, project_type) -> None:
+        credential_resource = MagicMock()
+        credential = MagicMock()
+        credential_resource.__enter__.return_value = credential
+        credential_type.return_value = credential_resource
 
-        response = evaluate_baseline.post_with_rate_limit_retries("https://example.test", headers={}, json_body={})
+        project_resource = MagicMock()
+        project_client = MagicMock()
+        project_resource.__enter__.return_value = project_client
+        project_type.return_value = project_resource
 
-        self.assertIs(response, success)
-        sleep.assert_called_once_with(1.5)
-        self.assertEqual(post.call_count, 2)
+        openai_resource = MagicMock()
+        openai_client = MagicMock()
+        openai_resource.__enter__.return_value = openai_client
+        project_client.get_openai_client.return_value = openai_resource
 
-    @patch.object(evaluate_baseline.time, "sleep")
-    @patch.object(evaluate_baseline.requests, "post")
-    def test_retries_using_retry_after_seconds(self, post, sleep):
-        throttled = Mock(status_code=429, headers={"retry-after": "3"})
-        success = Mock(status_code=200)
-        post.side_effect = [throttled, success]
+        with foundry_sdk.open_project_client("https://example.services.ai.azure.com/api/projects/demo") as client:
+            self.assertIs(client, openai_client)
 
-        evaluate_baseline.post_with_rate_limit_retries("https://example.test", headers={}, json_body={})
-
-        sleep.assert_called_once_with(3)
-
-    @patch.object(evaluate_baseline.time, "sleep")
-    @patch.object(evaluate_baseline.requests, "post")
-    def test_raises_after_retry_limit(self, post, sleep):
-        throttled = Mock(status_code=429, headers={})
-        throttled.raise_for_status.side_effect = RuntimeError("429")
-        post.return_value = throttled
-
-        with self.assertRaisesRegex(RuntimeError, "429"):
-            evaluate_baseline.post_with_rate_limit_retries("https://example.test", headers={}, json_body={})
-
-        self.assertEqual(post.call_count, evaluate_baseline.MAX_RATE_LIMIT_RETRIES + 1)
-        self.assertEqual(sleep.call_count, evaluate_baseline.MAX_RATE_LIMIT_RETRIES)
+        project_client.get_openai_client.assert_called_once_with(max_retries=5)
 
 
 if __name__ == "__main__":

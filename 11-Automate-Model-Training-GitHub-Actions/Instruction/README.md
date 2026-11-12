@@ -8,34 +8,41 @@ This lab uses industry practices: versioned infrastructure, a deployment preview
 
 ## 1. Prepare access and tools
 
-Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. You need access to the private course repository and permission to create a private repository. For infrastructure setup, use an Azure account permitted to create resource groups and resources and assign roles (for example subscription Owner). An instructor can perform setup for students who only have workspace access. Ensure the selected region has at least four available E-series v4 CPU cores for Standard_E4ds_v4, or pass an available size using -VmSize.
+Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. The public course repository can be inspected or cloned without signing in:
 
 ```powershell
-gh auth login
-az login
-az bicep install
-gh repo clone kavsrd13/operationalize-ml-models-labs
+git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+```
+
+For infrastructure setup, use an Azure account permitted to create resource groups and resources and assign roles (for example subscription Owner). An instructor can perform setup for students who only have workspace access. Ensure the selected region has at least four available E-series v4 CPU cores for Standard_E4ds_v4, or pass an available size using `-VmSize`.
+
+## 2. Fork and clone into your GitHub account
+
+1. Sign in at [GitHub](https://github.com/).
+2. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
+3. Select **Fork**, keep the repository name, and select **Create fork**.
+4. Clone your fork by replacing `YOUR-GITHUB-USERNAME` below:
+
+```powershell
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
+git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
+git remote -v
+$LAB_REPO = 'YOUR-GITHUB-USERNAME/operationalize-ml-models-labs'
 ```
 
-Clone first because the Bicep template and setup script are in the repository. All following commands run from this repository root.
-
-## 2. Create your private student repository
-
-```powershell
-$OWNER = gh api user --jq '.login'
-$REPO = 'my-azure-ml-training-lab'
-$LAB_REPO = "$OWNER/$REPO"
-gh repo create $LAB_REPO --private --source . --remote student --push
-```
-
-Choose a new repository name if that name already exists. Keep main as the default branch. The initial workflow may be skipped: setup enables training only after resources and access are ready. The student remote points to your repository; origin still points to the instructor repository.
+No `gh auth login` command is needed to clone. The fork is your student repository, `origin` points to it, and `upstream` points to the instructor repository. Keep `main` as the default branch. The initial workflow is skipped because setup enables training only after Azure resources and access are ready.
 
 ## 3. Run guided setup
 
 ```powershell
+az login
+az bicep install
+gh auth login
 .\11-Automate-Model-Training-GitHub-Actions\setup.ps1 -GitHubRepo $LAB_REPO
 ```
+
+The GitHub CLI sign-in here is not needed for cloning. Exercise 11 needs it only because the setup script must configure Actions secrets, variables, and passwordless OIDC trust in **your fork**. Complete the browser sign-in with the GitHub account that owns the fork.
 
 The script asks for subscription, region, resource group and workspace. Use a dedicated course group, for example rg-course-anna and mlw-course-anna. Keep those names for subsequent labs. Students sharing a subscription need separate groups and workspaces.
 
@@ -92,7 +99,7 @@ Open jobs/train-job.yml in Lab 11. Change learning_rate from 0.05 to 0.10, then:
 ```powershell
 git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
 git commit -m "Experiment: compare learning rate 0.10"
-git push student main
+git push origin main
 ```
 
 Open Actions. A new run starts automatically; do not click Run workflow again. Select both jobs in the Studio experiment to compare metrics. Check that the MLflow git_commit tag matches each GitHub commit. Record whether MAE improved; lower is better. A parameter change does not guarantee improvement.
@@ -120,7 +127,7 @@ Let running jobs complete, or cancel them in Azure ML Studio. Cancelling GitHub 
 - AADSTS700213: GitHub's presented subject must match exactly. New repositories use numeric owner/repository IDs. Older, renamed, transferred or customized repositories can differ. Rerun setup with -OidcSubject followed by the exact presented subject from the failed login. See [GitHub OIDC reference](https://docs.github.com/en/actions/reference/security/oidc).
 - First-run authorization error: role assignments can take a few minutes to propagate. Retry the workflow after propagation.
 - Workflow skipped: verify ENABLE_AZURE_TRAINING is true in your student repository.
-- No push run: verify you pushed to student main and changed a watched path.
+- No push run: verify you pushed to `origin/main` in your fork and changed a watched path.
 - Training failed: open the Azure job's user_logs/std_log.txt. GitHub reports the Azure final status.
 - GitHub timed out or was cancelled: inspect the Azure job before retrying to avoid duplicate jobs.
 

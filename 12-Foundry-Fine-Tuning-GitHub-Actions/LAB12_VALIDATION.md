@@ -8,8 +8,13 @@
 - Assistant JSON schema and allowed urgency labels passed.
 - Identical user-question overlap across splits: zero.
 - Python scripts compile locally.
-- The configuration validator pins `gpt-4.1-mini-2025-04-14` and `globalStandard` training before any Azure upload.
+- The configuration validator separates `GlobalStandard` placement from the SFT hyperparameters `n_epochs`, `batch_size` and `learning_rate_multiplier`.
+- The SDK request-shape test verifies hyperparameters are nested under `method.supervised.hyperparameters`, while `seed`, `suffix` and `trainingType` remain job controls.
+- `azure-ai-projects` 2.8.0, `azure-identity` 1.25.3 and `openai` 3.13.0 are pinned for repeatable GitHub execution.
+- The existing project endpoint `https://finetunning121.services.ai.azure.com/api/projects/proj-default` responded through `AIProjectClient`; the signed-in human identity was correctly denied because Azure Owner does not grant Foundry data-plane fine-tuning permissions.
+- The existing-resource Azure what-if accepted a single least-privilege change: assign `Foundry User` to the GitHub managed identity at `proj-default` scope. It predicted no account, project, deployment, identity or federation replacement.
 - The workflow trigger covers all committed changes under `data/**` and `config/**`; dataset filenames are resolved at runtime instead of being hardcoded in the workflow.
+- The Azure job is guarded by the canonical repository name, so pushes in public forks cannot attempt to use upstream OIDC settings or Azure configuration.
 - GitHub workflow YAML parses locally.
 - PowerShell setup script parses locally.
 - New-resource and existing-resource Bicep entry points compile locally.
@@ -19,4 +24,4 @@
 
 ## Live validation boundary
 
-The Exercise 12 revision has not submitted a new paid `gpt-4.1-mini` fine-tuning job. A learner must push reviewed data and the pinned configuration, monitor the job to a terminal state, compare it with the baseline, and obtain instructor approval before deployment. Quota and model lifecycle must be rechecked in each learner subscription. A submitted or succeeded job is not evidence that the fine-tuned model is safe or better than the base model.
+The SDK revision has not yet submitted a new paid `gpt-4.1-mini` fine-tuning job. Applying the project-scoped role and publishing the changed configuration require explicit approval because the push immediately starts paid training. After training, the learner must compare checkpoints and held-out behavior with the baseline and obtain instructor approval before deployment. A submitted or succeeded job is not evidence that the fine-tuned model is safe or better than the base model.

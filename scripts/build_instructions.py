@@ -1,4 +1,4 @@
-"""Build offline HTML instruction pages and one complete course index.
+"""Build offline HTML instruction pages and a button-only course index.
 
 Only Python's standard library is required. Run from anywhere with
 `python scripts/build_instructions.py`.
@@ -123,7 +123,6 @@ def page(title: str, body: str, stylesheet: str, nav: str) -> str:
 
 def main() -> None:
     cards = []
-    sections = []
     for lab in LABS:
         source = lab / "Instruction" / "README.md"
         if not source.is_file():
@@ -137,12 +136,12 @@ def main() -> None:
             newline="\n",
         )
         cards.append(f'<a class="card" href="{lab.name}/Instruction/index.html"><small>{lab.name[:2]}</small><strong>{html.escape(title)}</strong><span>Open this exercise →</span></a>')
-        root_body = render(markdown, f"{lab.name}/Instruction/")
-        sections.append(f'<section id="lab-{lab.name[:2]}"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="{lab.name}/Instruction/index.html">Separate page</a></div>{root_body}</section>')
-    body = '<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>All student instructions in one page. Each exercise can start from a fresh clone; reuse the same Azure workspace and generic compute name when taking several labs.</p></div>'
-    body += '<div class="cards">' + "\n".join(cards) + '</div><div class="all-labs">' + "\n".join(sections) + '</div>'
+    repo_url = "https://github.com/kavsrd13/operationalize-ml-models-labs"
+    body = f'''<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p>Select an exercise below to open its complete instructions.</p></div>
+<section class="repo-panel"><h2>Clone the course code</h2><p>GitHub repository: <a href="{repo_url}">{repo_url}</a></p><pre><code>git clone {repo_url}.git</code></pre><a class="repo-button" href="{repo_url}">Open GitHub repository →</a></section>
+<h2 class="exercise-heading">Exercises</h2><div class="cards">''' + "\n".join(cards) + '</div>'
     (ROOT / "index.html").write_text(page("All exercises", body, "assets/site.css", "index.html"), encoding="utf-8", newline="\n")
-    print(f"Built {len(LABS)} exercise pages and one complete index")
+    print(f"Built {len(LABS)} exercise pages and one button-only index")
 
 
 if __name__ == "__main__":

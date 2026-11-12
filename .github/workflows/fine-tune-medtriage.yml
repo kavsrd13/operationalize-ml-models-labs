@@ -18,6 +18,7 @@ concurrency:
 
 jobs:
   validate:
+    if: github.repository == 'kavsrd13/operationalize-ml-models-labs'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -38,7 +39,7 @@ jobs:
   baseline-and-submit:
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
 
@@ -55,35 +56,50 @@ jobs:
           tenant-id: ${{ secrets.MEDTRIAGE_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.MEDTRIAGE_AZURE_SUBSCRIPTION_ID }}
 
-      - name: Upload data and submit fine-tuning job
+      - name: Baseline, upload data, and submit fine-tuning
+        id: submit
         env:
-          FOUNDRY_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_ENDPOINT }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT }}
         run: |
           set -euo pipefail
           python -m pip install --disable-pip-version-check -r 12-Foundry-Fine-Tuning-GitHub-Actions/requirements.txt
-          TOKEN=$(az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv)
-          export AZURE_ACCESS_TOKEN="$TOKEN"
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/evaluate_baseline.py \
-            --endpoint "$FOUNDRY_ENDPOINT" \
+            --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
             --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
             --output baseline_metrics.json
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/submit_finetune.py \
-            --endpoint "$FOUNDRY_ENDPOINT" \
+            --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
             --config 12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
             --training-file "$MEDTRIAGE_TRAINING_FILE" \
             --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
             --output fine_tuning_job.json
           JOB_ID=$(python -c "import json; print(json.load(open('fine_tuning_job.json'))['job']['id'])")
+          echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
           echo "### MedTriage fine-tuning submitted" >> "$GITHUB_STEP_SUMMARY"
           echo "Job ID: \`$JOB_ID\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Baseline metrics:" >> "$GITHUB_STEP_SUMMARY"
           cat baseline_metrics.json >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Preserve submitted job details
+      - name: Monitor training and collect checkpoints
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT }}
+        run: |
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/monitor_finetune.py \
+            --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
+            --job-id "${{ steps.submit.outputs.job_id }}" \
+            --output fine_tuning_result.json
+          FINE_TUNED_MODEL=$(python -c "import json; print(json.load(open('fine_tuning_result.json'))['job']['fine_tuned_model'])")
+          echo "### MedTriage fine-tuning completed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Fine-tuned model: \`$FINE_TUNED_MODEL\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Preserve experiment evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: fine-tuning-job
           path: |
             fine_tuning_job.json
+            fine_tuning_result.json
             baseline_metrics.json
+          if-no-files-found: warn

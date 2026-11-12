@@ -5,15 +5,24 @@
 Create lag-based climate features, train and track a forecasting model locally, then
 register, deploy, and invoke it through Azure ML.
 
-## Start from a fresh clone
+## Fork and clone the public repository
 
-Ask the instructor for access to the private GitHub repository. Install Python 3.10 or 3.11, GitHub CLI, Azure CLI, and a notebook editor. From an empty working folder in PowerShell:
+Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:
 
 ```powershell
-gh auth login
-gh repo clone kavsrd13/operationalize-ml-models-labs
-Set-Location .\operationalize-ml-models-labs
+git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
 ```
+
+To save your exercise work in your own GitHub account, sign in at [GitHub](https://github.com/), open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, and then select **Create fork**. Clone your fork instead of the upstream repository:
+
+```powershell
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
+git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
+git remote -v
+```
+
+No `gh auth login` command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.
 
 ## Code files
 
