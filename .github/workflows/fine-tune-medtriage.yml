@@ -8,7 +8,6 @@ on:
       - '12-Foundry-Fine-Tuning-GitHub-Actions/data/**'
       - '12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json'
       - '12-Foundry-Fine-Tuning-GitHub-Actions/scripts/**'
-      - '.github/workflows/fine-tune-medtriage.yml'
 
 permissions:
   contents: read
@@ -33,7 +32,6 @@ jobs:
 
   baseline-and-submit:
     needs: validate
-    if: vars.ENABLE_MEDTRIAGE_FINETUNING == 'true' && vars.MEDTRIAGE_DATA_REVIEWED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:

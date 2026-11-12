@@ -15,4 +15,4 @@ Open [Instruction/README.md](Instruction/README.md) for the editable student gui
 - `setup.ps1`: guided Azure selection, deployment preview, OIDC and GitHub configuration.
 - `LAB12_VALIDATION.md`: completed checks and the live-validation boundary.
 
-The workflow is stored at repository root in `.github/workflows/fine-tune-medtriage.yml`, as required by GitHub Actions. Both training gates are disabled by setup and must be enabled deliberately after data review.
+The workflow is stored at repository root in `.github/workflows/fine-tune-medtriage.yml`, as required by GitHub Actions. Infrastructure and OIDC are configured once by the instructor. Students replace the two versioned JSONL files, edit `config/finetune.json`, and push to `main`; validation, baseline evaluation and fine-tuning submission then run automatically.

@@ -15,7 +15,7 @@
 <a class="card" href="09-IMDB-Sentiment-Classification/Instruction/index.html"><small>09</small><strong>Exercise 09: IMDB sentiment classification</strong><span>Open this exercise →</span></a>
 <a class="card" href="10-Delhi-Climate-Time-Series/Instruction/index.html"><small>10</small><strong>Exercise 10: Delhi climate time-series regression</strong><span>Open this exercise →</span></a>
 <a class="card" href="11-Automate-Model-Training-GitHub-Actions/Instruction/index.html"><small>11</small><strong>Exercise 11: GitHub training automation with Bicep and MLflow</strong><span>Open this exercise →</span></a>
-<a class="card" href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/index.html"><small>12</small><strong>Exercise 12: Automate Foundry fine-tuning with GitHub Actions</strong><span>Open this exercise →</span></a></div><div class="all-labs"><section id="lab-00"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="00-Shared-Setup-and-Data/Instruction/index.html">Separate page</a></div><h1>Exercise 00: One shared Azure ML setup</h1>
+<a class="card" href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/index.html"><small>12</small><strong>Exercise 12: Automatic Foundry fine-tuning from GitHub</strong><span>Open this exercise →</span></a></div><div class="all-labs"><section id="lab-00"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="00-Shared-Setup-and-Data/Instruction/index.html">Separate page</a></div><h1>Exercise 00: One shared Azure ML setup</h1>
 <h2>Goal</h2>
 <p>Use one workspace, one scale-to-zero CPU cluster, and named data assets throughout the course. Exercises 01 and 02 run locally; cloud exercises 03–11 reuse this setup.</p>
 <h2>Start from a fresh clone</h2>
@@ -753,169 +753,99 @@ git push student main</code></pre>
 </ul>
 <h2>Validation status</h2>
 <p>The previous training workflow was live-tested on 11 November 2026. The Bicep-managed identity setup and additional MLflow artifacts are a new revision. See LAB11_VALIDATION.md in this exercise for the checks actually completed; previous live evidence does not validate the new setup.</p></section>
-<section id="lab-12"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/index.html">Separate page</a></div><h1>Exercise 12: Automate Foundry fine-tuning with GitHub Actions</h1>
+<section id="lab-12"><div class="section-nav"><a href="#top">↑ Back to top</a> · <a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/index.html">Separate page</a></div><h1>Exercise 12: Automatic Foundry fine-tuning from GitHub</h1>
 <h2>Outcome</h2>
-<p>Create or reuse a Microsoft Foundry/Azure AI Services resource, connect a private student GitHub repository to Azure without a client secret, validate a versioned medical-triage dataset, measure the base model, and submit a supervised fine-tuning job after an approved push to <code>main</code>.</p>
-<p>This exercise is independent of Exercises 00–11. It uses Azure AI Services and Foundry rather than the shared Azure Machine Learning workspace or <code>course-cpu</code> cluster.</p>
-<p>The automation submits a fine-tuning job; it does not automatically deploy the resulting model. In an industry workflow, deployment follows job completion, checkpoint evaluation, safety review, quota confirmation, and a separate approval.</p>
-<h2>Architecture</h2>
-<pre><code>Student changes versioned data or configuration
-                 |
-                 v
-        Push to GitHub main
-                 |
-                 v
- GitHub Actions validates the JSONL dataset
-                 |
-                 v
- GitHub OIDC obtains a short-lived Azure token
-                 |
-                 v
- Base gpt-4.1-mini evaluation is recorded
-                 |
-                 v
- Training and validation files are uploaded
-                 |
-                 v
- Microsoft Foundry fine-tuning job is submitted</code></pre>
-<h2>1. Check prerequisites and quota</h2>
-<p>Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. You need:</p>
-<ul>
-<li>A private GitHub repository you administer.</li>
-<li>An Azure subscription in which you can deploy resources and assign roles. Subscription Owner is sufficient for the classroom bootstrap; an administrator can perform setup for learners with narrower access.</li>
-<li>A region and subscription with <code>gpt-4.1-mini</code> version <code>2025-04-14</code> base deployment capacity and fine-tuning quota.</li>
-<li>A qualified reviewer for the medical labels and safety wording before enabling paid training.</li>
-</ul>
-<p>Check the tools and sign in with the Azure identity that belongs to the intended tenant:</p>
-<pre><code>git --version
-gh --version
-az version
-python --version
-gh auth login
-az login --use-device-code
-az bicep install</code></pre>
-<p>Device-code authentication is completed in the same terminal session that will run setup. A login completed in another machine or agent session does not transfer its Azure CLI token.</p>
-<h2>2. Clone the repository and use <code>origin/main</code></h2>
-<pre><code>gh repo clone kavsrd13/operationalize-ml-models-labs
+<p>Replace the training data, edit one configuration file, and push to <code>main</code>. GitHub automatically validates the data, measures the base model, signs in to Azure without a password, uploads the files, and submits a Microsoft Foundry supervised fine-tuning job.</p>
+<p>The instructor has already completed the one-time Azure infrastructure and GitHub OIDC setup. Students do <strong>not</strong> run <code>setup.ps1</code>, create a service principal, create Azure resources, or configure GitHub secrets.</p>
+<h2>The complete student workflow</h2>
+<pre><code>Clone repository
+      ↓
+Replace training and validation JSONL files
+      ↓
+Edit config/finetune.json
+      ↓
+Commit and push to origin/main
+      ↓
+GitHub validates → evaluates baseline → submits fine-tuning</code></pre>
+<h2>1. Clone the repository</h2>
+<p>Ask the instructor for write access to <code>kavsrd13/operationalize-ml-models-labs</code>. Install Git and GitHub CLI, then run:</p>
+<pre><code>gh auth login
+gh repo clone kavsrd13/operationalize-ml-models-labs
 Set-Location .\operationalize-ml-models-labs
 git switch main
-git pull --ff-only origin main
-$LAB_REPO = gh repo view --json nameWithOwner --jq &#x27;.nameWithOwner&#x27;</code></pre>
-<p>The exercise uses only the repository connected as <code>origin</code> and only its <code>main</code> branch. Setup detects <code>OWNER/REPOSITORY</code> from <code>origin</code>, verifies that the current local branch is <code>main</code>, confirms repository administrator permission, and stops if <code>main</code> has branch protection or the repository has a ruleset. The course repository currently has neither, so a permitted user can push directly to <code>origin/main</code>.</p>
-<h2>3. Inspect the actual code</h2>
+git pull --ff-only origin main</code></pre>
+<p>The exercise uses the shared course repository and its <code>main</code> branch. Do not create another repository, remote, service principal or Azure resource.</p>
+<h2>2. Add your reviewed data</h2>
+<p>Replace the contents of these two existing files without changing their filenames:</p>
 <ul>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../setup.ps1">setup.ps1</a>: guided subscription, resource, Bicep and GitHub configuration.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../infra/main.bicep">infra/main.bicep</a>: creates a new resource group and delegates new-resource provisioning.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../infra/resources.bicep">infra/resources.bicep</a>: creates a new Azure AI Services resource, base deployment, managed identity, OIDC federation and role assignment.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../infra/existing-main.bicep">infra/existing-main.bicep</a>: targets the resource group of a selected existing resource without recreating the group.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../infra/existing-resources.bicep">infra/existing-resources.bicep</a>: reuses the selected account and adds only the missing lab components.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../config/finetune.json">config/finetune.json</a>: model, training tier, epochs, learning-rate multiplier and suffix.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../scripts/validate_dataset.py">scripts/validate_dataset.py</a>: deterministic checks before Azure is used.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../scripts/evaluate_baseline.py">scripts/evaluate_baseline.py</a>: evaluates ten held-out examples against <code>medtriage-base</code>.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../scripts/submit_finetune.py">scripts/submit_finetune.py</a>: uploads both datasets and submits the supervised fine-tuning job.</li>
-<li><a href="12-Foundry-Fine-Tuning-GitHub-Actions/Instruction/../../.github/workflows/fine-tune-medtriage.yml">GitHub workflow</a>: validation, OIDC login, baseline evaluation and submission.</li>
+<li><code>12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl</code></li>
+<li><code>12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl</code></li>
 </ul>
-<p>The workflow requests <code>id-token: write</code>. Azure trusts only the configured repository and <code>main</code> branch. GitHub stores the identity&#x27;s client ID, tenant ID and subscription ID, but no password, API key or client secret.</p>
-<h2>4. Validate the versioned dataset locally</h2>
+<p>Each JSONL line must contain exactly three messages in this order:</p>
+<pre><code>{&quot;messages&quot;:[{&quot;role&quot;:&quot;system&quot;,&quot;content&quot;:&quot;...&quot;},{&quot;role&quot;:&quot;user&quot;,&quot;content&quot;:&quot;...&quot;},{&quot;role&quot;:&quot;assistant&quot;,&quot;content&quot;:&quot;{\&quot;urgency\&quot;:\&quot;Routine\&quot;,\&quot;department\&quot;:\&quot;Primary Care\&quot;,\&quot;reason\&quot;:\&quot;...\&quot;,\&quot;next_step\&quot;:\&quot;...\&quot;}&quot;}]}</code></pre>
+<p>The assistant content must be a JSON string containing exactly <code>urgency</code>, <code>department</code>, <code>reason</code>, and <code>next_step</code>. This medical demonstration must contain no personal health information. A qualified reviewer must approve its labels and emergency wording before the push because the push starts a paid job automatically.</p>
+<p>Optional local check:</p>
 <pre><code>python .\12-Foundry-Fine-Tuning-GitHub-Actions\scripts\validate_dataset.py `
   .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_training_300.jsonl `
   .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_validation_300.jsonl</code></pre>
-<p>Expected result:</p>
-<pre><code>Training examples: 255
-Validation examples: 45
-System prompts: 1
-Train/validation overlap: 0
-Dataset validation passed.</code></pre>
-<p>The filenames contain <code>300</code>, but the actual split is 255 training and 45 validation examples. The validator also requires exactly <code>system</code>, <code>user</code>, and <code>assistant</code> messages, valid assistant JSON, the four expected output fields, allowed urgency labels, nonblank values, and no identical user questions across the two splits.</p>
-<p>Do not enable training merely because structural validation passes. A qualified reviewer must confirm clinical labels, emergency escalation language, jurisdiction, consent to use the data, and absence of personal health information. This is a teaching dataset, not a clinical decision-support system.</p>
-<h2>5. Preview the guided Azure setup</h2>
-<p>Run the setup from the repository root:</p>
-<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 -PreviewOnly</code></pre>
-<p>The script lists every enabled subscription visible to the signed-in Azure user with a number. Enter the displayed number, not the subscription ID. For example, if the intended subscription is shown as <code>[2]</code>, enter <code>2</code>. Invalid input displays the numbered list again.</p>
-<p>After selecting a subscription, the script asks:</p>
-<pre><code>[1] Use an existing Azure AI Services / Azure OpenAI resource
-[2] Create a new dedicated Azure AI Services resource
-[3] Exit setup without deploying anything</code></pre>
-<p>Every setup run displays this menu. Enter exactly <code>1</code>, <code>2</code>, or <code>3</code>. An invalid entry displays all three choices again. Option <code>3</code> stops before Bicep deployment or GitHub configuration.</p>
-<h3>Option 1: existing resource</h3>
-<p>The script lists compatible resources in the selected subscription. Select one by number. It uses the selected resource&#x27;s group, name and region and does not recreate or retag that resource.</p>
-<p>If <code>medtriage-base</code> already deploys <code>gpt-4.1-mini</code> version <code>2025-04-14</code>, it is reused. If that deployment is missing, Bicep proposes creating it. If the name belongs to a different model or version, setup stops instead of overwriting it.</p>
-<h3>Option 2: new resource</h3>
-<p>The script asks for a resource group, region and globally unique Azure AI Services name. Defaults are offered, but the learner can enter different names. Bicep proposes the dedicated resource group, Azure AI Services resource and base deployment.</p>
-<h3>Resources common to both choices</h3>
-<p>The preview includes a user-assigned managed identity unique to the student repository, a GitHub OIDC federated credential restricted to <code>main</code>, and <code>Cognitive Services OpenAI Contributor</code> on only the selected Azure AI resource.</p>
-<p>Read the entire <code>what-if</code> output. <code>-PreviewOnly</code> creates no Azure or GitHub resources.</p>
-<h2>6. Apply the setup</h2>
-<p>Rerun without <code>-PreviewOnly</code>:</p>
-<pre><code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code></pre>
-<p>Choose the same subscription and resource strategy. After the preview, the script displays:</p>
-<pre><code>[1] Deploy the resources shown above
-[2] Show the Bicep what-if preview again
-[3] Exit without deploying</code></pre>
-<p>Enter <code>1</code> only when the proposed resources are correct. Enter <code>2</code> to inspect the preview again or <code>3</code> to stop.</p>
-<p>After deployment the script configures these GitHub secrets:</p>
-<ul>
-<li><code>MEDTRIAGE_AZURE_CLIENT_ID</code></li>
-<li><code>MEDTRIAGE_AZURE_TENANT_ID</code></li>
-<li><code>MEDTRIAGE_AZURE_SUBSCRIPTION_ID</code></li>
-</ul>
-<p>It also configures the Foundry endpoint, Azure resource names and two safety variables. Both safety variables initially remain <code>false</code>, so setup cannot accidentally submit a paid job.</p>
-<p>For repeatable setup, pass the resource details explicitly. Subscription selection, resource strategy and final deployment approval remain numbered interactive choices:</p>
-<pre><code># Reuse a known resource
-.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -ResourceGroup YOUR_EXISTING_RESOURCE_GROUP `
-  -AccountName YOUR_EXISTING_AI_RESOURCE
+<p>The included example currently reports 255 training records, 45 validation records, one system prompt and zero identical questions across the splits.</p>
+<h2>3. Edit the fine-tuning configuration</h2>
+<p>Open <code>12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json</code>:</p>
+<pre><code>{
+  &quot;model&quot;: &quot;gpt-4.1-mini-2025-04-14&quot;,
+  &quot;training_type&quot;: &quot;globalStandard&quot;,
+  &quot;n_epochs&quot;: 2,
+  &quot;learning_rate_multiplier&quot;: 1.0,
+  &quot;suffix&quot;: &quot;medtriage-json&quot;
+}</code></pre>
+<p>For the first run, keep the model and training type unchanged. Give <code>suffix</code> a short experiment name. Change epochs or learning rate only when the experiment has a clear comparison objective.</p>
+<h2>4. Push and start fine-tuning automatically</h2>
+<p>Stage only the two data files and configuration:</p>
+<pre><code>git add `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_training_300.jsonl `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\data\medical_triage_validation_300.jsonl `
+  .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
 
-# Or create a dedicated resource
-.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1 `
-  -ResourceGroup rg-medtriage-finetuning `
-  -Location eastus `
-  -AccountName YOUR_GLOBALLY_UNIQUE_NAME</code></pre>
-<h2>7. Review and enable the controlled training gates</h2>
-<p>Only after the required data review, enable both repository variables:</p>
-<pre><code>gh variable set MEDTRIAGE_DATA_REVIEWED --body true --repo $LAB_REPO
-gh variable set ENABLE_MEDTRIAGE_FINETUNING --body true --repo $LAB_REPO</code></pre>
-<p>These are deliberate cost and safety gates, not credentials. If either value is not exactly <code>true</code>, the workflow is skipped.</p>
-<h2>8. Change the fine-tuning configuration and push</h2>
-<p>Open <code>12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json</code>. Change the suffix to a short identifier for your experiment, while leaving the reviewed model and hyperparameters unchanged for the first run. Then commit only the Exercise 12 change:</p>
-<pre><code>git add .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
-git commit -m &quot;Exercise 12: submit reviewed fine-tuning experiment&quot;
+git commit -m &quot;Exercise 12: submit fine-tuning experiment&quot;
 git push origin main</code></pre>
-<p>The push triggers the workflow because the configuration is a watched path. Open the run:</p>
-<pre><code>gh run list --workflow fine-tune-medtriage.yml --repo $LAB_REPO
-gh repo view $LAB_REPO --web</code></pre>
-<p>Every watched push to <code>main</code> starts the workflow and runs dataset validation. If both paid-training gates are <code>true</code>, the second job obtains a short-lived Azure token through OIDC, evaluates ten validation examples on <code>medtriage-base</code>, uploads both JSONL files, waits for file processing, and submits one supervised fine-tuning job. If either gate is <code>false</code>, validation still runs and the paid submission job is shown as skipped.</p>
-<h2>9. Verify the submitted job</h2>
-<p>In the GitHub run summary, record:</p>
-<ul>
-<li>Git commit SHA.</li>
-<li>Foundry fine-tuning job ID.</li>
-<li>Baseline JSON-schema compliance rate.</li>
-<li>Baseline urgency-label match rate.</li>
-</ul>
-<p>Download the <code>fine-tuning-job</code> workflow artifact and inspect <code>baseline_metrics.json</code> and <code>fine_tuning_job.json</code>. Then open the selected Azure AI Services/Foundry resource and locate the fine-tuning job. Confirm that the job ID matches GitHub and monitor it to a terminal status.</p>
-<p>A green GitHub workflow means that the job was submitted successfully; it does not mean that the asynchronous Foundry training job has completed or that the resulting model is safe to deploy.</p>
-<h2>10. Stop automatic paid submissions</h2>
-<p>Immediately close the training gate after the intended submission:</p>
-<pre><code>gh variable set ENABLE_MEDTRIAGE_FINETUNING --body false --repo $LAB_REPO</code></pre>
-<p>Keep <code>MEDTRIAGE_DATA_REVIEWED</code> aligned with the currently committed dataset. Set it back to <code>false</code> whenever the training or validation data changes and require another review.</p>
-<h2>11. Cleanup</h2>
-<p>If you created a dedicated resource group for this exercise, first confirm that it contains no unrelated resources. When the lab and any required evaluation are finished, delete that dedicated group through Azure Portal or your organization&#x27;s approved cleanup process.</p>
-<p>If you reused an existing shared resource, do not delete its resource group or Azure AI account. Remove only the Exercise 12 identity, role assignment, and any base deployment that this exercise created and that no other workload uses. Also remove the <code>MEDTRIAGE_*</code> GitHub secrets and variables when the repository no longer needs Azure access.</p>
-<p>Deletion is intentionally not automated by the setup script because the existing-resource path may target shared infrastructure.</p>
+<p>That push is the trigger. Do not run another setup command and do not manually start the workflow.</p>
+<h2>5. Watch the automatic workflow</h2>
+<pre><code>gh run list `
+  --workflow fine-tune-medtriage.yml `
+  --repo kavsrd13/operationalize-ml-models-labs
+
+gh repo view kavsrd13/operationalize-ml-models-labs --web</code></pre>
+<p>Open <strong>Actions → Exercise 12 - Fine-tune MedTriage model</strong>. The workflow performs these steps:</p>
+<ol start="1">
+<li>Validates every JSONL line and checks that training and validation questions do not overlap.</li>
+<li>Uses GitHub OIDC to obtain a short-lived Azure token. No Azure password or API key is stored.</li>
+<li>Evaluates ten held-out examples against the <code>medtriage-base</code> deployment.</li>
+<li>Uploads the training and validation files.</li>
+<li>Submits one supervised fine-tuning job using the committed configuration.</li>
+<li>Saves <code>baseline_metrics.json</code> and <code>fine_tuning_job.json</code> as a GitHub artifact.</li>
+</ol>
+<p>The GitHub summary records the commit and Foundry job ID. A green GitHub run means submission succeeded; Foundry training continues asynchronously.</p>
+<h2>6. Monitor the Foundry job</h2>
+<p>Open the Azure AI Services resource <code>Finetunning121</code> in resource group <code>Krishna</code>, then open its fine-tuning jobs. Match the job ID with the GitHub summary and monitor it to a terminal status.</p>
+<p>Do not deploy the resulting model merely because training completed. Compare it with the recorded baseline, inspect checkpoints and safety behavior, confirm deployment quota, and require instructor approval before deployment.</p>
+<h2>Files students edit</h2>
+<table><thead><tr><th>File</th><th>Student action</th></tr></thead><tbody>
+<tr><td><code>data/medical_triage_training_300.jsonl</code></td><td>Replace with reviewed training examples</td></tr>
+<tr><td><code>data/medical_triage_validation_300.jsonl</code></td><td>Replace with held-out validation examples</td></tr>
+<tr><td><code>config/finetune.json</code></td><td>Set the experiment suffix and approved hyperparameters</td></tr>
+</tbody></table>
+<p>All Bicep, OIDC and setup files are instructor-maintained. The GitHub workflow is also instructor-maintained.</p>
 <h2>Troubleshooting</h2>
 <ul>
-<li><code>AADSTS50020</code> or <code>AADSTS500341</code>: the Azure CLI is using an identity from the wrong tenant or a stale account. Run <code>az logout</code>, sign in to the subscription&#x27;s tenant in the same terminal, and verify <code>az account show</code> before rerunning setup.</li>
-<li><code>./setup.ps1</code> is not recognized: check <code>Get-Location</code> and <code>Test-Path .\setup.ps1</code>. From the repository root, run <code>.\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1</code>; from inside the Exercise 12 folder, run <code>.\setup.ps1</code>. The script does not change the terminal&#x27;s current directory, so it can be rerun from the same location.</li>
-<li>Wrong GitHub repository detected: setup uses only <code>origin</code>. Check <code>git remote -v</code> and correct the origin URL before rerunning setup.</li>
-<li>Branch protection or ruleset error: this classroom flow requires direct pushes to <code>origin/main</code>. Remove the rule only if this is a dedicated teaching repository and your repository owner approves that policy.</li>
-<li>No resources listed under Existing: confirm the selected subscription and that the account can read Azure AI Services/OpenAI resources; otherwise choose New.</li>
-<li>Fine-tuning quota error: the selected region/subscription lacks quota for the configured model or training type. Use a resource in an approved region with quota or request quota before enabling the workflow.</li>
-<li>Base deployment quota error: choose an existing compatible <code>medtriage-base</code> deployment or a region with base-model capacity.</li>
-<li>OIDC login failure: compare the subject in the GitHub error with the subject printed by setup. Rerun setup with <code>-OidcSubject &#x27;THE_EXACT_SUBJECT&#x27;</code> if the repository uses a customized subject format.</li>
-<li>First-run authorization error: Azure role propagation can take several minutes. Retry the same workflow after propagation; verify that a previous fine-tuning job was not already submitted.</li>
-<li>Paid submission job skipped: dataset validation still runs on the push, but both <code>ENABLE_MEDTRIAGE_FINETUNING</code> and <code>MEDTRIAGE_DATA_REVIEWED</code> must equal <code>true</code> before the fine-tuning job is submitted.</li>
-<li>Workflow green but training still running: GitHub submits the asynchronous job and preserves its ID; monitor the job in Foundry.</li>
+<li>Push rejected: confirm the instructor granted write access and that you are on <code>main</code>.</li>
+<li>Workflow does not appear: confirm one of the two data files or <code>config/finetune.json</code> changed in the pushed commit.</li>
+<li>Validation fails: open the failed step; fix the reported JSONL line, output schema, urgency label or train/validation overlap, then push a correction.</li>
+<li>Azure login fails: notify the instructor; students should not recreate secrets or identities.</li>
+<li>Fine-tuning submission reports quota or model availability: notify the instructor before retrying to avoid duplicate jobs.</li>
+<li>GitHub is green while Foundry is still running: expected—the workflow submits the asynchronous training job but does not wait for completion.</li>
 </ul>
+<h2>One-time instructor setup</h2>
+<p>Only an instructor or repository administrator runs <code>12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1</code>. It creates or selects the Azure AI resource, deploys <code>gpt-4.1-mini</code> version <code>2025-04-14</code> as <code>medtriage-base</code>, creates the managed identity and GitHub OIDC trust, assigns the scoped Azure role, and configures repository secrets and resource variables.</p>
+<p>The current repository is configured for <code>origin/main</code>, resource group <code>Krishna</code>, Azure AI resource <code>Finetunning121</code>, and East US. Run setup again only if those instructor-managed resources change.</p>
 <h2>Validation status</h2>
-<p>The dataset validator, Python syntax, YAML parsing, PowerShell syntax, and both Bicep paths have been checked locally. The supplied files contain 255 training and 45 validation records with zero identical user questions across splits. On 12 November 2026, the new-resource Azure <code>what-if</code> succeeded in East US with <code>gpt-4.1-mini</code> version <code>2025-04-14</code>; the selected subscription showed 5,000K Global Standard base quota and 500K Global Standard fine-tuning quota. The preview created no resources and no paid fine-tuning job has been submitted. OIDC authentication, role propagation, training completion and model quality remain live validation steps.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>The dataset validator, Python syntax, workflow YAML, PowerShell setup and both Bicep paths passed. On 12 November 2026, the Azure <code>what-if</code> accepted the current base model in East US, and the selected subscription reported base and fine-tuning quota. The existing resource and <code>medtriage-base</code> deployment were subsequently provisioned and GitHub OIDC secrets were configured. A new paid fine-tuning job has not yet been submitted through this simplified push flow.</p></section></div></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

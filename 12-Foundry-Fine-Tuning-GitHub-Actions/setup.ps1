@@ -280,8 +280,6 @@ foreach ($item in @{
   MEDTRIAGE_FOUNDRY_ENDPOINT = $outputs.accountEndpoint.value
   MEDTRIAGE_RESOURCE_GROUP = $ResourceGroup
   MEDTRIAGE_ACCOUNT_NAME = $AccountName
-  ENABLE_MEDTRIAGE_FINETUNING = 'false'
-  MEDTRIAGE_DATA_REVIEWED = 'false'
 }.GetEnumerator()) {
   gh variable set $item.Key --body $item.Value --repo $GitHubRepo
   Assert-LastExitCode "Set GitHub variable $($item.Key)"
@@ -289,4 +287,4 @@ foreach ($item in @{
 Write-Host "Provisioning complete. Foundry endpoint: $($outputs.accountEndpoint.value)"
 Write-Host "Azure resource mode: $ResourceMode ($ResourceGroup/$AccountName)"
 Write-Host "Actions: https://github.com/$GitHubRepo/actions"
-Write-Host 'The workflow remains disabled until a reviewer deliberately changes both training gates to true.'
+Write-Host 'Automation is ready. A push that changes Exercise 12 data, config, or scripts will submit fine-tuning after validation.'
