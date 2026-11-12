@@ -23,7 +23,7 @@ Student changes versioned data or configuration
  GitHub OIDC obtains a short-lived Azure token
                  |
                  v
- Base gpt-4o-mini evaluation is recorded
+ Base gpt-4.1-mini evaluation is recorded
                  |
                  v
  Training and validation files are uploaded
@@ -38,7 +38,7 @@ Install Git, GitHub CLI, Azure CLI with Bicep, and Python 3.10 or 3.11. You need
 
 - A private GitHub repository you administer.
 - An Azure subscription in which you can deploy resources and assign roles. Subscription Owner is sufficient for the classroom bootstrap; an administrator can perform setup for learners with narrower access.
-- A region and subscription with `gpt-4o-mini` base deployment capacity and fine-tuning quota.
+- A region and subscription with `gpt-4.1-mini` version `2025-04-14` base deployment capacity and fine-tuning quota.
 - A qualified reviewer for the medical labels and safety wording before enabling paid training.
 
 Check the tools and sign in with the Azure identity that belongs to the intended tenant:
@@ -128,7 +128,7 @@ Every setup run displays this menu. Enter exactly `1`, `2`, or `3`. An invalid e
 
 The script lists compatible resources in the selected subscription. Select one by number. It uses the selected resource's group, name and region and does not recreate or retag that resource.
 
-If `medtriage-base` already deploys `gpt-4o-mini` version `2024-07-18`, it is reused. If that deployment is missing, Bicep proposes creating it. If the name belongs to a different model or version, setup stops instead of overwriting it.
+If `medtriage-base` already deploys `gpt-4.1-mini` version `2025-04-14`, it is reused. If that deployment is missing, Bicep proposes creating it. If the name belongs to a different model or version, setup stops instead of overwriting it.
 
 ### Option 2: new resource
 
@@ -258,4 +258,4 @@ Deletion is intentionally not automated by the setup script because the existing
 
 ## Validation status
 
-The dataset validator, Python syntax, YAML parsing, PowerShell syntax, and both Bicep paths have been checked locally. The supplied files contain 255 training and 45 validation records with zero identical user questions across splits. The revised Exercise 12 setup and workflow have not yet been run end to end against a learner's Azure subscription, so live quota, model availability, OIDC subject policy, role propagation, training completion and model quality remain tenant-specific validation steps.
+The dataset validator, Python syntax, YAML parsing, PowerShell syntax, and both Bicep paths have been checked locally. The supplied files contain 255 training and 45 validation records with zero identical user questions across splits. On 12 November 2026, the new-resource Azure `what-if` succeeded in East US with `gpt-4.1-mini` version `2025-04-14`; the selected subscription showed 5,000K Global Standard base quota and 500K Global Standard fine-tuning quota. The preview created no resources and no paid fine-tuning job has been submitted. OIDC authentication, role propagation, training completion and model quality remain live validation steps.

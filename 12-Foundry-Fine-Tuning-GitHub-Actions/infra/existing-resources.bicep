@@ -24,8 +24,8 @@ resource baselineDeployment 'Microsoft.CognitiveServices/accounts/deployments@20
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4o-mini'
-      version: '2024-07-18'
+      name: 'gpt-4.1-mini'
+      version: '2025-04-14'
     }
   }
 }

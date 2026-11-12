@@ -198,7 +198,7 @@ if ($ResourceMode -eq 'Existing') {
     $deployments = @(foreach ($deployment in $parsedDeployments) { $deployment })
     $baseline = $deployments | Where-Object { $_.name -eq 'medtriage-base' } | Select-Object -First 1
     if ($baseline) {
-        if ($baseline.properties.model.name -ne 'gpt-4o-mini' -or $baseline.properties.model.version -ne '2024-07-18') {
+        if ($baseline.properties.model.name -ne 'gpt-4.1-mini' -or $baseline.properties.model.version -ne '2025-04-14') {
             throw "The existing medtriage-base deployment uses $($baseline.properties.model.name) $($baseline.properties.model.version). Rename or remove it, or select another resource."
         }
         $createBaselineDeployment = $false
@@ -220,6 +220,7 @@ Write-Host "Subscription:   $SubscriptionId"
 Write-Host "Resource group: $ResourceGroup"
 Write-Host "Azure resource: $AccountName"
 Write-Host "Location:       $Location"
+Write-Host 'Base model:    gpt-4.1-mini (2025-04-14)'
 Write-Host "GitHub repo:    $GitHubRepo"
 Write-Host "OIDC subject:   $OidcSubject"
 

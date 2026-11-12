@@ -1,6 +1,6 @@
 # Exercise 12: Foundry fine-tuning with GitHub Actions
 
-This standalone exercise validates a versioned MedTriage supervised fine-tuning dataset, establishes passwordless GitHub-to-Azure authentication with OIDC, measures a `gpt-4o-mini` baseline, and submits a Microsoft Foundry fine-tuning job.
+This standalone exercise validates a versioned MedTriage supervised fine-tuning dataset, establishes passwordless GitHub-to-Azure authentication with OIDC, measures a `gpt-4.1-mini` baseline, and submits a Microsoft Foundry fine-tuning job.
 
 Open [Instruction/README.md](Instruction/README.md) for the editable student guide or [Instruction/index.html](Instruction/index.html) for the generated offline page.
 
