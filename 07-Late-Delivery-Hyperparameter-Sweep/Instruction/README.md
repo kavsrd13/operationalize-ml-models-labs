@@ -81,9 +81,10 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 5. From the collection root, run the smoke job and wait for `Completed`:
 
    ```powershell
-   az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
-     -g $RG -w $WS
-   az ml job stream -n YOUR_SMOKE_JOB -g $RG -w $WS
+   $SMOKE_JOB = az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $SMOKE_JOB -g $RG -w $WS
+   az ml job show -n $SMOKE_JOB -g $RG -w $WS --query status -o tsv
    ```
 
 6. Set `SUBMIT_SWEEP = True` in notebook step 1 and run the sweep submission

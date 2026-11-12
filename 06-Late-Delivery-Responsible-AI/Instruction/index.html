@@ -63,20 +63,24 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <ol start="5">
 <li>Submit and monitor the training job:</li>
 </ol>
-<pre><code>   az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\train.yml -g $RG -w $WS
-   az ml job stream -n YOUR_TRAIN_JOB -g $RG -w $WS</code></pre>
+<pre><code>   $TRAIN_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\train.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $TRAIN_JOB -g $RG -w $WS
+   az ml job show -n $TRAIN_JOB -g $RG -w $WS --query status -o tsv</code></pre>
 <ol start="6">
 <li>In Studio inspect the full future-period classification metrics. When the job is <code>Completed</code>, register its MLflow output:</li>
 </ol>
 <pre><code>   az ml model create -n olist-late-delivery-rai --type mlflow_model `
-     --path &#x27;azureml://jobs/YOUR_TRAIN_JOB/outputs/artifacts/paths/outputs/model/&#x27; `
+     --path &quot;azureml://jobs/$TRAIN_JOB/outputs/artifacts/paths/outputs/model/&quot; `
      -g $RG -w $WS</code></pre>
 <ol start="7">
 <li>Check the returned model version. <code>../jobs/rai-dashboard.yml</code> references version 1; if yours differs, change its <code>selected_model.path</code> and <code>construct.inputs.model_info</code> to the version you just registered.</li>
 <li>Read <code>../lab-guide.html</code> for the dashboard&#x27;s component flow, then submit:</li>
 </ol>
-<pre><code>   az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\rai-dashboard.yml -g $RG -w $WS
-   az ml job stream -n YOUR_DASHBOARD_JOB -g $RG -w $WS</code></pre>
+<pre><code>   $DASHBOARD_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\rai-dashboard.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $DASHBOARD_JOB -g $RG -w $WS
+   az ml job show -n $DASHBOARD_JOB -g $RG -w $WS --query status -o tsv</code></pre>
 <ol start="9">
 <li>Open the dashboard in Studio. Compare error and explanation views across cohorts. Observed differences alone do not establish causality or a fairness violation.</li>
 </ol></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

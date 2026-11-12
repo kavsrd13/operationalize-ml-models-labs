@@ -115,6 +115,12 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 
 4. Invoke `../deploy/sample-invalid-request.json` with the same endpoint command;
    verify that scoring reports a useful validation error.
+
+   ```powershell
+   az ml online-endpoint invoke -n $ENDPOINT `
+     --request-file .\08-Online-Model-Serving\deploy\sample-invalid-request.json `
+     -g $RG -w $WS
+   ```
 5. In `../app/.env`, set `FREIGHT_ENDPOINT_URL` from
    `az ml online-endpoint show -n $ENDPOINT --query scoring_uri` and
    `FREIGHT_ENDPOINT_KEY` from

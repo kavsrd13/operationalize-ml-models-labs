@@ -100,8 +100,11 @@ the command job. The `../src/train.py` source has the
 same TF-IDF and logistic regression flow as the local notebook.
 
 ```powershell
-az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
-  --resource-group $RG --workspace-name $WS
+az ml data show -n course-imdb-data -v 1 -g $RG -w $WS 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
+    --resource-group $RG --workspace-name $WS
+}
 az ml data show -n course-imdb-data -v 1 -g $RG -w $WS
 $JOB = az ml job create --file .\09-IMDB-Sentiment-Classification\jobs\train.yml `
   --resource-group $RG --workspace-name $WS --query name -o tsv

@@ -91,8 +91,10 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 5. Submit and monitor the training job:
 
    ```powershell
-   az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\train.yml -g $RG -w $WS
-   az ml job stream -n YOUR_TRAIN_JOB -g $RG -w $WS
+   $TRAIN_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\train.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $TRAIN_JOB -g $RG -w $WS
+   az ml job show -n $TRAIN_JOB -g $RG -w $WS --query status -o tsv
    ```
 
 6. In Studio inspect the full future-period classification metrics. When the
@@ -100,7 +102,7 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 
    ```powershell
    az ml model create -n olist-late-delivery-rai --type mlflow_model `
-     --path 'azureml://jobs/YOUR_TRAIN_JOB/outputs/artifacts/paths/outputs/model/' `
+     --path "azureml://jobs/$TRAIN_JOB/outputs/artifacts/paths/outputs/model/" `
      -g $RG -w $WS
    ```
 
@@ -110,8 +112,10 @@ Run commands from the repository root. Olist's source ZIP is stored once in `dat
 8. Read `../lab-guide.html` for the dashboard's component flow, then submit:
 
    ```powershell
-   az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\rai-dashboard.yml -g $RG -w $WS
-   az ml job stream -n YOUR_DASHBOARD_JOB -g $RG -w $WS
+   $DASHBOARD_JOB = az ml job create -f .\06-Late-Delivery-Responsible-AI\jobs\rai-dashboard.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $DASHBOARD_JOB -g $RG -w $WS
+   az ml job show -n $DASHBOARD_JOB -g $RG -w $WS --query status -o tsv
    ```
 
 9. Open the dashboard in Studio. Compare error and explanation views across

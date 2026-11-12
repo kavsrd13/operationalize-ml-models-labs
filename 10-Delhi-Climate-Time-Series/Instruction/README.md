@@ -101,10 +101,16 @@ From the collection root, register the two CSVs once as named assets, then
 submit the command job. It creates lag-one features and logs test MAE/RMSE.
 
 ```powershell
-az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
-  -g $RG -w $WS
-az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
-  -g $RG -w $WS
+az ml data show -n course-delhi-train -v 1 -g $RG -w $WS 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
+    -g $RG -w $WS
+}
+az ml data show -n course-delhi-test -v 1 -g $RG -w $WS 2>$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
+    -g $RG -w $WS
+}
 az ml data show -n course-delhi-train -v 1 -g $RG -w $WS
 az ml data show -n course-delhi-test -v 1 -g $RG -w $WS
 $JOB = az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `

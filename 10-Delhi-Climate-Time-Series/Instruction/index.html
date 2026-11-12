@@ -69,10 +69,16 @@ az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
 <p>Check regional quota for <code>Standard_E4ds_v4</code> before creating the cluster and <code>Standard_D2ds_v5</code> before deploying the endpoint.</p>
 <h2>Azure route</h2>
 <p>Use the Azure ML workspace and <code>course-cpu</code> cluster created above. From the collection root, register the two CSVs once as named assets, then submit the command job. It creates lag-one features and logs test MAE/RMSE.</p>
-<pre><code>az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
-  -g $RG -w $WS
-az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
-  -g $RG -w $WS
+<pre><code>az ml data show -n course-delhi-train -v 1 -g $RG -w $WS 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create -f .\10-Delhi-Climate-Time-Series\data\train.yml `
+    -g $RG -w $WS
+}
+az ml data show -n course-delhi-test -v 1 -g $RG -w $WS 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create -f .\10-Delhi-Climate-Time-Series\data\test.yml `
+    -g $RG -w $WS
+}
 az ml data show -n course-delhi-train -v 1 -g $RG -w $WS
 az ml data show -n course-delhi-test -v 1 -g $RG -w $WS
 $JOB = az ml job create --file .\10-Delhi-Climate-Time-Series\jobs\train.yml `

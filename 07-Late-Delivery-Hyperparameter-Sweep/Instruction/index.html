@@ -53,9 +53,10 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
 <li>Read <code>../jobs/sweep-smoke.yml</code>, <code>../jobs/sweep.yml</code>, and the trial script. The smoke job uses fixed values; the full sweep has at most eight trials, one concurrent trial, and a 300-minute limit.</li>
 <li>From the collection root, run the smoke job and wait for <code>Completed</code>:</li>
 </ol>
-<pre><code>   az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
-     -g $RG -w $WS
-   az ml job stream -n YOUR_SMOKE_JOB -g $RG -w $WS</code></pre>
+<pre><code>   $SMOKE_JOB = az ml job create -f .\07-Late-Delivery-Hyperparameter-Sweep\jobs\sweep-smoke.yml `
+     -g $RG -w $WS --query name -o tsv
+   az ml job stream -n $SMOKE_JOB -g $RG -w $WS
+   az ml job show -n $SMOKE_JOB -g $RG -w $WS --query status -o tsv</code></pre>
 <ol start="6">
 <li>Set <code>SUBMIT_SWEEP = True</code> in notebook step 1 and run the sweep submission cell once. The job name is saved in ignored <code>.sweep-run-id.json</code> to avoid duplicate submissions. Alternatively submit <code>../jobs/sweep.yml</code> with <code>az ml job create -f</code> using the same group and workspace.</li>
 <li>In Studio inspect average precision and late-class precision/recall for every trial. Record the selected settings and explain why validation results are not a final future-period test.</li>

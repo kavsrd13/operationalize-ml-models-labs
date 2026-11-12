@@ -67,8 +67,11 @@ az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
 <p>Check regional quota for <code>Standard_E4ds_v4</code> before creating the cluster and <code>Standard_D2ds_v5</code> before deploying the endpoint.</p>
 <h2>Azure route</h2>
 <p>Use the Azure ML workspace and <code>course-cpu</code> cluster created above. From the collection root, register the CSV once as a named asset, then submit the command job. The <code>../src/train.py</code> source has the same TF-IDF and logistic regression flow as the local notebook.</p>
-<pre><code>az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
-  --resource-group $RG --workspace-name $WS
+<pre><code>az ml data show -n course-imdb-data -v 1 -g $RG -w $WS 2&gt;$null | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  az ml data create --file .\09-IMDB-Sentiment-Classification\data\imdb.yml `
+    --resource-group $RG --workspace-name $WS
+}
 az ml data show -n course-imdb-data -v 1 -g $RG -w $WS
 $JOB = az ml job create --file .\09-IMDB-Sentiment-Classification\jobs\train.yml `
   --resource-group $RG --workspace-name $WS --query name -o tsv

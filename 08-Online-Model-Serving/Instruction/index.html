@@ -80,6 +80,11 @@ az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</c
      -g $RG -w $WS</code></pre>
 <ol start="4">
 <li>Invoke <code>../deploy/sample-invalid-request.json</code> with the same endpoint command; verify that scoring reports a useful validation error.</li>
+</ol>
+<pre><code>   az ml online-endpoint invoke -n $ENDPOINT `
+     --request-file .\08-Online-Model-Serving\deploy\sample-invalid-request.json `
+     -g $RG -w $WS</code></pre>
+<ol start="5">
 <li>In <code>../app/.env</code>, set <code>FREIGHT_ENDPOINT_URL</code> from <code>az ml online-endpoint show -n $ENDPOINT --query scoring_uri</code> and <code>FREIGHT_ENDPOINT_KEY</code> from <code>az ml online-endpoint get-credentials -n $ENDPOINT --query primaryKey</code>. Keep this file untracked. Install <code>../app/requirements.txt</code>, run <code>python .\08-Online-Model-Serving\app\app.py</code>, and submit sample fields.</li>
 <li>Delete only your own endpoint immediately after the demo:</li>
 </ol>
