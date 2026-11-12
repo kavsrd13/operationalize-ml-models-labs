@@ -22,6 +22,8 @@ excluded.
 11. `10-Delhi-Climate-Time-Series` provides local and Azure ML forecasting demos.
 12. `11-Automate-Model-Training-GitHub-Actions` runs freight training on a GitHub
     push or manual trigger using OIDC and the shared Azure ML resources.
+13. `12-Foundry-Fine-Tuning-GitHub-Actions` validates a versioned MedTriage
+    dataset and uses GitHub OIDC to submit a controlled Foundry fine-tuning job.
 
 Open `index.html` for the complete offline student guide. Every exercise also has
 its own `Instruction/index.html` and editable `Instruction/README.md`. Each guide
@@ -55,6 +57,8 @@ python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
 ```
 
 The shared cluster is created once and reused by exercises 03–07 and 09–11.
+Exercise 12 is independent and uses Azure AI Services/Foundry rather than the
+Azure ML workspace and `course-cpu` cluster.
 For local-only exercises 01 and 02, run bootstrap with `--skip-azure` instead.
 Each student instruction names its additional prepared data assets. Managed online
 endpoints use separate serving compute and need globally unique names.

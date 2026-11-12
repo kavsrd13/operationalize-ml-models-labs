@@ -8,7 +8,7 @@
 **/.mlflow/
 **/mlruns/
 **/mlflow-local.db
-finetunning/.parameters.json
+12-Foundry-Fine-Tuning-GitHub-Actions/.parameters.json
 /datasets/olist/Ecommerce Dataset/
 
 **/.lab11.parameters.json

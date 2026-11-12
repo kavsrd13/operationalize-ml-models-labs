@@ -1,6 +1,7 @@
 param accountName string
 param location string
 param githubSubject string
+param githubIdentityName string
 param createBaselineDeployment bool
 
 var tags = {
@@ -30,7 +31,7 @@ resource baselineDeployment 'Microsoft.CognitiveServices/accounts/deployments@20
 }
 
 resource githubIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2023-01-31' = {
-  name: 'id-medtriage-finetuning-github'
+  name: githubIdentityName
   location: location
   tags: tags
 }

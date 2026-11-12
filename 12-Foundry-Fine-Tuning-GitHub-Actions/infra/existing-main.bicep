@@ -12,6 +12,9 @@ param location string
 @description('Exact GitHub OIDC subject permitted to submit training from main.')
 param githubSubject string
 
+@description('Unique managed identity name for this student GitHub repository.')
+param githubIdentityName string
+
 @description('Create medtriage-base only when it is not already present.')
 param createBaselineDeployment bool = true
 
@@ -26,6 +29,7 @@ module resources './existing-resources.bicep' = {
     accountName: accountName
     location: location
     githubSubject: githubSubject
+    githubIdentityName: githubIdentityName
     createBaselineDeployment: createBaselineDeployment
   }
 }

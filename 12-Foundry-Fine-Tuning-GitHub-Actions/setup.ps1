@@ -1,12 +1,14 @@
+# Run from a cloned student repository after az login and gh auth login.
 [CmdletBinding()]
 param(
-    [string]$SubscriptionId = '2df30ff1-915d-4d35-974a-3d3155aaa413',
-    [string]$ResourceGroup = 'rg-medtriage-finetuning',
-    [string]$AccountName = '',
-    [string]$Location = 'eastus',
+    [string]$SubscriptionId,
+    [string]$ResourceGroup,
+    [string]$AccountName,
+    [string]$Location,
     [ValidateSet('New', 'Existing')]
     [string]$ResourceMode,
-    [string]$GitHubRepo = 'kavsrd13/operationalize-ml-models-labs',
+    [string]$GitHubRepo,
+    [string]$OidcSubject,
     [switch]$PreviewOnly,
     [switch]$Yes
 )
@@ -17,6 +19,13 @@ Set-Location $repoRoot
 
 function Assert-LastExitCode([string]$Step) {
     if ($LASTEXITCODE -ne 0) { throw "$Step failed. Resolve the preceding error and rerun setup." }
+}
+
+function Ask([string]$Value, [string]$Label, [string]$Default) {
+    if ($Value) { return $Value }
+    $answer = Read-Host "$Label [$Default]"
+    if ($answer) { return $answer.Trim() }
+    return $Default
 }
 
 function Select-ExistingFoundryAccount {
@@ -44,16 +53,35 @@ function Select-ExistingFoundryAccount {
 }
 
 foreach ($tool in @('az', 'gh')) { Get-Command $tool -ErrorAction Stop | Out-Null }
+$currentAccount = az account show -o json | ConvertFrom-Json
+Assert-LastExitCode 'Azure sign-in (run az login first)'
+gh auth status
+Assert-LastExitCode 'GitHub sign-in (run gh auth login first)'
+
+az account list --query '[].{Name:name,Subscription:id,Tenant:tenantId}' -o table
+Assert-LastExitCode 'List Azure subscriptions'
+$SubscriptionId = Ask $SubscriptionId 'Subscription ID' $currentAccount.id
 az account set --subscription $SubscriptionId
-Assert-LastExitCode 'Select the Pay-As-You-Go subscription'
+Assert-LastExitCode 'Select Azure subscription'
 $account = az account show -o json | ConvertFrom-Json
 if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select $SubscriptionId." }
-gh auth status
-Assert-LastExitCode 'GitHub sign-in'
+
+$GitHubRepo = Ask $GitHubRepo 'Your student GitHub repository (OWNER/REPO)' ''
+if ($GitHubRepo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Use OWNER/REPO for GitHubRepo.' }
 $repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
 Assert-LastExitCode 'Read GitHub repository'
-if (-not $repo.permissions.admin) { throw 'Administrator access to the GitHub repository is required to set Actions secrets and variables.' }
+if (-not $repo.permissions.admin) { throw 'Administrator access to the student repository is required to set Actions secrets and variables.' }
 if ($repo.default_branch -ne 'main') { throw 'The automation expects main as the default branch.' }
+$GitHubRepo = $repo.full_name
+
+if (-not $OidcSubject) {
+    if ([datetime]$repo.created_at -ge [datetime]'2026-07-15') {
+        $OidcSubject = "repo:$($repo.owner.login)@$($repo.owner.id)/$($repo.name)@$($repo.id):ref:refs/heads/main"
+    } else {
+        $OidcSubject = "repo:${GitHubRepo}:ref:refs/heads/main"
+    }
+}
+$identityName = "id-medtriage-ft-gh-$($repo.id)"
 
 if (-not $ResourceMode) {
     Write-Host ''
@@ -69,6 +97,9 @@ if (-not $ResourceMode) {
 
 $createBaselineDeployment = $true
 if ($ResourceMode -eq 'Existing') {
+    if (($AccountName -and -not $ResourceGroup) -or ($ResourceGroup -and -not $AccountName)) {
+        throw 'For noninteractive existing-resource setup, provide both ResourceGroup and AccountName.'
+    }
     if ($AccountName) {
         $selectedAccount = az cognitiveservices account show --subscription $SubscriptionId --resource-group $ResourceGroup --name $AccountName -o json | ConvertFrom-Json
         Assert-LastExitCode "Read existing Azure AI resource $AccountName"
@@ -87,14 +118,17 @@ if ($ResourceMode -eq 'Existing') {
     $baseline = $deployments | Where-Object { $_.name -eq 'medtriage-base' } | Select-Object -First 1
     if ($baseline) {
         if ($baseline.properties.model.name -ne 'gpt-4o-mini' -or $baseline.properties.model.version -ne '2024-07-18') {
-            throw "The existing medtriage-base deployment uses $($baseline.properties.model.name) $($baseline.properties.model.version). Rename or remove it, or use a resource without that deployment name."
+            throw "The existing medtriage-base deployment uses $($baseline.properties.model.name) $($baseline.properties.model.version). Rename or remove it, or select another resource."
         }
         $createBaselineDeployment = $false
         Write-Host 'Reusing the compatible medtriage-base deployment already on the selected resource.'
     }
     $template = Join-Path $PSScriptRoot 'infra/existing-main.bicep'
 } else {
-    if (-not $AccountName) { $AccountName = "medtriageft$((Get-Random -Minimum 100000 -Maximum 999999))" }
+    $ResourceGroup = Ask $ResourceGroup 'New resource group' 'rg-medtriage-finetuning'
+    $Location = Ask $Location 'Azure region with fine-tuning quota' 'eastus'
+    $generatedName = "medtriageft$((Get-Random -Minimum 100000 -Maximum 999999))"
+    $AccountName = Ask $AccountName 'New globally unique Azure AI Services name' $generatedName
     if ($AccountName -notmatch '^[a-z0-9]{2,64}$') { throw 'AccountName must contain only lowercase letters and digits.' }
     $template = Join-Path $PSScriptRoot 'infra/main.bicep'
 }
@@ -105,7 +139,9 @@ Write-Host "Subscription:   $SubscriptionId"
 Write-Host "Resource group: $ResourceGroup"
 Write-Host "Azure resource: $AccountName"
 Write-Host "Location:       $Location"
-$subject = "repo:$($repo.owner.login)@$($repo.owner.id)/$($repo.name)@$($repo.id):ref:refs/heads/main"
+Write-Host "GitHub repo:    $GitHubRepo"
+Write-Host "OIDC subject:   $OidcSubject"
+
 $parameterFile = Join-Path $PSScriptRoot '.parameters.json'
 $parameters = @{
   '$schema' = 'https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#'
@@ -114,10 +150,11 @@ $parameters = @{
     resourceGroupName = @{ value = $ResourceGroup }
     accountName = @{ value = $AccountName }
     location = @{ value = $Location }
-    githubSubject = @{ value = $subject }
+    githubSubject = @{ value = $OidcSubject }
+    githubIdentityName = @{ value = $identityName }
+    createBaselineDeployment = @{ value = $createBaselineDeployment }
   }
 }
-$parameters.parameters.createBaselineDeployment = @{ value = $createBaselineDeployment }
 $parameters | ConvertTo-Json -Depth 8 | Set-Content -Path $parameterFile -Encoding utf8
 $deploymentName = "medtriage-finetuning-$($ResourceMode.ToLowerInvariant())-$Location"
 $deploymentArgs = @('--name', $deploymentName, '--location', $Location, '--template-file', $template, '--parameters', "@$parameterFile")
@@ -131,6 +168,7 @@ az deployment sub create @deploymentArgs --output none
 Assert-LastExitCode 'Create Foundry resources'
 $outputs = az deployment sub show --name $deploymentName --query properties.outputs -o json | ConvertFrom-Json
 Assert-LastExitCode 'Read deployment outputs'
+
 foreach ($item in @{
   MEDTRIAGE_AZURE_CLIENT_ID = $outputs.githubClientId.value
   MEDTRIAGE_AZURE_TENANT_ID = $account.tenantId
@@ -151,4 +189,5 @@ foreach ($item in @{
 }
 Write-Host "Provisioning complete. Foundry endpoint: $($outputs.accountEndpoint.value)"
 Write-Host "Azure resource mode: $ResourceMode ($ResourceGroup/$AccountName)"
+Write-Host "Actions: https://github.com/$GitHubRepo/actions"
 Write-Host 'The workflow remains disabled until a reviewer deliberately changes both training gates to true.'

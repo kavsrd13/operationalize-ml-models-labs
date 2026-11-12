@@ -1,13 +1,13 @@
-name: Fine-tune MedTriage model
+name: Exercise 12 - Fine-tune MedTriage model
 
 on:
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      - 'finetunning/data/**'
-      - 'finetunning/config/finetune.json'
-      - 'finetunning/scripts/**'
+      - '12-Foundry-Fine-Tuning-GitHub-Actions/data/**'
+      - '12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json'
+      - '12-Foundry-Fine-Tuning-GitHub-Actions/scripts/**'
       - '.github/workflows/fine-tune-medtriage.yml'
 
 permissions:
@@ -28,9 +28,9 @@ jobs:
 
       - name: Validate versioned datasets
         run: |
-          python finetunning/scripts/validate_dataset.py \
-            finetunning/data/medical_triage_training_300.jsonl \
-            finetunning/data/medical_triage_validation_300.jsonl
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/validate_dataset.py \
+            12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl \
+            12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl
 
       - name: Sign in to Azure with GitHub OIDC
         uses: azure/login@v2
@@ -44,18 +44,18 @@ jobs:
           FOUNDRY_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_ENDPOINT }}
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check -r finetunning/requirements.txt
+          python -m pip install --disable-pip-version-check -r 12-Foundry-Fine-Tuning-GitHub-Actions/requirements.txt
           TOKEN=$(az account get-access-token --resource https://cognitiveservices.azure.com --query accessToken -o tsv)
           export AZURE_ACCESS_TOKEN="$TOKEN"
-          python finetunning/scripts/evaluate_baseline.py \
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/evaluate_baseline.py \
             --endpoint "$FOUNDRY_ENDPOINT" \
-            --validation-file finetunning/data/medical_triage_validation_300.jsonl \
+            --validation-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl \
             --output baseline_metrics.json
-          python finetunning/scripts/submit_finetune.py \
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/submit_finetune.py \
             --endpoint "$FOUNDRY_ENDPOINT" \
-            --config finetunning/config/finetune.json \
-            --training-file finetunning/data/medical_triage_training_300.jsonl \
-            --validation-file finetunning/data/medical_triage_validation_300.jsonl \
+            --config 12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
+            --training-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_training_300.jsonl \
+            --validation-file 12-Foundry-Fine-Tuning-GitHub-Actions/data/medical_triage_validation_300.jsonl \
             --output fine_tuning_job.json
           JOB_ID=$(python -c "import json; print(json.load(open('fine_tuning_job.json'))['job']['id'])")
           echo "### MedTriage fine-tuning submitted" >> "$GITHUB_STEP_SUMMARY"
