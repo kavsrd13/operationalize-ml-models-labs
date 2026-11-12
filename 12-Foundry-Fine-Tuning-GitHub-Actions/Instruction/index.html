@@ -198,10 +198,36 @@ git push origin main</code></pre>
 <pre><code>.\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt</code></pre>
 <h3>12.3 Add your deployment values</h3>
-<p>Open <code>scripts/test_deployment.py</code>. Replace only these three placeholders with the values copied from Foundry:</p>
-<pre><code>endpoint = &quot;https://&lt;your-resource-name&gt;.services.ai.azure.com/openai/v1/&quot;
+<p>Open <code>scripts/test_deployment.py</code>. The complete code is shown below. Replace only the <code>endpoint</code>, <code>deployment_name</code>, and <code>api_key</code> placeholders with the values copied from Foundry:</p>
+<pre><code>from openai import OpenAI
+
+
+endpoint = &quot;https://&lt;your-resource-name&gt;.services.ai.azure.com/openai/v1/&quot;
 deployment_name = &quot;&lt;your-deployment-name&gt;&quot;
-api_key = &quot;&lt;your-api-key&gt;&quot;</code></pre>
+api_key = &quot;&lt;your-api-key&gt;&quot;
+
+system_instruction = (
+    &quot;You are MedTriage, a hospital symptom triage assistant. Reply ONLY with &quot;
+    &quot;a single JSON object with the keys urgency (Emergency | Urgent | Routine &quot;
+    &quot;| Not Applicable), department, reason, next_step. Never give a diagnosis &quot;
+    &quot;or medication dose. Training demo only - not for clinical use.&quot;
+)
+
+client = OpenAI(
+    base_url=endpoint,
+    api_key=api_key,
+)
+
+response = client.responses.create(
+    model=deployment_name,
+    instructions=system_instruction,
+    input=(
+        &quot;I suddenly developed weakness on the right side of my face and arm, &quot;
+        &quot;and my speech is unclear. What should I do?&quot;
+    ),
+)
+
+print(f&quot;answer: {response.output_text}&quot;)</code></pre>
 <p>For example, the endpoint can look like <code>https://finetunning121.services.ai.azure.com/openai/v1/</code>. Your deployment name and API key will be different.</p>
 <p>The script sends the same system instruction and emergency-triage prompt used in the playground. It prints <code>response.output_text</code>, which is the readable text returned by the Responses API.</p>
 <h3>12.4 Run the test</h3>
