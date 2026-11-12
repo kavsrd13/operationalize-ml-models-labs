@@ -20,3 +20,9 @@ Open [Instruction/README.md](Instruction/README.md) for the editable student gui
 - `LAB12_VALIDATION.md`: completed checks and the live-validation boundary.
 
 The workflow is stored at repository root in `.github/workflows/fine-tune-medtriage.yml`, as required by GitHub Actions. Each learner forks the public repository and runs `setup.ps1` once so that the learner's fork receives its own GitHub OIDC trust, Actions settings, and Foundry project connection. The learner then changes only `hyperparameters.n_epochs` from 2 to 3 and pushes directly to the fork's `main` branch. That push starts the workflow immediately; no pull request or instructor approval is required. Future experiments may replace reviewed data or change other configuration values.
+
+After the job succeeds, the learner evaluates checkpoints, deploys an approved
+fine-tuned checkpoint, opens it in the Foundry playground, applies the same
+MedTriage system instruction used by the dataset, and compares unseen prompts
+against `medtriage-base`. Fine-tuning is considered effective only when held-out
+JSON compliance, urgency labeling, and safety behavior improve.

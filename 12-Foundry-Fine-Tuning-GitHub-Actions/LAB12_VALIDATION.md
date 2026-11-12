@@ -32,3 +32,12 @@
 - At the time this record was updated, the job status was `pending` with no reported error and the GitHub workflow was monitoring it.
 
 Job creation proves that the automated identity, project endpoint, file upload, dataset processing, and SDK request shape work together. It does not prove that the resulting model is better or safe to deploy. After training, the instructor must compare checkpoints and held-out behavior with the baseline before approving deployment.
+
+## Portal deployment and playground boundary
+
+The student guide now includes checkpoint selection, Serverless deployment,
+Foundry playground system instructions, three unseen test prompts, a base-versus-
+fine-tuned comparison, and serving-deployment cleanup. These steps follow the
+current Microsoft Foundry deployment and playground documentation. They were
+not executed live in this validation record because deployment depends on the
+learner's current fine-tuned-model quota and deployment permissions.
