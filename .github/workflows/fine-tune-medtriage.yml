@@ -56,17 +56,25 @@ jobs:
           tenant-id: ${{ secrets.MEDTRIAGE_AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.MEDTRIAGE_AZURE_SUBSCRIPTION_ID }}
 
-      - name: Baseline, upload data, and submit fine-tuning
+      - name: Install Foundry SDK dependencies
+        run: python -m pip install --disable-pip-version-check -r 12-Foundry-Fine-Tuning-GitHub-Actions/requirements.txt
+
+      - name: Evaluate base model on held-out examples
+        env:
+          FOUNDRY_PROJECT_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT }}
+        run: |
+          set -euo pipefail
+          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/evaluate_baseline.py \
+            --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
+            --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
+            --output baseline_metrics.json
+
+      - name: Upload data and submit supervised fine-tuning
         id: submit
         env:
           FOUNDRY_PROJECT_ENDPOINT: ${{ vars.MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT }}
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check -r 12-Foundry-Fine-Tuning-GitHub-Actions/requirements.txt
-          python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/evaluate_baseline.py \
-            --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
-            --validation-file "$MEDTRIAGE_VALIDATION_FILE" \
-            --output baseline_metrics.json
           python 12-Foundry-Fine-Tuning-GitHub-Actions/scripts/submit_finetune.py \
             --project-endpoint "$FOUNDRY_PROJECT_ENDPOINT" \
             --config 12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \

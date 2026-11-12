@@ -28,13 +28,16 @@ def main() -> None:
         if line.strip()
     ]
     results = []
+    selected_rows = rows[: args.samples]
     with open_project_client(args.project_endpoint) as client:
-        for row in rows[: args.samples]:
+        for index, row in enumerate(selected_rows, start=1):
+            print(f"Evaluating held-out example {index}/{len(selected_rows)}", flush=True)
             expected = json.loads(row["messages"][-1]["content"])
             response = client.chat.completions.create(
                 model=args.deployment,
                 messages=row["messages"][:-1],
                 temperature=0,
+                max_completion_tokens=180,
                 response_format={"type": "json_object"},
             )
             content = response.choices[0].message.content or ""

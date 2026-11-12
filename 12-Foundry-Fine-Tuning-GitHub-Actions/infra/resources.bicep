@@ -49,9 +49,11 @@ resource baselineDeployment 'Microsoft.CognitiveServices/accounts/deployments@20
   name: 'medtriage-base'
   sku: {
     name: 'GlobalStandard'
-    capacity: 1
+    capacity: 10
   }
   properties: {
+    raiPolicyName: 'Microsoft.DefaultV2'
+    versionUpgradeOption: 'OnceNewDefaultVersionAvailable'
     model: {
       format: 'OpenAI'
       name: 'gpt-4.1-mini'
