@@ -1,0 +1,18 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+type: command
+code: ./src
+command: >-
+  python train-diabetes.py
+  --training_data ${{inputs.training_data}}
+  --model_output ${{outputs.trained_model}}
+inputs:
+  training_data:
+    type: uri_file
+    path: azureml:diabetes-data@latest
+outputs:
+  trained_model:
+    type: mlflow_model
+environment: azureml:AzureML-sklearn-1.0-ubuntu20.04-py38-cpu@latest
+compute: azureml:cpu-cluster
+experiment_name: diabetes-command-job-tutorial
+display_name: diabetes-train-and-register

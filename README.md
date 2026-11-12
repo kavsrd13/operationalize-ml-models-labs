@@ -67,22 +67,7 @@ and need globally unique names.
 
 ## Validation boundary
 
-The numbered training and pipeline labs have recorded Azure results. Freight,
-IMDB, and Delhi online serving have passed live sample requests in East US.
-Cloud commands create billable resources and should
-be run deliberately in the learner's own workspace.
-See `AZURE_VALIDATION_2026-11-10.md` and
-`AZURE_ENDPOINT_VALIDATION_2026-11-11.md` for earlier live results and cleanup.
-See `SHARED_COMPUTE_AND_GITHUB_VALIDATION_2026-11-11.md` for the latest shared
-compute training run and successful GitHub OIDC automation test.
-Exercise 03's earlier shared-compute job and exercise 11's earlier workflow were
-live-tested. The generic `course-cpu` cluster is provisioned, and exercise 08's
-standalone training and model registration completed in Azure. A new West US
-endpoint attempt failed with a subscription registration error and was removed.
-The revised exercise 11 workflow completed a live GitHub Actions → Azure ML
-training run on `course-cpu`. See `STANDALONE_LABS_VALIDATION_2026-11-11.md`
-for the current checks.
-The named IMDB/Delhi assets, training jobs, and explicit scoring scripts were
-live-tested in a temporary workspace in the teaching subscription. The newer
-shared-compute settings for 04–07 still need a fresh run before being described
-as verified in every learner workspace.
+The numbered training and pipeline labs have recorded Azure results, including
+successful cloud training runs and endpoint checks for the serving labs.
+Cloud commands create billable resources and should be run deliberately in the
+learner's own workspace.

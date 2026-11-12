@@ -1,0 +1,3 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineEndpoint.schema.json
+name: endpoint-name-placeholder
+auth_mode: key

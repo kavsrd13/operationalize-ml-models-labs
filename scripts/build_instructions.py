@@ -164,9 +164,9 @@ def main() -> None:
         if lab.name not in OMIT_FROM_INDEX:
             cards.append(f'<a class="card" href="{lab.name}/Instruction/index.html"><small>{lab.name[:2]}</small><strong>{html.escape(title)}</strong><span>Open this exercise →</span></a>')
     repo_url = "https://github.com/kavsrd13/operationalize-ml-models-labs"
-    body = f'''<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1></div>
+    body = f'''<div id="top" class="intro"><p class="eyebrow">SELF-PACED COURSE</p><h1>Operationalize Machine Learning Models</h1><p class="learning-path">Learning path: <strong>Labs 01–02 run locally</strong> on your machine, then <strong>Labs 03 onward move to Azure ML</strong> (Lab 12 uses Azure Foundry fine-tuning workflow).</p></div>
 <section class="repo-panel"><h2>Clone the course code</h2><p>GitHub repository: <a href="{repo_url}">{repo_url}</a></p><pre><code>git clone {repo_url}.git</code></pre><a class="repo-button" href="{repo_url}">Open GitHub repository →</a></section>
-<h2 class="exercise-heading">Exercises</h2><p>Recommended sequence: 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10.</p><div class="cards">''' + "\n".join(cards) + '</div>'
+<h2 class="exercise-heading">Exercises</h2><p>Recommended sequence: 01 → 02 → 03 → 04 → 05 → 06 → 07 → 08 → 09 → 10. Labs 01–02 are local; labs 03 onward are Azure ML-based.</p><div class="cards">''' + "\n".join(cards) + '</div>'
     (ROOT / "index.html").write_text(page("All exercises", body, "assets/site.css", "index.html"), encoding="utf-8", newline="\n")
     print(f"Built {len(labs)} exercise pages and one button-only index")
 

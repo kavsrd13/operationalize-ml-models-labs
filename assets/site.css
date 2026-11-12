@@ -13,8 +13,10 @@ main{max-width:1120px;margin:auto;padding:2rem 1.5rem 4rem}
 .home-index header{background:#edf6ff;color:#163047;border-bottom:1px solid #d4e4f3}
 .home-index header a{color:#0b5c8c}
 .home-index header span{color:#345873}
-.home-index .intro{background:linear-gradient(135deg,#ffffff 0,#edf7ff 100%);border:1px solid #d6e8f8;border-radius:18px;padding:2rem;box-shadow:0 8px 24px #16365314}
+.home-index .intro{background:linear-gradient(135deg,#ffffff 0,#edf7ff 58%,#eef9f3 100%);border:1px solid #d6e8f8;border-radius:18px;padding:2rem;box-shadow:0 8px 24px #16365314}
 .home-index .intro p{max-width:72ch}
+.learning-path{margin-top:1rem;background:linear-gradient(135deg,#eef8ff 0,#f4fdf4 100%);border:1px solid #cfe6dd;border-radius:12px;padding:.9rem 1rem;color:#1f4b44;font-weight:600}
+.learning-path code{background:#ffffff;border:1px solid #d9ece4}
 .hero-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.9rem;margin-top:1.1rem}
 .hero-button{display:inline-block;background:#086eaa;color:#fff;text-decoration:none;font-weight:700;padding:.75rem 1rem;border-radius:9px}
 .hero-button:hover{background:#065a8b}
@@ -26,14 +28,18 @@ main{max-width:1120px;margin:auto;padding:2rem 1.5rem 4rem}
 .repo-panel{background:white;border:1px solid #dbe5ef;border-radius:12px;padding:1.4rem;margin:.5rem 0 2rem;box-shadow:0 2px 8px #1636530d}
 .repo-panel h2{border:0;margin:0 0 .5rem;padding:0}
 .repo-panel pre{margin:.8rem 0}
-.repo-button{display:inline-block;background:#086eaa;color:white;text-decoration:none;font-weight:700;padding:.7rem 1rem;border-radius:7px}
-.repo-button:hover{background:#075a8a}
+.repo-button{display:inline-block;background:linear-gradient(135deg,#086eaa 0,#0b8a9f 100%);color:white;text-decoration:none;font-weight:700;padding:.7rem 1rem;border-radius:7px}
+.repo-button:hover{background:linear-gradient(135deg,#075a8a 0,#0a6f80 100%)}
 .exercise-heading{border:0;padding:0;margin:0 0 1rem}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin:1rem 0 3rem}
 .card{background:white;border:1px solid #dbe5ef;border-radius:12px;padding:1.1rem;display:flex;flex-direction:column;gap:.65rem;text-decoration:none;color:inherit;box-shadow:0 2px 8px #1636530d;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
 .card:hover{border-color:#2789bc;transform:translateY(-2px);box-shadow:0 10px 24px #0d40671f}
 .card small{color:#087da9;font-weight:800}
 .card span{color:#087da9;font-size:.85rem}
+.cards .card:nth-child(4n+1){border-top:4px solid #1577b3}
+.cards .card:nth-child(4n+2){border-top:4px solid #2d9f63}
+.cards .card:nth-child(4n+3){border-top:4px solid #8658d6}
+.cards .card:nth-child(4n+4){border-top:4px solid #e08a2f}
 .all-labs section,article{background:white;border:1px solid #dbe5ef;border-radius:12px;padding:clamp(1.2rem,3vw,2.4rem);margin:1.5rem 0;box-shadow:0 2px 8px #1636530d}
 .section-nav{text-align:right;font-size:.85rem}
 h1{line-height:1.15}
