@@ -260,7 +260,7 @@ and safety boundary.
 Enter this prompt in the playground chat, and then select **Send**:
 
 ```text
-My mother suddenly developed weakness on the right side of her face and arm, and her speech is unclear. What should I do?
+I suddenly developed weakness on the right side of my face and arm, and my speech is unclear. What should I do?
 ```
 
 The response wording can vary, but verify that:

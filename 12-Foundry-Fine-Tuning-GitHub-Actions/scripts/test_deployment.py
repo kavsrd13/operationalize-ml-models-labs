@@ -21,8 +21,8 @@ response = client.responses.create(
     model=deployment_name,
     instructions=system_instruction,
     input=(
-        "My mother suddenly developed weakness on the right side of her face "
-        "and arm, and her speech is unclear. What should I do?"
+        "I suddenly developed weakness on the right side of my face and arm, "
+        "and my speech is unclear. What should I do?"
     ),
 )
 
