@@ -279,7 +279,76 @@ correctness, safety, and response length. The fine-tuned model is effective only
 when it improves the required behavior on prompts that were not in its training
 or validation data.
 
-## Step 12: Clean up the serving deployment
+## Step 12: Test the deployment with Python code
+
+The playground test proves that the deployment works interactively. Now call
+the same deployment from Python, as an application would.
+
+### 12.1 Find the endpoint, deployment name, and API key
+
+1. In Foundry, open **Models**, and then open your `medtriage-ft-v1`
+   deployment.
+2. Select **Get endpoint**, **Code**, or **Use in application**, depending on
+   the label shown in your Foundry portal.
+3. Copy the OpenAI v1 endpoint. It must end in `/openai/v1/`. For example:
+
+   ```text
+   https://finetunning121.services.ai.azure.com/openai/v1/
+   ```
+
+4. Copy the **deployment name**. Use the deployed model name shown on this
+   page, not the fine-tuning job ID or the base-model name.
+5. Copy an API key from the deployment's **Keys and Endpoint** section. If the
+   key is not displayed in Foundry, follow the link to the parent Foundry
+   resource in the Azure portal, select **Keys and Endpoint**, and copy
+   **KEY 1**.
+
+Treat the API key like a password. Use it only in your local copy of the test
+file. Never commit or push a real key to GitHub.
+
+### 12.2 Install the dependency
+
+In the Exercise 12 folder, activate the virtual environment you used during
+setup, and install the pinned dependencies:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+```
+
+### 12.3 Add your deployment values
+
+Open `scripts/test_deployment.py`. Replace only these three placeholders with
+the values copied from Foundry:
+
+```python
+endpoint = "https://<your-resource-name>.services.ai.azure.com/openai/v1/"
+deployment_name = "<your-deployment-name>"
+api_key = "<your-api-key>"
+```
+
+For example, the endpoint can look like
+`https://finetunning121.services.ai.azure.com/openai/v1/`. Your deployment name
+and API key will be different.
+
+The script sends the same system instruction and emergency-triage prompt used
+in the playground. It prints `response.output_text`, which is the readable text
+returned by the Responses API.
+
+### 12.4 Run the test
+
+```powershell
+python .\scripts\test_deployment.py
+```
+
+Confirm that the printed answer is one JSON object containing `urgency`,
+`department`, `reason`, and `next_step`, and that `urgency` is `Emergency`.
+
+After the test succeeds, immediately replace the real API key in the local
+file with `<your-api-key>`. Do not run `git add`, `git commit`, or `git push`
+while the real key is present.
+
+## Step 13: Clean up the serving deployment
 
 After testing:
 
@@ -289,4 +358,4 @@ After testing:
 4. Keep the GitHub artifact and evaluation notes as experiment evidence.
 
 Deleting the serving deployment stops its hosting cost. It does not erase the
-fine-tuning job evidence stored in GitHub Actions.
+fine-tuning job evidence stored in GitHub Actions. The exercise is complete.

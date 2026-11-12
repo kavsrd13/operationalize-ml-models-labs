@@ -14,6 +14,7 @@ Open [Instruction/README.md](Instruction/README.md) for the editable student gui
 - `scripts/evaluate_baseline.py`: held-out base-model baseline through the project client.
 - `scripts/submit_finetune.py`: SDK upload and SFT job submission with correctly nested hyperparameters.
 - `scripts/monitor_finetune.py`: terminal-state monitoring and checkpoint collection.
+- `scripts/test_deployment.py`: local OpenAI Responses API test for the deployed fine-tuned model.
 - `tests/`: offline assertions for the exact SDK request shape.
 - `infra/`: separate Bicep paths for new and existing Azure AI resources.
 - `setup.ps1`: guided Azure selection, fine-tuned-model quota preflight, deployment preview, OIDC and GitHub configuration.
@@ -24,5 +25,7 @@ The workflow is stored at repository root in `.github/workflows/fine-tune-medtri
 After the job succeeds, the learner evaluates checkpoints, deploys an approved
 fine-tuned checkpoint, opens it in the Foundry playground, applies the same
 MedTriage system instruction used by the dataset, and compares unseen prompts
-against `medtriage-base`. Fine-tuning is considered effective only when held-out
-JSON compliance, urgency labeling, and safety behavior improve.
+against `medtriage-base`. The learner then finds the deployment endpoint, name,
+and API key in Foundry and tests the deployment with Python. Fine-tuning is
+considered effective only when held-out JSON compliance, urgency labeling, and
+safety behavior improve.

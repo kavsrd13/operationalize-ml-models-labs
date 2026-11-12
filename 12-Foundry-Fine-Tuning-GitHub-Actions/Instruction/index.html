@@ -179,7 +179,36 @@ git push origin main</code></pre>
 <li>It does not provide a diagnosis or medication dose.</li>
 </ul>
 <p>For a fair comparison, select <code>medtriage-base</code>, apply the same system instruction, and send the same prompt. Compare JSON compliance, urgency-label correctness, safety, and response length. The fine-tuned model is effective only when it improves the required behavior on prompts that were not in its training or validation data.</p>
-<h2>Step 12: Clean up the serving deployment</h2>
+<h2>Step 12: Test the deployment with Python code</h2>
+<p>The playground test proves that the deployment works interactively. Now call the same deployment from Python, as an application would.</p>
+<h3>12.1 Find the endpoint, deployment name, and API key</h3>
+<ol start="1">
+<li>In Foundry, open <strong>Models</strong>, and then open your <code>medtriage-ft-v1</code> deployment.</li>
+<li>Select <strong>Get endpoint</strong>, <strong>Code</strong>, or <strong>Use in application</strong>, depending on the label shown in your Foundry portal.</li>
+<li>Copy the OpenAI v1 endpoint. It must end in <code>/openai/v1/</code>. For example:</li>
+</ol>
+<pre><code>   https://finetunning121.services.ai.azure.com/openai/v1/</code></pre>
+<ol start="4">
+<li>Copy the <strong>deployment name</strong>. Use the deployed model name shown on this page, not the fine-tuning job ID or the base-model name.</li>
+<li>Copy an API key from the deployment&#x27;s <strong>Keys and Endpoint</strong> section. If the key is not displayed in Foundry, follow the link to the parent Foundry resource in the Azure portal, select <strong>Keys and Endpoint</strong>, and copy <strong>KEY 1</strong>.</li>
+</ol>
+<p>Treat the API key like a password. Use it only in your local copy of the test file. Never commit or push a real key to GitHub.</p>
+<h3>12.2 Install the dependency</h3>
+<p>In the Exercise 12 folder, activate the virtual environment you used during setup, and install the pinned dependencies:</p>
+<pre><code>.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt</code></pre>
+<h3>12.3 Add your deployment values</h3>
+<p>Open <code>scripts/test_deployment.py</code>. Replace only these three placeholders with the values copied from Foundry:</p>
+<pre><code>endpoint = &quot;https://&lt;your-resource-name&gt;.services.ai.azure.com/openai/v1/&quot;
+deployment_name = &quot;&lt;your-deployment-name&gt;&quot;
+api_key = &quot;&lt;your-api-key&gt;&quot;</code></pre>
+<p>For example, the endpoint can look like <code>https://finetunning121.services.ai.azure.com/openai/v1/</code>. Your deployment name and API key will be different.</p>
+<p>The script sends the same system instruction and emergency-triage prompt used in the playground. It prints <code>response.output_text</code>, which is the readable text returned by the Responses API.</p>
+<h3>12.4 Run the test</h3>
+<pre><code>python .\scripts\test_deployment.py</code></pre>
+<p>Confirm that the printed answer is one JSON object containing <code>urgency</code>, <code>department</code>, <code>reason</code>, and <code>next_step</code>, and that <code>urgency</code> is <code>Emergency</code>.</p>
+<p>After the test succeeds, immediately replace the real API key in the local file with <code>&lt;your-api-key&gt;</code>. Do not run <code>git add</code>, <code>git commit</code>, or <code>git push</code> while the real key is present.</p>
+<h2>Step 13: Clean up the serving deployment</h2>
 <p>After testing:</p>
 <ol start="1">
 <li>Open <strong>Models</strong> in the Foundry project.</li>
@@ -187,4 +216,4 @@ git push origin main</code></pre>
 <li>Select <strong>Delete</strong> and confirm the deletion.</li>
 <li>Keep the GitHub artifact and evaluation notes as experiment evidence.</li>
 </ol>
-<p>Deleting the serving deployment stops its hosting cost. It does not erase the fine-tuning job evidence stored in GitHub Actions.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>Deleting the serving deployment stops its hosting cost. It does not erase the fine-tuning job evidence stored in GitHub Actions. The exercise is complete.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
