@@ -115,8 +115,7 @@ git push origin main</code></pre>
 <ol start="1">
 <li>Open your fork on GitHub.</li>
 <li>Select <strong>Actions</strong>.</li>
-<li>Select <strong>Exercise 12 - Fine-tune MedTriage model</strong>.</li>
-<li>Open the run created by your push.</li>
+<li>Open the newest workflow run created by your push.</li>
 </ol>
 <p>The workflow:</p>
 <ol start="1">
@@ -151,42 +150,35 @@ git push origin main</code></pre>
 <li>Review the job metrics and available checkpoints. Select the evaluated checkpoint you want to test.</li>
 <li>Select <strong>Deploy</strong>, and then select <strong>Serverless</strong>.</li>
 <li>Enter <code>medtriage-ft-v1</code> as the deployment name.</li>
-<li>Choose an available deployment type. Use <strong>Global Standard</strong> when the subscription has fine-tuned-model quota; for short evaluation, use the <strong>Developer</strong> deployment type if it is offered for the model and region.</li>
+<li>Select <strong>Global Standard</strong> as the deployment type.</li>
 <li>Select a small evaluation capacity within your quota, create the deployment, and wait until its status is <strong>Succeeded</strong> on the <strong>Models</strong> page.</li>
 </ol>
 <p>If deployment fails because quota is zero, do not retrain the model. Request deployment quota or select a supported deployment type or region with available fine-tuned-model quota.</p>
 <h2>Step 10: Open the playground and add the system instruction</h2>
 <ol start="1">
 <li>On the completed deployment page, select <strong>Open in playground</strong>. If that option is not shown, open <strong>Playgrounds</strong> from the Foundry project.</li>
-<li>Select <code>medtriage-ft-v1</code> from the deployment list. Confirm that you did not select the base deployment <code>medtriage-base</code>.</li>
-<li>In <strong>System message</strong> or <strong>System instructions</strong>, paste:</li>
+<li>In the deployment selector, choose <code>medtriage-ft-v1</code>. Confirm that the selected deployment is not the base deployment <code>medtriage-base</code>.</li>
+<li>In <strong>System message</strong> or <strong>System instructions</strong>, replace any existing text with this instruction:</li>
 </ol>
 <pre><code>You are MedTriage, a hospital symptom triage assistant. Reply ONLY with a single JSON object with the keys urgency (Emergency | Urgent | Routine | Not Applicable), department, reason, next_step. Never give a diagnosis or medication dose. Training demo only - not for clinical use.</code></pre>
 <ol start="4">
-<li>Select <strong>Apply changes</strong> or the equivalent save action shown in the portal.</li>
+<li>Select <strong>Apply changes</strong>. Select <strong>Continue</strong> if Foundry asks you to confirm the update.</li>
 <li>Start a new chat session so an earlier conversation does not affect the test.</li>
 </ol>
 <p>The system instruction is still required after fine-tuning. Fine-tuning teaches the repeated behavior; the system instruction states the current runtime task and safety boundary.</p>
 <h2>Step 11: Test the fine-tuned model</h2>
-<p>Send each prompt separately. These are evaluation examples and must not be added to the training or validation files before the test.</p>
-<h3>Test 1 — emergency pattern</h3>
-<pre><code>My mother suddenly cannot raise her right arm and her speech is garbled.</code></pre>
-<p>Expected behavior: valid JSON, <code>Emergency</code>, an emergency or neurology department, and immediate emergency action without claiming a diagnosis.</p>
-<h3>Test 2 — routine pattern</h3>
-<pre><code>I have had a small painless wart on one finger for several months.</code></pre>
-<p>Expected behavior: valid JSON, <code>Routine</code>, an appropriate routine department, and a non-emergency next step.</p>
-<h3>Test 3 — non-triage request</h3>
-<pre><code>Can you email me a copy of my hospital test results?</code></pre>
-<p>Expected behavior: valid JSON, <code>Not Applicable</code>, an appropriate patient-services department, and redirection to an authorized hospital service.</p>
-<p>For every response, verify:</p>
+<p>Enter this prompt in the playground chat, and then select <strong>Send</strong>:</p>
+<pre><code>My mother suddenly developed weakness on the right side of her face and arm, and her speech is unclear. What should I do?</code></pre>
+<p>The response wording can vary, but verify that:</p>
 <ul>
 <li>The response parses as one JSON object with no Markdown fence or extra text.</li>
 <li>It contains exactly <code>urgency</code>, <code>department</code>, <code>reason</code>, and <code>next_step</code>.</li>
-<li><code>urgency</code> is one of the four approved labels.</li>
+<li><code>urgency</code> is <code>Emergency</code>.</li>
+<li><code>department</code> directs the patient to emergency care or an appropriate emergency specialty.</li>
+<li><code>next_step</code> clearly says to seek immediate emergency help.</li>
 <li>It does not provide a diagnosis or medication dose.</li>
-<li>Emergency language is clear when emergency warning signs are present.</li>
 </ul>
-<p>Run the same three prompts against <code>medtriage-base</code> with the same system instruction. Record JSON compliance, urgency-label correctness, safety, and response length for both deployments. Fine-tuning is effective only if the fine-tuned model produces a measurable improvement on unseen prompts.</p>
+<p>For a fair comparison, select <code>medtriage-base</code>, apply the same system instruction, and send the same prompt. Compare JSON compliance, urgency-label correctness, safety, and response length. The fine-tuned model is effective only when it improves the required behavior on prompts that were not in its training or validation data.</p>
 <h2>Step 12: Clean up the serving deployment</h2>
 <p>After testing:</p>
 <ol start="1">
@@ -195,22 +187,4 @@ git push origin main</code></pre>
 <li>Select <strong>Delete</strong> and confirm the deletion.</li>
 <li>Keep the GitHub artifact and evaluation notes as experiment evidence.</li>
 </ol>
-<p>Deleting the serving deployment stops its hosting cost. It does not erase the fine-tuning job evidence stored in GitHub Actions.</p>
-<h2>Optional future experiments</h2>
-<p>Any later push to your fork&#x27;s <code>main</code> branch that changes Exercise 12 <code>data/<strong></code> or <code>config/</strong></code> starts another billable run. You may later replace the reviewed datasets or change a different supported hyperparameter. This exercise changes only <code>n_epochs</code>.</p>
-<h2>Troubleshooting</h2>
-<ul>
-<li><strong>Fork is unavailable:</strong> Sign in to GitHub and confirm the source repository allows forks.</li>
-<li><strong>Setup reports that you are not an administrator:</strong> Confirm <code>origin</code> points to your own fork with <code>git remote -v</code>.</li>
-<li><strong>Setup requires <code>main</code>:</strong> Run <code>git switch main</code>, and then rerun setup.</li>
-<li><strong>No workflow run appears:</strong> Confirm you pushed the configuration change to your fork&#x27;s <code>main</code> branch. Rerun <code>setup.ps1</code> to enable Actions and the Exercise 12 workflow in the fork.</li>
-<li><strong>Azure configuration is missing:</strong> Run <code>setup.ps1</code> from your fork and complete the deployment before pushing again.</li>
-<li><strong>OIDC sign-in fails:</strong> Rerun <code>setup.ps1</code> from the same fork. OIDC trust is repository-specific and does not transfer from the source repository.</li>
-<li><strong>No Foundry job appears immediately:</strong> Wait for the baseline step and the <strong>Upload data and submit supervised fine-tuning</strong> step to finish.</li>
-<li><strong>Quota error:</strong> Select a subscription or region with available <code>gpt-4.1-mini</code> fine-tuning quota.</li>
-<li><strong>Deploy is unavailable:</strong> Confirm the job completed successfully and that your Azure role can create Cognitive Services model deployments.</li>
-<li><strong>Playground shows base-model behavior:</strong> Confirm the selected deployment is <code>medtriage-ft-v1</code>, start a new chat, and apply the system instruction again.</li>
-<li><strong>Response is not valid JSON:</strong> Record the failure, compare it with <code>medtriage-base</code>, and do not treat the fine-tune as successful until held-out evaluation improves.</li>
-<li><strong>Push starts another paid run:</strong> This is expected whenever Exercise 12 data or configuration changes on <code>main</code>. Wait for the active run before pushing another experiment.</li>
-</ul>
-<p>The implementation follows the official <a href="https://learn.microsoft.com/python/api/overview/azure/ai-projects-readme">Azure AI Projects Python client</a>, <a href="https://learn.microsoft.com/azure/ai-foundry/openai/how-to/fine-tuning">Microsoft Foundry supervised fine-tuning</a>, and <a href="https://learn.microsoft.com/azure/foundry/fine-tuning/deploy-fine-tuned-models">fine-tuned model deployment</a> patterns. See <a href="../LAB12_VALIDATION.md">LAB12_VALIDATION.md</a> for tested evidence and the live-validation boundary.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>Deleting the serving deployment stops its hosting cost. It does not erase the fine-tuning job evidence stored in GitHub Actions.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
