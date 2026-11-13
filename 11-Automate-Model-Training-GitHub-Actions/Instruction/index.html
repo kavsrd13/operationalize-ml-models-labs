@@ -56,19 +56,26 @@
 <li>Git, Azure CLI, GitHub CLI, PowerShell, and Python installed locally.</li>
 <li>Permission to run billable Azure ML compute. The cluster scales to zero after 120 seconds when idle, but the training node incurs cost while running.</li>
 </ul>
-<h2>Step 1: Fork and clone the repository</h2>
+<h2>Step 1: Create your GitHub copy and clone it</h2>
 <ol start="1">
 <li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
-<li>Select <strong>Fork</strong>, choose your GitHub account, and create the fork.</li>
-<li>Clone your fork without signing in to GitHub CLI. Replace <code>&lt;your-github-name&gt;</code>:</li>
+<li>Select <strong>Fork</strong>, or select <strong>Use this template</strong> → **Create a new repository**. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
+<li>Clone your GitHub copy without signing in to GitHub CLI. Replace both placeholders. The final <code>lab11-student</code> argument deliberately gives the local folder a known name even when the GitHub repository has another name:</li>
 </ol>
-<pre><code>git clone https://github.com/&lt;your-github-name&gt;/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs
+<pre><code>git clone https://github.com/&lt;your-github-name&gt;/&lt;your-repository-name&gt;.git lab11-student
+Set-Location .\lab11-student
+git switch main</code></pre>
+<p>For example, if your repository is <code>kavsrd13/mlops3</code>, run:</p>
+<pre><code>git clone https://github.com/kavsrd13/mlops3.git lab11-student
+Set-Location .\lab11-student
 git switch main</code></pre>
 <ol start="4">
-<li>Confirm <code>origin</code> points to your fork:</li>
+<li>Confirm you are in the clone you just created, the working tree is clean, and <code>origin</code> points to your GitHub copy:</li>
 </ol>
-<pre><code>git remote -v</code></pre>
+<pre><code>Get-Location
+git status --short
+git remote get-url origin</code></pre>
+<p><code>git status --short</code> must print nothing. Do not continue if it displays modified files or if the remote URL names a different repository.</p>
 <p>You need GitHub CLI authentication only when setup configures secrets and variables in your fork.</p>
 <h2>Step 2: Sign in to Azure and GitHub</h2>
 <p>From the repository root, run:</p>
@@ -194,6 +201,7 @@ az group exists --name $RG</code></pre>
 <h2>Troubleshooting</h2>
 <ul>
 <li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your fork and <code>gh auth status</code> shows its owner account.</li>
+<li><strong>Setup unexpectedly asks you to type <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean <code>lab11-student</code> folder created in Step 1.</li>
 <li><strong>Setup says administrator access is required:</strong> run setup from a fork that you own, not the instructor&#x27;s source repository.</li>
 <li><strong>OIDC login fails:</strong> rerun setup from the same fork. OIDC trust is specific to the repository and <code>main</code> branch.</li>
 <li><strong>Compute quota fails:</strong> choose another region or rerun setup with a VM size available in your subscription, for example <code>-VmSize &#x27;&lt;available-cpu-sku&gt;&#x27;</code>.</li>

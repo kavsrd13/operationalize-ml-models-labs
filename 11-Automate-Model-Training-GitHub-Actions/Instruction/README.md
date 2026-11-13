@@ -96,24 +96,42 @@ You need:
 - Permission to run billable Azure ML compute. The cluster scales to zero after
   120 seconds when idle, but the training node incurs cost while running.
 
-## Step 1: Fork and clone the repository
+## Step 1: Create your GitHub copy and clone it
 
 1. Open
    [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-2. Select **Fork**, choose your GitHub account, and create the fork.
-3. Clone your fork without signing in to GitHub CLI. Replace `<your-github-name>`:
+2. Select **Fork**, or select **Use this template** → **Create a new
+   repository**. Choose your GitHub account and give the repository any name,
+   such as `mlops3`.
+3. Clone your GitHub copy without signing in to GitHub CLI. Replace both
+   placeholders. The final `lab11-student` argument deliberately gives the
+   local folder a known name even when the GitHub repository has another name:
 
 ```powershell
-git clone https://github.com/<your-github-name>/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs
+git clone https://github.com/<your-github-name>/<your-repository-name>.git lab11-student
+Set-Location .\lab11-student
 git switch main
 ```
 
-4. Confirm `origin` points to your fork:
+For example, if your repository is `kavsrd13/mlops3`, run:
 
 ```powershell
-git remote -v
+git clone https://github.com/kavsrd13/mlops3.git lab11-student
+Set-Location .\lab11-student
+git switch main
 ```
+
+4. Confirm you are in the clone you just created, the working tree is clean,
+   and `origin` points to your GitHub copy:
+
+```powershell
+Get-Location
+git status --short
+git remote get-url origin
+```
+
+`git status --short` must print nothing. Do not continue if it displays modified
+files or if the remote URL names a different repository.
 
 You need GitHub CLI authentication only when setup configures secrets and
 variables in your fork.
@@ -340,6 +358,10 @@ repository will be reused for a different subscription.
 
 - **Setup cannot read the repository:** confirm `git remote -v` points to your
   fork and `gh auth status` shows its owner account.
+- **Setup unexpectedly asks you to type `OWNER/REPO`:** you are running an old
+  setup script or are in the wrong clone. Run `Get-Location`,
+  `git status --short`, and `git remote get-url origin`; then return to the
+  clean `lab11-student` folder created in Step 1.
 - **Setup says administrator access is required:** run setup from a fork that
   you own, not the instructor's source repository.
 - **OIDC login fails:** rerun setup from the same fork. OIDC trust is specific
