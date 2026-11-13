@@ -5,66 +5,91 @@
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 03: Train a freight regression model</h1>
 <h2>Goal</h2>
-<p>Predict item freight cost from checkout-time features, compare a median baseline, Ridge, and gradient boosting, and inspect the MLflow model created by Azure ML.</p>
-<h2>Fork and clone the public repository</h2>
-<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:</p>
+<p>Train a freight-cost model locally, then run the same training problem as an Azure Machine Learning <strong>command job</strong>. You will create or select a resource group and workspace, register the Olist data asset, create a CPU compute cluster, submit the job, and inspect its metrics and MLflow model artifact.</p>
+<p>This exercise trains a model. It does not register the resulting model as a workspace model asset or deploy an endpoint.</p>
+<h2>Step 1: Clone the code and check prerequisites</h2>
+<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor such as VS Code. Clone the public repository from a PowerShell terminal. No GitHub CLI sign-in is needed:</p>
 <pre><code>git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs</code></pre>
-<p>To save your exercise work in your own GitHub account, sign in at <a href="https://github.com/">GitHub</a>, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>, select <strong>Fork</strong>, and then select <strong>Create fork</strong>. Clone your fork instead of the upstream repository:</p>
-<pre><code>git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git remote -v</code></pre>
-<p>No <code>gh auth login</code> command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.</p>
-<h2>Create or reuse Azure resources for this lab</h2>
-<p>Set your own subscription, resource group, workspace, and region. The commands create the group and workspace if needed, install the shared Olist asset, and create one scale-to-zero training cluster named <code>course-cpu</code>. Reuse the same names in later labs. Check regional quota for <code>Standard_E4ds_v4</code>.</p>
-<pre><code>$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
+python --version
+az --version</code></pre>
+<p>Run the remaining commands from this repository root. If you already cloned it for Exercises 01 or 02, enter that folder instead of cloning again. To save your changes in your own GitHub account, use <strong>Use this template</strong> on the <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">course repository</a> and clone your copy instead. In that case, substitute your repository URL in the <code>git clone</code> command above.</p>
+<p>The actual code is in <a href="../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a>, <a href="../src/train.py"><code>src/train.py</code></a>, and <a href="../jobs/train-job.yml"><code>jobs/train-job.yml</code></a>. The shared resource definitions are <a href="../../datasets/olist/olist-data-asset.yml"><code>olist-data-asset.yml</code></a> and <a href="../../00-Shared-Setup-and-Data/scripts/compute.yml"><code>compute.yml</code></a>.</p>
+<h2>Step 2: Prepare the data and local Python environment</h2>
+<p>Run this once if you have not completed the shared setup in Exercises 01 or 02:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<p>This extracts and checks the nine Olist CSV files, creates <code>.venv</code>, installs Python packages, and registers the <strong>Python (Olist Azure ML)</strong> local notebook kernel. It does not contact Azure or train a model. Verify the CSVs:</p>
+<pre><code>(Get-ChildItem &#x27;.\datasets\olist\Ecommerce Dataset&#x27; -Filter &#x27;*.csv&#x27;).Count</code></pre>
+<p>The result must be <code>9</code>.</p>
+<h2>Step 3: Train locally first</h2>
+<p>Open <code>03-Freight-Regression-Training/freight-cost-local.ipynb</code> in VS Code and select <strong>Python (Olist Azure ML)</strong>. Run through <strong>8. Save the model</strong>. Record the median baseline, Ridge, and boosting MAE values, and find the saved <code>freight_model.joblib</code>.</p>
+<p>The final <strong>9. Try it: Gradio app</strong> section is optional and is not needed for the Azure job. To run it, first install its extra dependency in <code>.venv</code>:</p>
+<pre><code>.\.venv\Scripts\python.exe -m pip install gradio==6.9.0</code></pre>
+<h2>Step 4: Select your Azure subscription</h2>
+<p>If Azure CLI is already signed in, reuse that session. Otherwise run <code>az login</code>. List the enabled subscriptions and copy the ID you intend to use. Then set these four values in your PowerShell terminal:</p>
+<pre><code>az account list --query &quot;[?state==&#x27;Enabled&#x27;].{Name:name,ID:id}&quot; -o table
+$SUB = &#x27;YOUR_SUBSCRIPTION_ID&#x27;
 $RG = &#x27;rg-course-ml&#x27;
 $WS = &#x27;mlw-course-ml&#x27;
 $LOCATION = &#x27;eastus&#x27;
-az login
 az account set --subscription $SUB
-az extension add --name ml --yes
-az group create -n $RG -l $LOCATION
-az ml workspace show -n $WS -g $RG --subscription $SUB 2&gt;$null | Out-Null
-if ($LASTEXITCODE -ne 0) {
-  az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB
-}
-python .\00-Shared-Setup-and-Data\scripts\bootstrap.py `
-  --subscription $SUB --resource-group $RG --workspace $WS --create-cluster
-az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv
-az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv</code></pre>
-<h2>Code files</h2>
-<p>The actual code for this exercise is here:</p>
-<ul>
-<li><a href="../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a></li>
-<li><a href="../src/train.py"><code>src/train.py</code></a></li>
-<li><a href="../jobs/train-job.yml"><code>jobs/train-job.yml</code></a></li>
-</ul>
-<p>Run commands from the repository root. Olist&#x27;s source ZIP is stored once in <code>datasets/olist</code> and extracted by setup.</p>
-<h2>Steps</h2>
+az account show --query &#x27;{name:name,id:id}&#x27; -o table
+az extension add --name ml --yes</code></pre>
+<p>Choose a region with quota for <code>Standard_E4ds_v4</code>, the training cluster&#x27;s VM size. If classmates share a subscription, add your initials to <code>$RG</code> and <code>$WS</code> so your workspaces do not collide. Reuse your chosen names in Exercises 04–10.</p>
+<h2>Step 5: Create or select a resource group and workspace</h2>
+<p>For a new course workspace, run:</p>
+<pre><code>az group create -n $RG -l $LOCATION --subscription $SUB
+az ml workspace create -n $WS -g $RG -l $LOCATION --subscription $SUB</code></pre>
+<p>Azure ML also provisions supporting storage, key vault, and monitoring resources; it may provision a container registry when needed. If you already have the intended resource group and workspace, skip both create commands. In both cases, verify the workspace:</p>
+<pre><code>az ml workspace show -n $WS -g $RG --subscription $SUB `
+  --query &#x27;{name:name,location:location}&#x27; -o table</code></pre>
+<p>The name and region must match your choices. You do not need a <strong>compute instance</strong> for this job; it will use a compute <strong>cluster</strong>.</p>
+<h2>Step 6: Register the Olist data asset</h2>
+<p>The job expects the versioned asset <code>olist-ecommerce-raw:1</code>. Resolve the extracted folder and register it in your workspace:</p>
+<pre><code>$DATA = (Resolve-Path &#x27;.\datasets\olist\Ecommerce Dataset&#x27;).Path
+az ml data create --file &#x27;.\datasets\olist\olist-data-asset.yml&#x27; `
+  --path $DATA -g $RG -w $WS --subscription $SUB
+az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS `
+  --subscription $SUB --query &#x27;{name:name,version:version,type:type}&#x27; -o table</code></pre>
+<p>If version <code>1</code> is already registered in this workspace, skip <code>data create</code> and run only <code>data show</code>. Azure uploads the nine CSVs to workspace storage; the job reads this asset instead of your laptop folder.</p>
+<h2>Step 7: Create the training compute cluster</h2>
+<p>The shared definition uses <code>Standard_E4ds_v4</code>, one node during training, and zero nodes when idle. Create <code>course-cpu</code> once:</p>
+<pre><code>az ml compute create --file &#x27;.\00-Shared-Setup-and-Data\scripts\compute.yml&#x27; `
+  -g $RG -w $WS --subscription $SUB
+az ml compute show -n course-cpu -g $RG -w $WS `
+  --subscription $SUB --query &#x27;{name:name,size:size,type:type}&#x27; -o table</code></pre>
+<p>If <code>course-cpu</code> already exists, skip <code>compute create</code> and run <code>compute show</code>. Wait until provisioning succeeds before submitting the job. The first job can take extra time while the node starts.</p>
+<h2>Step 8: Read the command job definition</h2>
+<p>Open <code>03-Freight-Regression-Training/jobs/train-job.yml</code> and identify its five essential parts:</p>
 <ol start="1">
-<li>Use the <code>$RG</code> and <code>$WS</code> values from the Azure setup section above.</li>
-<li>Confirm the shared resources:</li>
+<li><code>code: ../src</code> uploads <code>src/train.py</code>, not the local notebook.</li>
+<li><code>command</code> runs <code>python train.py</code> with data and model parameters.</li>
+<li><code>olist_data</code> mounts <code>azureml:olist-ecommerce-raw:1</code> read-only as <code>--data</code>.</li>
+<li><code>environment</code> supplies a pinned curated scikit-learn environment.</li>
+<li><code>compute: azureml:course-cpu</code> selects the cluster from Step 7.</li>
 </ol>
-<pre><code>   az ml data show -n olist-ecommerce-raw -v 1 -g $RG -w $WS --query name -o tsv
-   az ml compute show -n course-cpu -g $RG -w $WS --query name -o tsv</code></pre>
-<ol start="3">
-<li>Read <code>../src/train.py</code> in execution order: input CSVs, joins, checkout-time features, time split, baseline, fitted models, and metrics. Find the <code>--data</code> argument and <code>outputs/model</code> artifact.</li>
-<li>Open <code>../freight-cost-local.ipynb</code> with the Olist kernel. Run every cell; record baseline MAE and fitted-model MAE.</li>
-<li>Review <code>../jobs/train-job.yml</code>. It points to the shared data asset and compute.</li>
-<li>Preview and submit one Azure ML job:</li>
-</ol>
-<pre><code>   python .\00-Shared-Setup-and-Data\scripts\submit.py freight --dry-run
-   python .\00-Shared-Setup-and-Data\scripts\submit.py freight</code></pre>
-<ol start="7">
-<li>Copy the returned job name. Check its status every few minutes until it says <code>Completed</code>:</li>
-</ol>
-<pre><code>   az ml job show -n YOUR_JOB_NAME -g $RG -w $WS --query status -o tsv</code></pre>
-<p><code>az ml job stream</code> is optional. Some Azure CLI versions remain open after the job finishes and then report <code>Incorrect padding</code>. The status command above is the reliable completion check. Download the evidence with <code>az ml job download -n YOUR_JOB_NAME -g $RG -w $WS --all</code> and inspect <code>outputs/metrics.json</code>, the plots, and the model folder.</p>
-<ol start="8">
-<li>In Studio compare MAE against the median baseline, inspect the prediction plot and <code>outputs/model</code>, and identify the held-out time period. Exercise 08 contains its own training job, so it does not depend on this run.</li>
-</ol>
-<p>The <code>../extended-demo/</code> folder is supplemental source material with older paths.</p>
-<h2>Next exercise</h2>
-<p>Keep <code>$SUB</code>, <code>$RG</code>, <code>$WS</code>, <code>olist-ecommerce-raw:1</code>, and the scale-to-zero <code>course-cpu</code> cluster. Continue with <a href="../../04-Delivery-Time-Pipeline/Instruction/index.html">Exercise 04</a>, which reuses this setup and submits a two-step pipeline. Do not run setup again.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
+<p>In <code>src/train.py</code>, find <code>build_dataset</code>, the time-based train/test split, the three model fits, MLflow metric logging, and <code>outputs/model</code>. Azure ML will upload the saved MLflow model <strong>artifact</strong> with the job outputs. It does not register a workspace model asset automatically.</p>
+<h2>Step 9: Submit the Azure ML command job</h2>
+<p>From the repository root, run the actual Azure ML CLI command. It uploads the Python code, resolves the data asset and environment, and schedules one job on <code>course-cpu</code>:</p>
+<pre><code>$JOB = az ml job create --file &#x27;.\03-Freight-Regression-Training\jobs\train-job.yml&#x27; `
+  -g $RG -w $WS --subscription $SUB --query name -o tsv
+$JOB</code></pre>
+<p>Save the printed job name. If Azure reports an error or <code>$JOB</code> is empty, fix that error before continuing; no training job has started.</p>
+<h2>Step 10: Monitor and inspect the result</h2>
+<p>Check the job every few minutes until its status is <code>Completed</code>:</p>
+<pre><code>az ml job show -n $JOB -g $RG -w $WS --subscription $SUB `
+  --query &#x27;{name:name,status:status,studio_url:studio_url}&#x27; -o json</code></pre>
+<p>Open the returned <code>studio_url</code>. In Azure ML Studio, inspect the job&#x27;s logs, Metrics, and Outputs. The median baseline, Ridge, and boosting metrics should all be present. Boosting MAE should be lower than the median baseline. If the status is <code>Failed</code>, read the job logs before changing the code.</p>
+<p>Download the result to inspect it locally:</p>
+<pre><code>$DOWNLOAD = &#x27;.\03-Freight-Regression-Training\outputs\azure-job&#x27;
+New-Item -ItemType Directory -Force -Path $DOWNLOAD | Out-Null
+az ml job download -n $JOB -g $RG -w $WS --subscription $SUB `
+  --all --download-path $DOWNLOAD
+Get-ChildItem $DOWNLOAD -Recurse -Filter metrics.json
+Get-ChildItem $DOWNLOAD -Recurse -Filter MLmodel</code></pre>
+<p>Open <code>metrics.json</code> and compare <code>baseline</code>, <code>linear</code>, and <code>boosting</code>. The <code>MLmodel</code> file identifies the model artifact. This exercise leaves that artifact attached to the job; deployment is a separate exercise.</p>
+<h2>Step 11: Keep the workspace connection for Exercise 04</h2>
+<p>Exercise 04&#x27;s shared submission helper reads a local, ignored <code>config.json</code>. Record the workspace values you selected without creating anything else:</p>
+<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure `
+  --skip-install --subscription $SUB --resource-group $RG --workspace $WS</code></pre>
+<p>Keep the same workspace, <code>olist-ecommerce-raw:1</code> data asset, and <code>course-cpu</code> cluster for <a href="../../04-Delivery-Time-Pipeline/Instruction/index.html">Exercise 04</a>. Do not delete them or rerun resource creation between exercises. Exercise 08 contains its own training job and does not depend on this run. The <code>extended-demo/</code> folder is supplemental source material with older paths.</p></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>

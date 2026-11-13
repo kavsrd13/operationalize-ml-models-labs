@@ -1,7 +1,7 @@
 # =====================================================================================
 #  Azure ML COMMAND JOB - train the Olist freight-cost model in the cloud
 # -------------------------------------------------------------------------------------
-#  Submit:   az ml job create --file jobs/train-job.yml -g rg-olist-ml-dev -w mlw-olist-dev
+#  Submit from repository root with the resource group and workspace selected in this lab.
 #
 #  code         -> the ../src folder is uploaded and becomes the working directory
 #  inputs       -> the registered data asset is MOUNTED (read-only) into the job
