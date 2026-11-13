@@ -60,14 +60,14 @@
 <ol start="1">
 <li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
 <li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
-<li>Clone your GitHub copy without signing in to GitHub CLI. Replace both placeholders. The final <code>lab11-student</code> argument deliberately gives the local folder a known name even when the GitHub repository has another name:</li>
+<li>Clone your GitHub copy without signing in to GitHub CLI. Replace both placeholders with your GitHub account and repository name. Git creates a local folder with the repository name; enter that folder:</li>
 </ol>
-<pre><code>git clone https://github.com/&lt;your-github-name&gt;/&lt;your-repository-name&gt;.git lab11-student
-Set-Location .\lab11-student
+<pre><code>git clone https://github.com/&lt;your-github-name&gt;/&lt;your-repository-name&gt;.git
+Set-Location .\&lt;your-repository-name&gt;
 git switch main</code></pre>
 <p>For example, if your repository is <code>kavsrd13/mlops3</code>, run:</p>
-<pre><code>git clone https://github.com/kavsrd13/mlops3.git lab11-student
-Set-Location .\lab11-student
+<pre><code>git clone https://github.com/kavsrd13/mlops3.git
+Set-Location .\mlops3
 git switch main</code></pre>
 <ol start="4">
 <li>Confirm you are in the clone you just created, the working tree is clean, and <code>origin</code> points to your GitHub copy:</li>
@@ -202,7 +202,7 @@ az group exists --name $RG</code></pre>
 <h2>Troubleshooting</h2>
 <ul>
 <li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your student repository and <code>gh auth status</code> shows its owner account.</li>
-<li><strong>Setup unexpectedly asks for a subscription ID or <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean <code>lab11-student</code> folder created in Step 1.</li>
+<li><strong>Setup unexpectedly asks for a subscription ID or <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean folder named after your GitHub repository created in Step 1.</li>
 <li><strong>Setup says administrator access is required:</strong> run setup from a repository created under your account with <strong>Use this template</strong>, not the instructor&#x27;s source repository.</li>
 <li><strong>OIDC login fails:</strong> rerun setup from the same student repository. OIDC trust is specific to the repository and <code>main</code> branch.</li>
 <li><strong>Compute quota fails:</strong> choose another region or rerun setup with a VM size available in your subscription, for example <code>-VmSize &#x27;&lt;available-cpu-sku&gt;&#x27;</code>.</li>

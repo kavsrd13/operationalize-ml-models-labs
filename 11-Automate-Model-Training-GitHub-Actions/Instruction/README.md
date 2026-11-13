@@ -103,20 +103,20 @@ You need:
 2. Select **Use this template** → **Create a new repository**. Choose your
    GitHub account and give the repository any name, such as `mlops3`.
 3. Clone your GitHub copy without signing in to GitHub CLI. Replace both
-   placeholders. The final `lab11-student` argument deliberately gives the
-   local folder a known name even when the GitHub repository has another name:
+   placeholders with your GitHub account and repository name. Git creates a
+   local folder with the repository name; enter that folder:
 
 ```powershell
-git clone https://github.com/<your-github-name>/<your-repository-name>.git lab11-student
-Set-Location .\lab11-student
+git clone https://github.com/<your-github-name>/<your-repository-name>.git
+Set-Location .\<your-repository-name>
 git switch main
 ```
 
 For example, if your repository is `kavsrd13/mlops3`, run:
 
 ```powershell
-git clone https://github.com/kavsrd13/mlops3.git lab11-student
-Set-Location .\lab11-student
+git clone https://github.com/kavsrd13/mlops3.git
+Set-Location .\mlops3
 git switch main
 ```
 
@@ -370,7 +370,7 @@ repository will be reused for a different subscription.
 - **Setup unexpectedly asks for a subscription ID or `OWNER/REPO`:** you are
   running an old setup script or are in the wrong clone. Run `Get-Location`,
   `git status --short`, and `git remote get-url origin`; then return to the
-  clean `lab11-student` folder created in Step 1.
+  clean folder named after your GitHub repository created in Step 1.
 - **Setup says administrator access is required:** run setup from a repository
   created under your account with **Use this template**, not the instructor's source repository.
 - **OIDC login fails:** rerun setup from the same student repository. OIDC trust is specific
