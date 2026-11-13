@@ -11,13 +11,29 @@ jobs:
       uses: actions/checkout@v4
     - name: Install az ml extension
       run: az extension add -n ml -y
+    - name: Determine Azure auth mode
+      id: auth_mode
+      env:
+        AZURE_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS }}
+        AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      run: |
+        set -euo pipefail
+        if [ -n "${AZURE_CREDENTIALS:-}" ]; then
+          echo "mode=sp" >> "$GITHUB_OUTPUT"
+        elif [ -n "${AZURE_CLIENT_ID:-}" ] && [ -n "${AZURE_TENANT_ID:-}" ] && [ -n "${AZURE_SUBSCRIPTION_ID:-}" ]; then
+          echo "mode=oidc" >> "$GITHUB_OUTPUT"
+        else
+          echo "mode=missing" >> "$GITHUB_OUTPUT"
+        fi
     - name: Azure login (service principal secret)
-      if: ${{ secrets.AZURE_CREDENTIALS != '' }}
+      if: ${{ steps.auth_mode.outputs.mode == 'sp' }}
       uses: azure/login@v2
       with:
         creds: ${{secrets.AZURE_CREDENTIALS}}
     - name: Azure login (OIDC)
-      if: ${{ secrets.AZURE_CREDENTIALS == '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_TENANT_ID != '' && secrets.AZURE_SUBSCRIPTION_ID != '' }}
+      if: ${{ steps.auth_mode.outputs.mode == 'oidc' }}
       uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -27,10 +43,7 @@ jobs:
       env:
         RG: ${{ vars.AZURE_RESOURCE_GROUP }}
         WS: ${{ vars.AZURE_WORKSPACE_NAME || vars.AZURE_ML_WORKSPACE }}
-        HAS_CREDENTIALS: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        HAS_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID != '' }}
-        HAS_TENANT_ID: ${{ secrets.AZURE_TENANT_ID != '' }}
-        HAS_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID != '' }}
+        AUTH_MODE: ${{ steps.auth_mode.outputs.mode }}
       run: |
         set -euo pipefail
         if [ -z "$RG" ]; then
@@ -41,7 +54,7 @@ jobs:
           echo "Missing repository variable: AZURE_WORKSPACE_NAME (or AZURE_ML_WORKSPACE)"
           exit 1
         fi
-        if [ "$HAS_CREDENTIALS" != "true" ] && { [ "$HAS_CLIENT_ID" != "true" ] || [ "$HAS_TENANT_ID" != "true" ] || [ "$HAS_SUBSCRIPTION_ID" != "true" ]; }; then
+        if [ "${AUTH_MODE:-missing}" = "missing" ]; then
           echo "Missing Azure auth secrets. Set AZURE_CREDENTIALS or set AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_SUBSCRIPTION_ID."
           exit 1
         fi
