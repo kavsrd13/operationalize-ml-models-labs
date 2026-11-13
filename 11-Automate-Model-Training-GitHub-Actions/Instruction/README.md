@@ -8,7 +8,7 @@ repository does not store an Azure client secret.
 The end-to-end path is:
 
 ```text
-Push training change to your fork's main branch
+Push training change to your repository's main branch
     -> GitHub Actions signs in to Azure with OIDC
     -> workflow validates the workspace, data asset, and compute cluster
     -> workflow submits an Azure ML command job
@@ -32,7 +32,7 @@ come from your answers; supporting names are derived consistently.
 | Application Insights | `appi-course-<unique-suffix>` | Provides workspace telemetry. |
 | Training cluster | `course-cpu` | Runs the Azure ML command job on `Standard_E4ds_v4`, with 0–1 dedicated Linux nodes. |
 | GitHub managed identity | `id-course-github` | Lets the GitHub workflow request short-lived Azure tokens. |
-| Federated credential | `github-main` | Trusts only the `main` branch of your fork. |
+| Federated credential | `github-main` | Trusts only the `main` branch of your student repository. |
 | Workspace role | AzureML Data Scientist | Lets the GitHub identity read assets and submit/monitor jobs without managing the workspace or compute. |
 | Data asset | `olist-ecommerce-raw:1` | A versioned `uri_folder` containing the nine original Olist CSV files. |
 
@@ -91,7 +91,7 @@ You need:
 - Available regional quota for at least four dedicated-family vCPUs used by
   `Standard_E4ds_v4`. You can pass another compatible VM size to setup if your
   region has different quota.
-- A GitHub account that can fork repositories and administer the fork.
+- A GitHub account that can create and administer a repository from a template.
 - Git, Azure CLI, GitHub CLI, PowerShell, and Python installed locally.
 - Permission to run billable Azure ML compute. The cluster scales to zero after
   120 seconds when idle, but the training node incurs cost while running.
@@ -100,9 +100,8 @@ You need:
 
 1. Open
    [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-2. Select **Fork**, or select **Use this template** → **Create a new
-   repository**. Choose your GitHub account and give the repository any name,
-   such as `mlops3`.
+2. Select **Use this template** → **Create a new repository**. Choose your
+   GitHub account and give the repository any name, such as `mlops3`.
 3. Clone your GitHub copy without signing in to GitHub CLI. Replace both
    placeholders. The final `lab11-student` argument deliberately gives the
    local folder a known name even when the GitHub repository has another name:
@@ -134,7 +133,7 @@ git remote get-url origin
 files or if the remote URL names a different repository.
 
 You need GitHub CLI authentication only when setup configures secrets and
-variables in your fork.
+variables in your student repository.
 
 ## Step 2: Sign in to Azure and GitHub
 
@@ -146,7 +145,7 @@ gh auth login
 ```
 
 For GitHub CLI, select **GitHub.com**, **HTTPS**, and browser authentication.
-Authorize the account that owns your fork.
+Authorize the account that owns your student repository.
 
 Verify both sessions:
 
@@ -172,7 +171,7 @@ The script always shows what to enter:
    `rg-course-ml-kd` in a shared subscription.
 4. Press Enter for `mlw-course-ml`, or type another generic workspace name.
 5. Review the printed subscription, region, resource group, workspace,
-   `course-cpu` cluster, data asset, fork, and OIDC subject.
+   `course-cpu` cluster, data asset, student repository, and OIDC subject.
 6. Review the Azure what-if output. It is a preview and does not create
    resources.
 7. Type `deploy` when asked to create the displayed resources.
@@ -212,7 +211,7 @@ Expected results:
 - compute is `course-cpu`, type `amlcompute`, minimum 0 and maximum 1;
 - data is `olist-ecommerce-raw`, version `1`, type `uri_folder`.
 
-Open your fork on GitHub and select **Settings** → **Secrets and variables** →
+Open your student repository on GitHub and select **Settings** → **Secrets and variables** →
 **Actions**. Setup creates:
 
 | Kind | Name | Purpose |
@@ -228,7 +227,7 @@ Open your fork on GitHub and select **Settings** → **Secrets and variables** �
 There is no `AZURE_CREDENTIALS` client-secret JSON. OIDC exchanges the GitHub
 token for a short-lived Azure token at workflow runtime.
 
-If your fork's **Actions** page asks you to enable workflows, enable them before
+If your repository's **Actions** page asks you to enable workflows, enable them before
 continuing.
 
 ## Step 5: Review the files that control training
@@ -269,7 +268,7 @@ git diff -- .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
 
 ## Step 7: Push and trigger the workflow
 
-Commit directly to your fork's `main` branch:
+Commit directly to your student repository's `main` branch:
 
 ```powershell
 git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
@@ -282,7 +281,7 @@ is required. The path-filtered push starts **Train freight model in Azure ML**.
 
 ## Step 8: Follow the GitHub Actions run
 
-1. Open your fork on GitHub.
+1. Open your student repository on GitHub.
 2. Select **Actions**.
 3. Open the newest **Train freight model in Azure ML** run created by your push.
 
@@ -351,20 +350,20 @@ Wait until the second command returns `false`. Resource-group deletion is
 asynchronous. Deleting a soft-deleted key vault can leave its globally unique
 name reserved for the retention period.
 
-Delete the three Azure secrets and four Azure variables from the fork if the
+Delete the three Azure secrets and four Azure variables from the repository if the
 repository will be reused for a different subscription.
 
 ## Troubleshooting
 
 - **Setup cannot read the repository:** confirm `git remote -v` points to your
-  fork and `gh auth status` shows its owner account.
+  student repository and `gh auth status` shows its owner account.
 - **Setup unexpectedly asks you to type `OWNER/REPO`:** you are running an old
   setup script or are in the wrong clone. Run `Get-Location`,
   `git status --short`, and `git remote get-url origin`; then return to the
   clean `lab11-student` folder created in Step 1.
-- **Setup says administrator access is required:** run setup from a fork that
-  you own, not the instructor's source repository.
-- **OIDC login fails:** rerun setup from the same fork. OIDC trust is specific
+- **Setup says administrator access is required:** run setup from a repository
+  created under your account with **Use this template**, not the instructor's source repository.
+- **OIDC login fails:** rerun setup from the same student repository. OIDC trust is specific
   to the repository and `main` branch.
 - **Compute quota fails:** choose another region or rerun setup with a VM size
   available in your subscription, for example
@@ -374,7 +373,7 @@ repository will be reused for a different subscription.
 - **Workflow cannot find compute:** confirm `AZURE_ML_COMPUTE` exactly matches
   an existing Azure ML compute cluster. Setup uses `course-cpu`.
 - **The workflow is skipped:** confirm `ENABLE_AZURE_TRAINING` equals the
-  lowercase value `true` in your fork's Actions variables.
+  lowercase value `true` in your repository's Actions variables.
 - **The first job waits in Starting or Preparing:** the zero-node cluster must
   allocate a VM and prepare the curated environment. Check regional quota and
   Azure ML job logs before resubmitting.

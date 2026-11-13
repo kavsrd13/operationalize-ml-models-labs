@@ -6,7 +6,7 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 11: Automate Azure ML training with GitHub Actions</h1>
 <p>In this exercise, you provision a complete Azure Machine Learning training environment with Bicep and use GitHub Actions to train the Olist freight-cost model. GitHub authenticates to Azure with OpenID Connect (OIDC), so the repository does not store an Azure client secret.</p>
 <p>The end-to-end path is:</p>
-<pre><code>Push training change to your fork&#x27;s main branch
+<pre><code>Push training change to your repository&#x27;s main branch
     -&gt; GitHub Actions signs in to Azure with OIDC
     -&gt; workflow validates the workspace, data asset, and compute cluster
     -&gt; workflow submits an Azure ML command job
@@ -24,7 +24,7 @@
 <tr><td>Application Insights</td><td><code>appi-course-&lt;unique-suffix&gt;</code></td><td>Provides workspace telemetry.</td></tr>
 <tr><td>Training cluster</td><td><code>course-cpu</code></td><td>Runs the Azure ML command job on <code>Standard_E4ds_v4</code>, with 0–1 dedicated Linux nodes.</td></tr>
 <tr><td>GitHub managed identity</td><td><code>id-course-github</code></td><td>Lets the GitHub workflow request short-lived Azure tokens.</td></tr>
-<tr><td>Federated credential</td><td><code>github-main</code></td><td>Trusts only the <code>main</code> branch of your fork.</td></tr>
+<tr><td>Federated credential</td><td><code>github-main</code></td><td>Trusts only the <code>main</code> branch of your student repository.</td></tr>
 <tr><td>Workspace role</td><td>AzureML Data Scientist</td><td>Lets the GitHub identity read assets and submit/monitor jobs without managing the workspace or compute.</td></tr>
 <tr><td>Data asset</td><td><code>olist-ecommerce-raw:1</code></td><td>A versioned <code>uri_folder</code> containing the nine original Olist CSV files.</td></tr>
 </tbody></table>
@@ -52,14 +52,14 @@
 <ul>
 <li>An Azure subscription where you can create resources and role assignments. <strong>Owner</strong> is sufficient. Alternatively, use <strong>Contributor</strong> plus **User Access Administrator** at the subscription scope.</li>
 <li>Available regional quota for at least four dedicated-family vCPUs used by <code>Standard_E4ds_v4</code>. You can pass another compatible VM size to setup if your region has different quota.</li>
-<li>A GitHub account that can fork repositories and administer the fork.</li>
+<li>A GitHub account that can create and administer a repository from a template.</li>
 <li>Git, Azure CLI, GitHub CLI, PowerShell, and Python installed locally.</li>
 <li>Permission to run billable Azure ML compute. The cluster scales to zero after 120 seconds when idle, but the training node incurs cost while running.</li>
 </ul>
 <h2>Step 1: Create your GitHub copy and clone it</h2>
 <ol start="1">
 <li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
-<li>Select <strong>Fork</strong>, or select <strong>Use this template</strong> → **Create a new repository**. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
+<li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
 <li>Clone your GitHub copy without signing in to GitHub CLI. Replace both placeholders. The final <code>lab11-student</code> argument deliberately gives the local folder a known name even when the GitHub repository has another name:</li>
 </ol>
 <pre><code>git clone https://github.com/&lt;your-github-name&gt;/&lt;your-repository-name&gt;.git lab11-student
@@ -76,12 +76,12 @@ git switch main</code></pre>
 git status --short
 git remote get-url origin</code></pre>
 <p><code>git status --short</code> must print nothing. Do not continue if it displays modified files or if the remote URL names a different repository.</p>
-<p>You need GitHub CLI authentication only when setup configures secrets and variables in your fork.</p>
+<p>You need GitHub CLI authentication only when setup configures secrets and variables in your student repository.</p>
 <h2>Step 2: Sign in to Azure and GitHub</h2>
 <p>From the repository root, run:</p>
 <pre><code>az login
 gh auth login</code></pre>
-<p>For GitHub CLI, select <strong>GitHub.com</strong>, <strong>HTTPS</strong>, and browser authentication. Authorize the account that owns your fork.</p>
+<p>For GitHub CLI, select <strong>GitHub.com</strong>, <strong>HTTPS</strong>, and browser authentication. Authorize the account that owns your student repository.</p>
 <p>Verify both sessions:</p>
 <pre><code>az account show --output table
 gh auth status</code></pre>
@@ -94,7 +94,7 @@ gh auth status</code></pre>
 <li>Press Enter for <code>eastus</code>, or type a region where your subscription has the required CPU quota.</li>
 <li>Press Enter for <code>rg-course-ml</code>, or use a unique generic name such as <code>rg-course-ml-kd</code> in a shared subscription.</li>
 <li>Press Enter for <code>mlw-course-ml</code>, or type another generic workspace name.</li>
-<li>Review the printed subscription, region, resource group, workspace, <code>course-cpu</code> cluster, data asset, fork, and OIDC subject.</li>
+<li>Review the printed subscription, region, resource group, workspace, <code>course-cpu</code> cluster, data asset, student repository, and OIDC subject.</li>
 <li>Review the Azure what-if output. It is a preview and does not create resources.</li>
 <li>Type <code>deploy</code> when asked to create the displayed resources.</li>
 </ol>
@@ -123,7 +123,7 @@ az ml data show -g $RG -w $WS -n olist-ecommerce-raw -v 1 --query &quot;{name:na
 <li>compute is <code>course-cpu</code>, type <code>amlcompute</code>, minimum 0 and maximum 1;</li>
 <li>data is <code>olist-ecommerce-raw</code>, version <code>1</code>, type <code>uri_folder</code>.</li>
 </ul>
-<p>Open your fork on GitHub and select <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong>. Setup creates:</p>
+<p>Open your student repository on GitHub and select <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong>. Setup creates:</p>
 <table><thead><tr><th>Kind</th><th>Name</th><th>Purpose</th></tr></thead><tbody>
 <tr><td>Secret</td><td><code>AZURE_CLIENT_ID</code></td><td>Client ID of <code>id-course-github</code>.</td></tr>
 <tr><td>Secret</td><td><code>AZURE_TENANT_ID</code></td><td>Selected Azure tenant.</td></tr>
@@ -134,7 +134,7 @@ az ml data show -g $RG -w $WS -n olist-ecommerce-raw -v 1 --query &quot;{name:na
 <tr><td>Variable</td><td><code>ENABLE_AZURE_TRAINING</code></td><td><code>true</code>; allows the workflow job to run.</td></tr>
 </tbody></table>
 <p>There is no <code>AZURE_CREDENTIALS</code> client-secret JSON. OIDC exchanges the GitHub token for a short-lived Azure token at workflow runtime.</p>
-<p>If your fork&#x27;s <strong>Actions</strong> page asks you to enable workflows, enable them before continuing.</p>
+<p>If your repository&#x27;s <strong>Actions</strong> page asks you to enable workflows, enable them before continuing.</p>
 <h2>Step 5: Review the files that control training</h2>
 <p>Open these files:</p>
 <ul>
@@ -151,14 +151,14 @@ az ml data show -g $RG -w $WS -n olist-ecommerce-raw -v 1 --query &quot;{name:na
 <p>Review only that intended change:</p>
 <pre><code>git diff -- .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml</code></pre>
 <h2>Step 7: Push and trigger the workflow</h2>
-<p>Commit directly to your fork&#x27;s <code>main</code> branch:</p>
+<p>Commit directly to your student repository&#x27;s <code>main</code> branch:</p>
 <pre><code>git add .\11-Automate-Model-Training-GitHub-Actions\jobs\train-job.yml
 git commit -m &quot;Exercise 11: increase freight training iterations&quot;
 git push origin main</code></pre>
 <p>No pull request, branch-protection rule, instructor approval, or client secret is required. The path-filtered push starts <strong>Train freight model in Azure ML</strong>.</p>
 <h2>Step 8: Follow the GitHub Actions run</h2>
 <ol start="1">
-<li>Open your fork on GitHub.</li>
+<li>Open your student repository on GitHub.</li>
 <li>Select <strong>Actions</strong>.</li>
 <li>Open the newest <strong>Train freight model in Azure ML</strong> run created by your push.</li>
 </ol>
@@ -197,16 +197,16 @@ git push origin main</code></pre>
 <pre><code>az group delete --name $RG --yes
 az group exists --name $RG</code></pre>
 <p>Wait until the second command returns <code>false</code>. Resource-group deletion is asynchronous. Deleting a soft-deleted key vault can leave its globally unique name reserved for the retention period.</p>
-<p>Delete the three Azure secrets and four Azure variables from the fork if the repository will be reused for a different subscription.</p>
+<p>Delete the three Azure secrets and four Azure variables from the repository if the repository will be reused for a different subscription.</p>
 <h2>Troubleshooting</h2>
 <ul>
-<li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your fork and <code>gh auth status</code> shows its owner account.</li>
+<li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your student repository and <code>gh auth status</code> shows its owner account.</li>
 <li><strong>Setup unexpectedly asks you to type <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean <code>lab11-student</code> folder created in Step 1.</li>
-<li><strong>Setup says administrator access is required:</strong> run setup from a fork that you own, not the instructor&#x27;s source repository.</li>
-<li><strong>OIDC login fails:</strong> rerun setup from the same fork. OIDC trust is specific to the repository and <code>main</code> branch.</li>
+<li><strong>Setup says administrator access is required:</strong> run setup from a repository created under your account with <strong>Use this template</strong>, not the instructor&#x27;s source repository.</li>
+<li><strong>OIDC login fails:</strong> rerun setup from the same student repository. OIDC trust is specific to the repository and <code>main</code> branch.</li>
 <li><strong>Compute quota fails:</strong> choose another region or rerun setup with a VM size available in your subscription, for example <code>-VmSize &#x27;&lt;available-cpu-sku&gt;&#x27;</code>.</li>
 <li><strong>Workflow cannot find data:</strong> confirm version <code>1</code> exists in the same workspace configured by <code>AZURE_ML_WORKSPACE</code>.</li>
 <li><strong>Workflow cannot find compute:</strong> confirm <code>AZURE_ML_COMPUTE</code> exactly matches an existing Azure ML compute cluster. Setup uses <code>course-cpu</code>.</li>
-<li><strong>The workflow is skipped:</strong> confirm <code>ENABLE_AZURE_TRAINING</code> equals the lowercase value <code>true</code> in your fork&#x27;s Actions variables.</li>
+<li><strong>The workflow is skipped:</strong> confirm <code>ENABLE_AZURE_TRAINING</code> equals the lowercase value <code>true</code> in your repository&#x27;s Actions variables.</li>
 <li><strong>The first job waits in Starting or Preparing:</strong> the zero-node cluster must allocate a VM and prepare the curated environment. Check regional quota and Azure ML job logs before resubmitting.</li>
 </ul></article></main><footer>Run cloud commands in your own Azure ML workspace. See each lab's validation status.</footer></body></html>
