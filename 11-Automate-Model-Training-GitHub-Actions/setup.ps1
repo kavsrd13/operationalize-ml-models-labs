@@ -66,10 +66,12 @@ function Get-GitHubRepositoryFromOrigin {
 }
 
 foreach ($tool in @('az', 'gh', 'git', 'python')) { Get-Command $tool -ErrorAction Stop | Out-Null }
+Write-Host 'Checking existing Azure and GitHub CLI sign-ins...'
 az account show --output none
-Check 'Azure sign-in (run az login)'
-gh auth status
-Check 'GitHub sign-in (run gh auth login)'
+Check 'Azure session (run az login if signed out)'
+gh auth status *> $null
+Check 'GitHub session (run gh auth login if signed out)'
+Write-Host 'Existing Azure and GitHub CLI sessions are ready; no second login is needed.'
 
 $GitHubRepo = Get-GitHubRepositoryFromOrigin
 if ($GitHubRepo -eq 'kavsrd13/operationalize-ml-models-labs') {

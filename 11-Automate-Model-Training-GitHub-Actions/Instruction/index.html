@@ -77,14 +77,15 @@ git status --short
 git remote get-url origin</code></pre>
 <p><code>git status --short</code> must print nothing. Do not continue if it displays modified files or if the remote URL names a different repository.</p>
 <p>You need GitHub CLI authentication only when setup configures secrets and variables in your student repository. <code>gh auth login</code> identifies your GitHub account; the clone&#x27;s <code>origin</code> URL identifies the repository. Setup reads that URL automatically, so you never type an owner/repository value.</p>
-<h2>Step 2: Sign in to Azure and GitHub</h2>
-<p>From the repository root, run:</p>
+<h2>Step 2: Check your Azure and GitHub sign-ins</h2>
+<p>If you are already signed in to Azure CLI and GitHub CLI on this computer, skip the login commands. Otherwise, from the repository root, run each one that you still need:</p>
 <pre><code>az login
 gh auth login</code></pre>
 <p>For GitHub CLI, select <strong>GitHub.com</strong>, <strong>HTTPS</strong>, and browser authentication. Authorize the account that owns your student repository.</p>
-<p>Verify both sessions:</p>
+<p>You can check both existing sessions without signing in again:</p>
 <pre><code>az account show --output table
 gh auth status</code></pre>
+<p>Setup checks these sessions again and reuses them. The GitHub Actions workflow later obtains its own short-lived Azure token through OIDC when it runs; that automatic workflow authentication is separate from your local <code>az login</code>.</p>
 <h2>Step 3: Run the guided setup</h2>
 <p>Stay at the repository root and run:</p>
 <pre><code>.\11-Automate-Model-Training-GitHub-Actions\setup.ps1</code></pre>

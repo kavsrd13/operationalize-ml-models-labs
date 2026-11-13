@@ -137,9 +137,11 @@ variables in your student repository. `gh auth login` identifies your GitHub
 account; the clone's `origin` URL identifies the repository. Setup reads that
 URL automatically, so you never type an owner/repository value.
 
-## Step 2: Sign in to Azure and GitHub
+## Step 2: Check your Azure and GitHub sign-ins
 
-From the repository root, run:
+If you are already signed in to Azure CLI and GitHub CLI on this computer,
+skip the login commands. Otherwise, from the repository root, run each one
+that you still need:
 
 ```powershell
 az login
@@ -149,12 +151,16 @@ gh auth login
 For GitHub CLI, select **GitHub.com**, **HTTPS**, and browser authentication.
 Authorize the account that owns your student repository.
 
-Verify both sessions:
+You can check both existing sessions without signing in again:
 
 ```powershell
 az account show --output table
 gh auth status
 ```
+
+Setup checks these sessions again and reuses them. The GitHub Actions workflow
+later obtains its own short-lived Azure token through OIDC when it runs; that
+automatic workflow authentication is separate from your local `az login`.
 
 ## Step 3: Run the guided setup
 
