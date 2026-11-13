@@ -43,7 +43,17 @@ jobs:
           COMPUTE: ${{ vars.AZURE_ML_COMPUTE }}
         run: |
           set -euo pipefail
-          COMPUTE_NAME="${COMPUTE:-course-cpu}"
+          trim_value() {
+            local value="${1:-}"
+            value="${value//$'\r'/}"
+            value="${value//$'\n'/}"
+            value="${value#"${value%%[![:space:]]*}"}"
+            value="${value%"${value##*[![:space:]]}"}"
+            printf '%s' "$value"
+          }
+          RG="$(trim_value "${RG:-}")"
+          WS="$(trim_value "${WS:-}")"
+          COMPUTE_NAME="$(trim_value "${COMPUTE:-course-cpu}")"
           az ml workspace show -g "$RG" -n "$WS" --query name -o tsv
           if ! az ml compute show -g "$RG" -w "$WS" -n "$COMPUTE_NAME" --query name -o tsv >/dev/null; then
             echo "Compute '$COMPUTE_NAME' was not found in workspace '$WS'."
@@ -53,6 +63,8 @@ jobs:
             exit 1
           fi
           az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query name -o tsv
+          echo "RG=$RG" >> "$GITHUB_ENV"
+          echo "WS=$WS" >> "$GITHUB_ENV"
           echo "COMPUTE_NAME=$COMPUTE_NAME" >> "$GITHUB_ENV"
 
       - name: Submit training and check result
