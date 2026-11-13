@@ -1,4 +1,5 @@
 #! /usr/bin/sh
+# Windows PowerShell users can run ./setup.ps1 from this folder.
 
 # Create random string
 guid=$(cat /proc/sys/kernel/random/uuid)
@@ -8,8 +9,7 @@ suffix=${suffix:0:18}
 # Set the necessary variables
 RESOURCE_GROUP="rg-ai300-l${suffix}"
 RESOURCE_PROVIDER="Microsoft.MachineLearningServices"
-REGIONS=("eastus" "westus" "centralus" "northeurope" "westeurope")
-RANDOM_REGION=${REGIONS[$RANDOM % ${#REGIONS[@]}]}
+LOCATION="eastus"
 WORKSPACE_NAME="mlw-ai300-l${suffix}"
 COMPUTE_INSTANCE="ci${suffix}"
 COMPUTE_CLUSTER="aml-cluster"
@@ -20,7 +20,7 @@ az provider register --namespace $RESOURCE_PROVIDER
 
 # Create the resource group and workspace and set to default
 echo "Create a resource group and set as default:"
-az group create --name $RESOURCE_GROUP --location $RANDOM_REGION
+az group create --name $RESOURCE_GROUP --location $LOCATION
 az configure --defaults group=$RESOURCE_GROUP
 
 echo "Create an Azure Machine Learning workspace:"

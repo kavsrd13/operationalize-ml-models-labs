@@ -30,9 +30,13 @@
    git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git operationalize-ml-models-labs
    cd operationalize-ml-models-labs/infra
    ./setup.sh</code></pre>
+<p>If you&#x27;re running from a local VS Code PowerShell terminal instead of Bash/Cloud Shell, use:</p>
+<pre><code>   git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git operationalize-ml-models-labs
+   Set-Location .\operationalize-ml-models-labs\infra
+   .\setup.ps1</code></pre>
 <p>Ignore any messages that say that extensions couldn&#x27;t be installed.</p>
 <ol start="1">
-<li>Wait for the script to finish. It creates a resource group, an Azure Machine Learning workspace, and compute resources.</li>
+<li>Wait for the script to finish. It creates a resource group, an Azure Machine Learning workspace, and compute resources in <code>eastus</code> by default.</li>
 <li>In the Azure portal, go to <strong>Resource groups</strong> and open the <code>rg-ai300-...</code> resource group that was created.</li>
 <li>Select the Azure Machine Learning workspace (for example, <code>mlw-ai300-...</code>) and then select <strong>Launch studio</strong> to open Azure Machine Learning studio.</li>
 </ol>

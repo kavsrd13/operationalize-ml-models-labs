@@ -33,9 +33,17 @@ First, you create the Azure Machine Learning workspace and compute resources you
    ./setup.sh
    ```
 
+   If you're running from a local VS Code PowerShell terminal instead of Bash/Cloud Shell, use:
+
+   ```powershell
+   git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git operationalize-ml-models-labs
+   Set-Location .\operationalize-ml-models-labs\infra
+   .\setup.ps1
+   ```
+
    Ignore any messages that say that extensions couldn't be installed.
 
-1. Wait for the script to finish. It creates a resource group, an Azure Machine Learning workspace, and compute resources.
+1. Wait for the script to finish. It creates a resource group, an Azure Machine Learning workspace, and compute resources in `eastus` by default.
 1. In the Azure portal, go to **Resource groups** and open the `rg-ai300-...` resource group that was created.
 1. Select the Azure Machine Learning workspace (for example, `mlw-ai300-...`) and then select **Launch studio** to open Azure Machine Learning studio.
 
