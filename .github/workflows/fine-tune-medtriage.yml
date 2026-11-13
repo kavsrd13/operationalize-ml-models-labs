@@ -53,17 +53,17 @@ jobs:
             12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json \
             --github-env "$GITHUB_ENV"
 
-      - name: Check this fork's Azure configuration
+      - name: Check this repository's Azure configuration
         run: |
           missing=0
           for name in FOUNDRY_PROJECT_ENDPOINT AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
             if [ -z "${!name}" ]; then
-              echo "$name is not configured in this fork." >&2
+              echo "$name is not configured in this repository." >&2
               missing=1
             fi
           done
           if [ "$missing" -ne 0 ]; then
-            echo "Run 12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1 from this fork, then push again." >&2
+            echo "Run 12-Foundry-Fine-Tuning-GitHub-Actions/setup.ps1 from your repository, then push again." >&2
             exit 1
           fi
 

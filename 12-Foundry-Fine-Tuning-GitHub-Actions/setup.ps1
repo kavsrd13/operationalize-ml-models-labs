@@ -1,4 +1,4 @@
-# Run from a cloned student repository after az login and gh auth login.
+# Run from your own cloned repository with active Azure CLI and GitHub CLI sessions.
 [CmdletBinding()]
 param(
     [string]$ResourceGroup,
@@ -20,7 +20,7 @@ function Ask([string]$Value, [string]$Label, [string]$Default) {
     if ($Default) {
         $answer = Read-Host "$Label. Press Enter to use '$Default', or type a different value"
     } else {
-        $answer = Read-Host "$Label (required; example: owner/repository)"
+        $answer = Read-Host "$Label (required)"
     }
     if ($answer) { return $answer.Trim() }
     return $Default
@@ -136,10 +136,25 @@ function Select-ExistingFoundryProject([array]$Projects) {
 }
 
 foreach ($tool in @('az', 'gh', 'git')) { Get-Command $tool -ErrorAction Stop | Out-Null }
+Write-Host 'Checking existing Azure and GitHub CLI sign-ins...'
 az account show --output none
-Assert-LastExitCode 'Azure sign-in (run az login first)'
-gh auth status
-Assert-LastExitCode 'GitHub sign-in (run gh auth login first)'
+Assert-LastExitCode 'Azure session (run az login if signed out)'
+gh auth status *> $null
+Assert-LastExitCode 'GitHub session (run gh auth login if signed out)'
+Write-Host 'Existing Azure and GitHub CLI sessions are ready; no second login is needed.'
+
+$GitHubRepo = Get-GitHubRepositoryFromGit
+if ($GitHubRepo -eq 'kavsrd13/operationalize-ml-models-labs') {
+    throw 'This is the course source repository. Create your own repository with Use this template, clone it, and run setup there.'
+}
+$repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
+Assert-LastExitCode 'Read student repository'
+if (-not $repo.permissions.admin) { throw 'Setup requires administrator access to your student repository.' }
+if ($repo.default_branch -ne 'main') { throw 'Use main as the student repository default branch.' }
+$GitHubRepo = $repo.full_name
+$currentBranch = (git branch --show-current).Trim()
+Assert-LastExitCode 'Read current Git branch'
+if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
 
 $selectedSubscription = Select-AzureSubscription
 $SubscriptionId = $selectedSubscription.id
@@ -147,16 +162,6 @@ az account set --subscription $SubscriptionId
 Assert-LastExitCode 'Select Azure subscription'
 $account = az account show -o json | ConvertFrom-Json
 if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select $SubscriptionId." }
-
-$GitHubRepo = Get-GitHubRepositoryFromGit
-$repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
-Assert-LastExitCode 'Read GitHub repository'
-if (-not $repo.permissions.admin) { throw 'Administrator access to the origin repository is required to set Actions secrets and variables.' }
-if ($repo.default_branch -ne 'main') { throw 'The automation expects main as the default branch.' }
-$GitHubRepo = $repo.full_name
-$currentBranch = (git branch --show-current).Trim()
-Assert-LastExitCode 'Read current Git branch'
-if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
 
 $branchProtectionQuery = 'query($owner:String!,$name:String!){repository(owner:$owner,name:$name){branchProtectionRules(first:100){totalCount}}}'
 $branchProtectionCount = gh api graphql `
@@ -176,15 +181,6 @@ if ($rulesets.Count -gt 0) {
     throw 'This repository has one or more rulesets. Remove them for this classroom repository before rerunning setup.'
 }
 Write-Host 'GitHub push check: origin/main has no branch protection or repository rulesets.'
-
-gh api --method PUT "repos/$GitHubRepo/actions/permissions" `
-    -F enabled=true `
-    -f allowed_actions=all `
-    --silent
-Assert-LastExitCode 'Enable GitHub Actions in the fork'
-gh workflow enable fine-tune-medtriage.yml --repo $GitHubRepo
-Assert-LastExitCode 'Enable the Exercise 12 workflow in the fork'
-Write-Host 'GitHub Actions check: Exercise 12 workflow is enabled in this fork.'
 
 if (-not $OidcSubject) {
     if ([datetime]$repo.created_at -ge [datetime]'2026-07-15') {
@@ -372,6 +368,14 @@ foreach ($item in @{
   gh variable set $item.Key --body $item.Value --repo $GitHubRepo
   Assert-LastExitCode "Set GitHub variable $($item.Key)"
 }
+gh api --method PUT "repos/$GitHubRepo/actions/permissions" `
+    -F enabled=true `
+    -f allowed_actions=all `
+    --silent
+Assert-LastExitCode 'Enable GitHub Actions in the student repository'
+gh workflow enable fine-tune-medtriage.yml --repo $GitHubRepo
+Assert-LastExitCode 'Enable the Exercise 12 workflow in the student repository'
+Write-Host 'GitHub Actions check: Exercise 12 workflow is enabled in your repository.'
 Write-Host "Provisioning complete. Foundry project endpoint: $($outputs.projectEndpoint.value)"
 Write-Host "Azure resource mode: $ResourceMode ($ResourceGroup/$AccountName/$ProjectName)"
 Write-Host "Actions: https://github.com/$GitHubRepo/actions"

@@ -1,8 +1,8 @@
-# Exercise 12: Automatic Foundry fine-tuning from your GitHub fork
+# Exercise 12: Automatic Foundry fine-tuning from your GitHub repository
 
 ## Goal
 
-Fork the course repository, connect your fork to your Microsoft Foundry project once, change `n_epochs` from 2 to 3, and push to `main`. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.
+Create your own repository from the course template, connect it to your Microsoft Foundry project once, change `n_epochs` from 2 to 3, and push to `main`. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.
 
 ## Why fine-tune this model?
 
@@ -31,13 +31,13 @@ real patient care.
 ## Student workflow
 
 ```text
-Fork and clone the course repository
+Create your repository from the template and clone it
         ↓
-Run setup.ps1 once for your fork and Azure account
+Check your Azure and GitHub CLI sign-ins; run setup.ps1 once
         ↓
 Change n_epochs from 2 to 3
         ↓
-Validate, commit, and push to your fork's main branch
+Validate, commit, and push to your repository's main branch
         ↓
 GitHub Actions automatically creates and monitors the Foundry job
         ↓
@@ -58,47 +58,81 @@ You need:
 
 Fine-tuning is billable. Use an exercise subscription and delete resources when the class is complete.
 
-## Step 1: Fork and clone the repository
+## Step 1: Create your GitHub copy and clone it
 
-1. Sign in to [GitHub](https://github.com/).
-2. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-3. Select **Fork**, and then select **Create fork**.
-4. Replace `YOUR-GITHUB-USERNAME` and run:
+1. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
+2. Select **Use this template** → **Create a new repository**. Choose your
+   GitHub account and give the repository any name, such as `mlops3`.
+3. Clone your GitHub copy. Replace both names below with your GitHub account
+   and repository name. Git creates a local folder with the repository name:
 
 ```powershell
-git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
-Set-Location .\operationalize-ml-models-labs
-git branch --show-current
+git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
+Set-Location .\YOUR-REPOSITORY-NAME
+git switch main
 ```
 
-The final command must show `main`. The `origin` remote now points to your fork, so the setup script configures your repository rather than the instructor's repository.
-
-## Step 2: Sign in and configure your fork once
-
-Sign in from the repository root:
+For example, if your repository is `kavsrd13/mlops3`, run:
 
 ```powershell
-az login --use-device-code
+git clone https://github.com/kavsrd13/mlops3.git
+Set-Location .\mlops3
+git switch main
+```
+
+4. Confirm that you are in your new clone and `origin` points to your GitHub
+   copy:
+
+```powershell
+Get-Location
+git status --short
+git remote get-url origin
+```
+
+`git status --short` must print nothing. Setup detects your repository from
+`origin`; it never asks you to type an owner/repository value.
+
+## Step 2: Check your Azure and GitHub sign-ins
+
+If you are already signed in to Azure CLI and GitHub CLI on this computer,
+skip the login commands. Otherwise, from the repository root, run each one
+that you still need:
+
+```powershell
+az login
 gh auth login
 ```
 
-For `gh auth login`, select:
+For GitHub CLI, select **GitHub.com**, **HTTPS**, and browser authentication.
+Authorize the account that owns your student repository.
 
-1. `GitHub.com`
-2. `HTTPS`
-3. `Login with a web browser`
+Check both sessions without signing in again:
 
-Run the guided setup:
+```powershell
+az account show --output table
+gh auth status
+```
+
+Setup checks these sessions again and reuses them. Later, GitHub Actions uses
+repository-specific OIDC to obtain its own short-lived Azure token; it does
+not reuse your local Azure CLI sign-in.
+
+## Step 3: Run the guided setup
+
+Stay at the repository root and run:
 
 ```powershell
 .\12-Foundry-Fine-Tuning-GitHub-Actions\setup.ps1
 ```
 
-The script detects your fork automatically. Follow the numbered choices shown in the terminal:
+The script detects your repository from `origin` and stops if you are in the
+course source repository or a branch other than `main`. Follow the numbered
+choices shown in the terminal:
 
 1. Select the Azure subscription by entering its displayed number.
 2. Enter `1` to reuse an existing Foundry resource, `2` to create a new resource, or `3` to exit.
-3. If you select an existing resource, enter the displayed resource and project numbers.
+3. If you select an existing resource, enter its displayed number. If more than
+   one project exists, enter the displayed project number too.
 4. Review the Bicep preview. Enter `1` to deploy, `2` to display the preview again, or `3` to exit.
 
 Setup performs the one-time platform work:
@@ -106,14 +140,14 @@ Setup performs the one-time platform work:
 - Selects or creates the Foundry resource and project.
 - Checks fine-tuning quota.
 - Reuses or creates the `medtriage-base` deployment.
-- Creates an identity trusted only by your fork's `main` branch.
+- Creates an identity trusted only by your repository's `main` branch.
 - Assigns **Foundry User** only at the Foundry project scope.
-- Enables GitHub Actions and the Exercise 12 workflow in your fork.
-- Adds the required secrets and variables to your fork.
+- Enables GitHub Actions and the Exercise 12 workflow in your repository.
+- Adds the required secrets and variables to your repository.
 
-Continue only after the terminal reports `Automation is ready` and displays the Actions URL for your fork.
+Continue only after the terminal reports `Automation is ready` and displays the Actions URL for your repository.
 
-## Step 3: Change the number of epochs
+## Step 4: Change the number of epochs
 
 Open:
 
@@ -141,7 +175,7 @@ Change only `n_epochs` from `2` to `3`:
 
 Keeping all other values unchanged makes the three-epoch experiment comparable with the two-epoch reference run.
 
-## Step 4: Validate the change
+## Step 5: Validate the change
 
 Run from the repository root:
 
@@ -158,9 +192,9 @@ Confirm that only the intended configuration changed:
 git diff -- .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
 ```
 
-## Step 5: Push and trigger fine-tuning
+## Step 6: Push and trigger fine-tuning
 
-Commit directly to your fork's `main` branch:
+Commit directly to your repository's `main` branch:
 
 ```powershell
 git add .\12-Foundry-Fine-Tuning-GitHub-Actions\config\finetune.json
@@ -170,9 +204,9 @@ git push origin main
 
 That push automatically triggers the workflow because a file under the Exercise 12 `config` folder changed. You do not open a pull request, and no instructor merge or approval is required.
 
-## Step 6: Watch the automated experiment
+## Step 7: Watch the automated experiment
 
-1. Open your fork on GitHub.
+1. Open your repository on GitHub.
 2. Select **Actions**.
 3. Open the newest workflow run created by your push.
 
@@ -189,7 +223,7 @@ The workflow:
 
 The baseline takes several minutes and fine-tuning takes longer. Do not push another data or configuration experiment while this run is active.
 
-## Step 7: Confirm the Foundry job
+## Step 8: Confirm the Foundry job
 
 Use the resource, project, and Actions URL printed by your setup script:
 
@@ -201,7 +235,7 @@ Use the resource, project, and Actions URL printed by your setup script:
 
 A created job proves that the automation works. It does not prove that the fine-tuned model is better or safe to deploy.
 
-## Step 8: Evaluate and choose a checkpoint
+## Step 9: Evaluate and choose a checkpoint
 
 After training succeeds, compare its checkpoints and held-out results with the
 base-model metrics stored in the GitHub artifact. Do not automatically assume
@@ -213,7 +247,7 @@ Use prompts that were not present in either training or validation data. The
 same prompts and system instruction must be used for the base and fine-tuned
 deployments so the comparison is fair.
 
-## Step 9: Deploy the selected fine-tuned model
+## Step 10: Deploy the selected fine-tuned model
 
 Deployment requires a role that can create model deployments, such as
 **Foundry Owner**, or another role containing
@@ -234,7 +268,7 @@ If deployment fails because quota is zero, do not retrain the model. Request
 deployment quota or select a supported deployment type or region with available
 fine-tuned-model quota.
 
-## Step 10: Open the playground and add the system instruction
+## Step 11: Open the playground and add the system instruction
 
 1. On the completed deployment page, select **Open in playground**. If that
    option is not shown, open **Playgrounds** from the Foundry project.
@@ -255,7 +289,7 @@ The system instruction is still required after fine-tuning. Fine-tuning teaches
 the repeated behavior; the system instruction states the current runtime task
 and safety boundary.
 
-## Step 11: Test the fine-tuned model
+## Step 12: Test the fine-tuned model
 
 Enter this prompt in the playground chat, and then select **Send**:
 
@@ -279,7 +313,7 @@ correctness, safety, and response length. The fine-tuned model is effective only
 when it improves the required behavior on prompts that were not in its training
 or validation data.
 
-## Step 12: Test the deployment with Python code
+## Step 13: Test the deployment with Python code
 
 The playground test proves that the deployment works interactively. Now call
 the same deployment from Python, as an application would.
@@ -375,7 +409,7 @@ After the test succeeds, immediately replace the real API key in the local
 file with `<your-api-key>`. Do not run `git add`, `git commit`, or `git push`
 while the real key is present.
 
-## Step 13: Clean up the serving deployment
+## Step 14: Clean up the serving deployment
 
 After testing:
 
