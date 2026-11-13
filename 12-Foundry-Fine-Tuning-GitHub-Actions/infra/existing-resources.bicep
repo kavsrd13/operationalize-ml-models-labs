@@ -19,6 +19,8 @@ resource account 'Microsoft.CognitiveServices/accounts@2025-06-01' existing = {
 resource project 'Microsoft.CognitiveServices/accounts/projects@2025-06-01' = if (createProject) {
   parent: account
   name: projectName
+  // ARM removes this dependency when the baseline deployment is skipped.
+  dependsOn: [baselineDeployment]
   location: location
   tags: tags
   identity: {

@@ -91,6 +91,7 @@ gh auth status</code></pre>
 <li>Adds the required secrets and variables to your repository.</li>
 </ul>
 <p>Continue only after the terminal reports <code>Automation is ready</code> and displays the Actions URL for your repository.</p>
+<p>If a new-resource deployment reports <code>RequestConflict</code> after creating the Azure AI Services account, wait for the current Azure operation to finish. Rerun setup, choose <code>1</code> for an existing resource, and select that account. Setup will reuse the successful parts instead of creating another account.</p>
 <h2>Step 4: Change the number of epochs</h2>
 <p>Open:</p>
 <p><code>12-Foundry-Fine-Tuning-GitHub-Actions/config/finetune.json</code></p>

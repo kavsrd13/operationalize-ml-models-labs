@@ -147,6 +147,11 @@ Setup performs the one-time platform work:
 
 Continue only after the terminal reports `Automation is ready` and displays the Actions URL for your repository.
 
+If a new-resource deployment reports `RequestConflict` after creating the
+Azure AI Services account, wait for the current Azure operation to finish.
+Rerun setup, choose `1` for an existing resource, and select that account.
+Setup will reuse the successful parts instead of creating another account.
+
 ## Step 4: Change the number of epochs
 
 Open:

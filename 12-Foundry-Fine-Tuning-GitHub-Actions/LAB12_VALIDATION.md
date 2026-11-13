@@ -23,6 +23,7 @@
 - On 12 November 2026, the new-resource subscription-level `what-if` succeeded in East US with `gpt-4.1-mini` version `2025-04-14`, Global Standard capacity 10, the Azure AI Services account, managed identity, OIDC federation and scoped role assignment.
 - The selected subscription reported 5,000K Global Standard base quota and 500K Global Standard fine-tuning quota for `gpt-4.1-mini` in East US.
 - A live resource query found one successful older job based on `gpt-4o-mini-2024-07-18`. Its fine-tuned deployment quota is 0K TPM for both Global Standard and Data Zone Standard in East US and the other checked candidate regions, so it must not be used for this exercise.
+- On 13 November 2026, a new-resource run in `rg-medtriage-finetuning` created account `medtriageft985272` and its `medtriage-base` deployment, but parallel project creation failed with `RequestConflict` on the account. Both Bicep paths now make project creation depend on the baseline deployment when one is needed. The compiled templates contain this dependency. An existing-resource recovery deployment then created `medtriage-project` and its project-scoped role successfully without creating another account or baseline deployment. The corrected new-resource path has not been live-tested on another new account.
 
 ## Live GitHub and Foundry validation
 

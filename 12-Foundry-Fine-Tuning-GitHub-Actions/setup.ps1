@@ -347,7 +347,9 @@ if ($deploymentChoice -eq '3') {
     return
 }
 az deployment sub create @deploymentArgs --output none
-Assert-LastExitCode 'Create Foundry resources'
+if ($LASTEXITCODE -ne 0) {
+    throw "Create Foundry resources failed. Inspect the Azure error above. If $AccountName now exists, rerun setup and choose [1] to reuse that account instead of creating another one."
+}
 $outputs = az deployment sub show --name $deploymentName --query properties.outputs -o json | ConvertFrom-Json
 Assert-LastExitCode 'Read deployment outputs'
 
