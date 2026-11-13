@@ -76,7 +76,7 @@ git switch main</code></pre>
 git status --short
 git remote get-url origin</code></pre>
 <p><code>git status --short</code> must print nothing. Do not continue if it displays modified files or if the remote URL names a different repository.</p>
-<p>You need GitHub CLI authentication only when setup configures secrets and variables in your student repository.</p>
+<p>You need GitHub CLI authentication only when setup configures secrets and variables in your student repository. <code>gh auth login</code> identifies your GitHub account; the clone&#x27;s <code>origin</code> URL identifies the repository. Setup reads that URL automatically, so you never type an owner/repository value.</p>
 <h2>Step 2: Sign in to Azure and GitHub</h2>
 <p>From the repository root, run:</p>
 <pre><code>az login
@@ -88,7 +88,7 @@ gh auth status</code></pre>
 <h2>Step 3: Run the guided setup</h2>
 <p>Stay at the repository root and run:</p>
 <pre><code>.\11-Automate-Model-Training-GitHub-Actions\setup.ps1</code></pre>
-<p>The script always shows what to enter:</p>
+<p>Setup first displays the repository detected from <code>origin</code>. It stops if you are in the course source repository, an unrelated clone, or a branch other than <code>main</code>. Then it shows numbered subscriptions and asks what to enter:</p>
 <ol start="1">
 <li>Select the Azure subscription by typing the number shown beside it.</li>
 <li>Press Enter for <code>eastus</code>, or type a region where your subscription has the required CPU quota.</li>
@@ -98,7 +98,7 @@ gh auth status</code></pre>
 <li>Review the Azure what-if output. It is a preview and does not create resources.</li>
 <li>Type <code>deploy</code> when asked to create the displayed resources.</li>
 </ol>
-<p>The script detects <code>OWNER/REPOSITORY</code> from the <code>origin</code> remote; it does not ask you to type the repository name. It also:</p>
+<p>The script detects the GitHub repository from the <code>origin</code> remote; it does not ask you to type the repository name or subscription ID. It also:</p>
 <ul>
 <li>registers required Azure resource providers when necessary;</li>
 <li>deploys the Bicep template;</li>
@@ -201,7 +201,7 @@ az group exists --name $RG</code></pre>
 <h2>Troubleshooting</h2>
 <ul>
 <li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your student repository and <code>gh auth status</code> shows its owner account.</li>
-<li><strong>Setup unexpectedly asks you to type <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean <code>lab11-student</code> folder created in Step 1.</li>
+<li><strong>Setup unexpectedly asks for a subscription ID or <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean <code>lab11-student</code> folder created in Step 1.</li>
 <li><strong>Setup says administrator access is required:</strong> run setup from a repository created under your account with <strong>Use this template</strong>, not the instructor&#x27;s source repository.</li>
 <li><strong>OIDC login fails:</strong> rerun setup from the same student repository. OIDC trust is specific to the repository and <code>main</code> branch.</li>
 <li><strong>Compute quota fails:</strong> choose another region or rerun setup with a VM size available in your subscription, for example <code>-VmSize &#x27;&lt;available-cpu-sku&gt;&#x27;</code>.</li>

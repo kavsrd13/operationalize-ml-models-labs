@@ -133,7 +133,9 @@ git remote get-url origin
 files or if the remote URL names a different repository.
 
 You need GitHub CLI authentication only when setup configures secrets and
-variables in your student repository.
+variables in your student repository. `gh auth login` identifies your GitHub
+account; the clone's `origin` URL identifies the repository. Setup reads that
+URL automatically, so you never type an owner/repository value.
 
 ## Step 2: Sign in to Azure and GitHub
 
@@ -162,7 +164,9 @@ Stay at the repository root and run:
 .\11-Automate-Model-Training-GitHub-Actions\setup.ps1
 ```
 
-The script always shows what to enter:
+Setup first displays the repository detected from `origin`. It stops if you
+are in the course source repository, an unrelated clone, or a branch other
+than `main`. Then it shows numbered subscriptions and asks what to enter:
 
 1. Select the Azure subscription by typing the number shown beside it.
 2. Press Enter for `eastus`, or type a region where your subscription has the
@@ -176,8 +180,8 @@ The script always shows what to enter:
    resources.
 7. Type `deploy` when asked to create the displayed resources.
 
-The script detects `OWNER/REPOSITORY` from the `origin` remote; it does not ask
-you to type the repository name. It also:
+The script detects the GitHub repository from the `origin` remote; it does not
+ask you to type the repository name or subscription ID. It also:
 
 - registers required Azure resource providers when necessary;
 - deploys the Bicep template;
@@ -357,8 +361,8 @@ repository will be reused for a different subscription.
 
 - **Setup cannot read the repository:** confirm `git remote -v` points to your
   student repository and `gh auth status` shows its owner account.
-- **Setup unexpectedly asks you to type `OWNER/REPO`:** you are running an old
-  setup script or are in the wrong clone. Run `Get-Location`,
+- **Setup unexpectedly asks for a subscription ID or `OWNER/REPO`:** you are
+  running an old setup script or are in the wrong clone. Run `Get-Location`,
   `git status --short`, and `git remote get-url origin`; then return to the
   clean `lab11-student` folder created in Step 1.
 - **Setup says administrator access is required:** run setup from a repository

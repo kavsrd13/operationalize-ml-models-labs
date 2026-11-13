@@ -1,11 +1,9 @@
 # Run from a cloned repository after az login and gh auth login.
 [CmdletBinding()]
 param(
-    [string]$SubscriptionId,
     [string]$ResourceGroup,
     [string]$Workspace,
     [string]$Location,
-    [string]$GitHubRepo,
     [string]$VmSize = 'Standard_E4ds_v4',
     [string]$OidcSubject,
     [switch]$PreviewOnly,
@@ -51,8 +49,9 @@ function Select-AzureSubscription {
 }
 
 function Get-GitHubRepositoryFromOrigin {
-    $remoteUrl = (git remote get-url origin).Trim()
+    $remoteUrl = git remote get-url origin
     Check 'Read the origin Git remote'
+    $remoteUrl = $remoteUrl.Trim()
     $repository = $remoteUrl `
         -replace '^https://github\.com/', '' `
         -replace '^git@github\.com:', '' `
@@ -60,7 +59,7 @@ function Get-GitHubRepositoryFromOrigin {
         -replace '\.git$', '' `
         -replace '/$', ''
     if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
-        throw "The origin remote is not a supported GitHub URL: $remoteUrl"
+        throw "The origin remote must point to your GitHub student repository: $remoteUrl"
     }
     Write-Host "Detected GitHub repository from origin: $repository"
     return $repository
@@ -72,9 +71,20 @@ Check 'Azure sign-in (run az login)'
 gh auth status
 Check 'GitHub sign-in (run gh auth login)'
 
-if (-not $SubscriptionId) {
-    $SubscriptionId = (Select-AzureSubscription).id
+$GitHubRepo = Get-GitHubRepositoryFromOrigin
+if ($GitHubRepo -eq 'kavsrd13/operationalize-ml-models-labs') {
+    throw 'This is the course source repository. Create your own repository with Use this template, clone it, and run setup there.'
 }
+$repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
+Check 'Read student repository'
+if (-not $repo.permissions.admin) { throw 'Setup requires administrator access to your student repository.' }
+if ($repo.default_branch -ne 'main') { throw 'Use main as the student repository default branch.' }
+$GitHubRepo = $repo.full_name
+$currentBranch = (git branch --show-current).Trim()
+Check 'Read current Git branch'
+if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
+
+$SubscriptionId = (Select-AzureSubscription).id
 az account set --subscription $SubscriptionId
 Check 'Select subscription'
 $account = az account show -o json | ConvertFrom-Json
@@ -84,16 +94,6 @@ if ($account.id -ne $SubscriptionId) { throw "Azure CLI did not select subscript
 $Location = Ask $Location 'Azure region with available CPU quota' 'eastus'
 $ResourceGroup = Ask $ResourceGroup 'Resource group (use a dedicated course group)' 'rg-course-ml'
 $Workspace = Ask $Workspace 'Azure ML workspace' 'mlw-course-ml'
-if (-not $GitHubRepo) { $GitHubRepo = Get-GitHubRepositoryFromOrigin }
-if ($GitHubRepo -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'Use OWNER/REPO for GitHubRepo.' }
-$repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
-Check 'Read student repository'
-if (-not $repo.permissions.admin) { throw 'Setup requires administrator access to your student repository.' }
-if ($repo.default_branch -ne 'main') { throw 'Use main as the student repository default branch.' }
-$GitHubRepo = $repo.full_name
-$currentBranch = (git branch --show-current).Trim()
-Check 'Read current Git branch'
-if ($currentBranch -ne 'main') { throw "Switch to main before setup. Current branch: $currentBranch" }
 if (-not $OidcSubject) {
     if ([datetime]$repo.created_at -ge [datetime]'2026-07-15') {
         $OidcSubject = "repo:$($repo.owner.login)@$($repo.owner.id)/$($repo.name)@$($repo.id):ref:refs/heads/main"
