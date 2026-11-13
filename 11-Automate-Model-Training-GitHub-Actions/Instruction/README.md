@@ -119,24 +119,25 @@ In this section, you connect your GitHub workflow to Azure Machine Learning and 
    git config --global user.email "your-email@example.com"
    ```
 
-1. In the cloned repository, open `src/job.yml` and replace the placeholder values for the `training_data` input so the command job uses the single file data asset created by the setup script:
+1. In the cloned repository, open `11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml` and confirm the `olist_data` input points to the folder data asset registered by setup:
 
    ```yml
    inputs:
-     training_data:
-       type: uri_file
-       path: azureml:diabetes-data@latest
+     olist_data:
+       type: uri_folder
+       path: azureml:olist-ecommerce-raw:1
+       mode: ro_mount
    ```
 1. In the cloned repository, locate the `.github/workflows/manual-trigger-job.yml` workflow file.
 1. Open `manual-trigger-job.yml` and review the existing steps. The workflow should:
    - Check out the repository code.
    - Install the Azure Machine Learning CLI extension.
    - Use the `AZURE_CREDENTIALS` secret to sign in to Azure via `azure/login@v2`.
-1. At the end of the workflow, add a new step that submits the Azure Machine Learning job defined in `src/job.yml`. The command requires explicit `--resource-group` and `--workspace-name` flags, supplied from the GitHub Actions variables you created:
+1. At the end of the workflow, add a new step that submits the Azure Machine Learning job defined in `11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml`. The command requires explicit `--resource-group` and `--workspace-name` flags, supplied from the GitHub Actions variables you created:
 
    ```yml
    - name: Run Azure Machine Learning training job
-     run: az ml job create -f src/job.yml --stream --resource-group ${{vars.AZURE_RESOURCE_GROUP}} --workspace-name ${{vars.AZURE_WORKSPACE_NAME}}
+     run: az ml job create -f 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml --stream --resource-group ${{vars.AZURE_RESOURCE_GROUP}} --workspace-name ${{vars.AZURE_WORKSPACE_NAME}}
    ```
 
 1. Save your changes, commit them to your local repository, and push the changes to the **main** branch of your fork.
@@ -144,7 +145,7 @@ In this section, you connect your GitHub workflow to Azure Machine Learning and 
 1. In GitHub, go to the **Actions** tab for your repository.
 1. Select the workflow defined in `manual-trigger-job.yml` and use **Run workflow** to start it manually.
 1. Wait for the workflow run to complete. Verify that the **Run Azure Machine Learning training job** step completes successfully.
-1. In Azure Machine Learning studio, select **Jobs** and confirm that a new job based on `src/job.yml` has run successfully. Review the job inputs, metrics, and logs.
+1. In Azure Machine Learning studio, select **Jobs** and confirm that a new job based on `11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml` has run successfully. Review the job inputs, metrics, and logs.
 
 You have now automated the training job by using a GitHub Actions workflow that you can run on demand.
 
@@ -175,7 +176,7 @@ Running workflows manually is useful for initial testing, but in a team environm
    git checkout -b feature/update-parameters
    ```
 
-1. Make a small, safe change to the training configuration. For example, adjust a hyperparameter value in `src/train-model-parameters.py` or in `src/job.yml`.
+1. Make a small, safe change to the training configuration. For example, adjust a hyperparameter value in `11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml` or `11-Automate-Model-Training-GitHub-Actions/src/train.py`.
 1. Commit your change to the feature branch and push the branch to GitHub:
 
    ```bash

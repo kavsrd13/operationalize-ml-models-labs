@@ -104,12 +104,13 @@
 <pre><code>   git config --global user.name &quot;Your GitHub Username&quot;
    git config --global user.email &quot;your-email@example.com&quot;</code></pre>
 <ol start="1">
-<li>In the cloned repository, open <code>src/job.yml</code> and replace the placeholder values for the <code>training_data</code> input so the command job uses the single file data asset created by the setup script:</li>
+<li>In the cloned repository, open <code>11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml</code> and confirm the <code>olist_data</code> input points to the folder data asset registered by setup:</li>
 </ol>
 <pre><code>   inputs:
-     training_data:
-       type: uri_file
-       path: azureml:diabetes-data@latest</code></pre>
+     olist_data:
+       type: uri_folder
+       path: azureml:olist-ecommerce-raw:1
+       mode: ro_mount</code></pre>
 <ol start="1">
 <li>In the cloned repository, locate the <code>.github/workflows/manual-trigger-job.yml</code> workflow file.</li>
 <li>Open <code>manual-trigger-job.yml</code> and review the existing steps. The workflow should:</li>
@@ -120,10 +121,10 @@
 <li>Use the <code>AZURE_CREDENTIALS</code> secret to sign in to Azure via <code>azure/login@v2</code>.</li>
 </ul>
 <ol start="1">
-<li>At the end of the workflow, add a new step that submits the Azure Machine Learning job defined in <code>src/job.yml</code>. The command requires explicit <code>--resource-group</code> and <code>--workspace-name</code> flags, supplied from the GitHub Actions variables you created:</li>
+<li>At the end of the workflow, add a new step that submits the Azure Machine Learning job defined in <code>11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml</code>. The command requires explicit <code>--resource-group</code> and <code>--workspace-name</code> flags, supplied from the GitHub Actions variables you created:</li>
 </ol>
 <pre><code>   - name: Run Azure Machine Learning training job
-     run: az ml job create -f src/job.yml --stream --resource-group ${{vars.AZURE_RESOURCE_GROUP}} --workspace-name ${{vars.AZURE_WORKSPACE_NAME}}</code></pre>
+     run: az ml job create -f 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml --stream --resource-group ${{vars.AZURE_RESOURCE_GROUP}} --workspace-name ${{vars.AZURE_WORKSPACE_NAME}}</code></pre>
 <ol start="1">
 <li>Save your changes, commit them to your local repository, and push the changes to the <strong>main</strong> branch of your fork.</li>
 </ol>
@@ -131,7 +132,7 @@
 <li>In GitHub, go to the <strong>Actions</strong> tab for your repository.</li>
 <li>Select the workflow defined in <code>manual-trigger-job.yml</code> and use <strong>Run workflow</strong> to start it manually.</li>
 <li>Wait for the workflow run to complete. Verify that the <strong>Run Azure Machine Learning training job</strong> step completes successfully.</li>
-<li>In Azure Machine Learning studio, select <strong>Jobs</strong> and confirm that a new job based on <code>src/job.yml</code> has run successfully. Review the job inputs, metrics, and logs.</li>
+<li>In Azure Machine Learning studio, select <strong>Jobs</strong> and confirm that a new job based on <code>11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml</code> has run successfully. Review the job inputs, metrics, and logs.</li>
 </ol>
 <p>You have now automated the training job by using a GitHub Actions workflow that you can run on demand.</p>
 <h2>Use feature-based development to trigger workflows</h2>
@@ -160,7 +161,7 @@
 </ol>
 <pre><code>   git checkout -b feature/update-parameters</code></pre>
 <ol start="1">
-<li>Make a small, safe change to the training configuration. For example, adjust a hyperparameter value in <code>src/train-model-parameters.py</code> or in <code>src/job.yml</code>.</li>
+<li>Make a small, safe change to the training configuration. For example, adjust a hyperparameter value in <code>11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml</code> or <code>11-Automate-Model-Training-GitHub-Actions/src/train.py</code>.</li>
 <li>Commit your change to the feature branch and push the branch to GitHub:</li>
 </ol>
 <pre><code>   git add .
