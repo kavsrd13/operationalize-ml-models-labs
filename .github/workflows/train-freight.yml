@@ -7,7 +7,6 @@ on:
     paths:
       - '11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml'
       - '11-Automate-Model-Training-GitHub-Actions/src/**'
-      - '.github/workflows/train-freight.yml'
 
 permissions:
   contents: read
@@ -54,7 +53,11 @@ jobs:
           RG="$(trim_value "${RG:-}")"
           WS="$(trim_value "${WS:-}")"
           COMPUTE_NAME="$(trim_value "${COMPUTE:-course-cpu}")"
-          az ml workspace show -g "$RG" -n "$WS" --query name -o tsv
+          if [ -z "$RG" ] || [ -z "$WS" ]; then
+            echo "Missing AZURE_RESOURCE_GROUP or AZURE_ML_WORKSPACE repository variable."
+            exit 1
+          fi
+          az ml workspace show -g "$RG" -n "$WS" --query '{name:name,location:location}' -o json
           if ! az ml compute show -g "$RG" -w "$WS" -n "$COMPUTE_NAME" --query name -o tsv >/dev/null; then
             echo "Compute '$COMPUTE_NAME' was not found in workspace '$WS'."
             echo "Available computes:"
@@ -62,15 +65,13 @@ jobs:
             echo "Set repository variable AZURE_ML_COMPUTE to an existing compute, or run the Lab 11 setup script to create course-cpu."
             exit 1
           fi
-          az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query name -o tsv
+          az ml compute show -g "$RG" -w "$WS" -n "$COMPUTE_NAME" --query '{name:name,type:type,size:size,min:min_instances,max:max_instances}' -o json
+          az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query '{name:name,version:version,type:type,path:path}' -o json
           echo "RG=$RG" >> "$GITHUB_ENV"
           echo "WS=$WS" >> "$GITHUB_ENV"
           echo "COMPUTE_NAME=$COMPUTE_NAME" >> "$GITHUB_ENV"
 
       - name: Submit training and check result
-        env:
-          RG: ${{ vars.AZURE_RESOURCE_GROUP }}
-          WS: ${{ vars.AZURE_ML_WORKSPACE }}
         run: |
           set -euo pipefail
           JOB_NAME=$(az ml job create \
@@ -82,10 +83,12 @@ jobs:
                   tags.git_commit="$GITHUB_SHA" --query name -o tsv)
           echo "Azure ML job: $JOB_NAME"
           STUDIO_URL=$(az ml job show -n "$JOB_NAME" -g "$RG" -w "$WS" --query services.Studio.endpoint -o tsv)
-          echo "[Open training in Azure ML Studio]($STUDIO_URL)" >> "$GITHUB_STEP_SUMMARY"
-          echo "Commit: $GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
           echo "### Azure ML training" >> "$GITHUB_STEP_SUMMARY"
           echo "Job: \`$JOB_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Data: \`olist-ecommerce-raw:1\` (read-only mount)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Compute: \`$COMPUTE_NAME\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "[Open training in Azure ML Studio]($STUDIO_URL)" >> "$GITHUB_STEP_SUMMARY"
           # Poll Azure ML directly. Some CLI versions fail while streaming logs
           # even when the cloud job itself completes successfully.
           for attempt in {1..120}; do
