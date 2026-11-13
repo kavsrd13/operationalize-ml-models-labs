@@ -91,6 +91,7 @@ foreach ($item in @{
 foreach ($item in @{
     AZURE_RESOURCE_GROUP = $ResourceGroup
     AZURE_ML_WORKSPACE = $Workspace
+    AZURE_ML_COMPUTE = 'course-cpu'
     ENABLE_AZURE_TRAINING = 'true'
 }.GetEnumerator()) {
     gh variable set $item.Key --body $item.Value --repo $GitHubRepo

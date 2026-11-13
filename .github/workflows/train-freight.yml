@@ -40,11 +40,20 @@ jobs:
         env:
           RG: ${{ vars.AZURE_RESOURCE_GROUP }}
           WS: ${{ vars.AZURE_ML_WORKSPACE }}
+          COMPUTE: ${{ vars.AZURE_ML_COMPUTE }}
         run: |
           set -euo pipefail
+          COMPUTE_NAME="${COMPUTE:-course-cpu}"
           az ml workspace show -g "$RG" -n "$WS" --query name -o tsv
-          az ml compute show -g "$RG" -w "$WS" -n course-cpu --query name -o tsv
+          if ! az ml compute show -g "$RG" -w "$WS" -n "$COMPUTE_NAME" --query name -o tsv >/dev/null; then
+            echo "Compute '$COMPUTE_NAME' was not found in workspace '$WS'."
+            echo "Available computes:"
+            az ml compute list -g "$RG" -w "$WS" --query "[].name" -o tsv || true
+            echo "Set repository variable AZURE_ML_COMPUTE to an existing compute, or run the Lab 11 setup script to create course-cpu."
+            exit 1
+          fi
           az ml data show -g "$RG" -w "$WS" -n olist-ecommerce-raw -v 1 --query name -o tsv
+          echo "COMPUTE_NAME=$COMPUTE_NAME" >> "$GITHUB_ENV"
 
       - name: Submit training and check result
         env:
@@ -55,6 +64,7 @@ jobs:
           JOB_NAME=$(az ml job create \
             --file 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml \
             -g "$RG" -w "$WS" \
+            --set compute="azureml:$COMPUTE_NAME" \
             --set environment_variables.TRAINING_GIT_SHA="$GITHUB_SHA" \
                   environment_variables.TRAINING_RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
                   tags.git_commit="$GITHUB_SHA" --query name -o tsv)

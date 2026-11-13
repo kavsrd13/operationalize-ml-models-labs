@@ -43,9 +43,11 @@ jobs:
       env:
         RG: ${{ vars.AZURE_RESOURCE_GROUP }}
         WS: ${{ vars.AZURE_WORKSPACE_NAME || vars.AZURE_ML_WORKSPACE }}
+        COMPUTE: ${{ vars.AZURE_ML_COMPUTE }}
         AUTH_MODE: ${{ steps.auth_mode.outputs.mode }}
       run: |
         set -euo pipefail
+        COMPUTE_NAME="${COMPUTE:-course-cpu}"
         if [ -z "$RG" ]; then
           echo "Missing repository variable: AZURE_RESOURCE_GROUP"
           exit 1
@@ -58,9 +60,18 @@ jobs:
           echo "Missing Azure auth secrets. Set AZURE_CREDENTIALS or set AZURE_CLIENT_ID/AZURE_TENANT_ID/AZURE_SUBSCRIPTION_ID."
           exit 1
         fi
+        az ml workspace show -g "$RG" -n "$WS" --query name -o tsv >/dev/null
+        if ! az ml compute show -g "$RG" -w "$WS" -n "$COMPUTE_NAME" --query name -o tsv >/dev/null; then
+          echo "Compute '$COMPUTE_NAME' was not found in workspace '$WS'."
+          echo "Available computes:"
+          az ml compute list -g "$RG" -w "$WS" --query "[].name" -o tsv || true
+          echo "Set repository variable AZURE_ML_COMPUTE to an existing compute, or run the Lab 11 setup script to create course-cpu."
+          exit 1
+        fi
+        echo "COMPUTE_NAME=$COMPUTE_NAME" >> "$GITHUB_ENV"
     - name: Run Azure Machine Learning training job
       env:
         RG: ${{ vars.AZURE_RESOURCE_GROUP }}
         WS: ${{ vars.AZURE_WORKSPACE_NAME || vars.AZURE_ML_WORKSPACE }}
-      run: az ml job create -f 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml --stream --resource-group "$RG" --workspace-name "$WS"
+      run: az ml job create -f 11-Automate-Model-Training-GitHub-Actions/jobs/train-job.yml --stream --resource-group "$RG" --workspace-name "$WS" --set compute="azureml:$COMPUTE_NAME"
 
