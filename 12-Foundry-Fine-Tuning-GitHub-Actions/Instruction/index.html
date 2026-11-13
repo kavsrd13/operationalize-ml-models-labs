@@ -134,21 +134,21 @@ git push origin main</code></pre>
 <li>Evaluates ten held-out examples against <code>medtriage-base</code>.</li>
 <li>Uploads the training and validation files through the Azure AI Projects SDK.</li>
 <li>Calls <code>fine_tuning.jobs.create()</code> with the supervised hyperparameters.</li>
-<li>Writes the Foundry job ID to the workflow summary.</li>
+<li>Writes the Foundry project endpoint and job ID to the workflow summary.</li>
 <li>Monitors the job until it succeeds, fails, or is cancelled.</li>
 <li>Uploads the baseline and fine-tuning evidence as a GitHub artifact.</li>
 </ol>
 <p>The baseline takes several minutes and fine-tuning takes longer. Do not push another data or configuration experiment while this run is active.</p>
 <h2>Step 8: Confirm the Foundry job</h2>
-<p>Use the resource, project, and Actions URL printed by your setup script:</p>
+<p>Use the <strong>Foundry project endpoint</strong> in this GitHub Actions run summary. If you reran setup after a failed deployment, an earlier Azure resource may still exist; its <code>medtriage-base</code> deployment does not mean the job ran there. You can also find the current project endpoint in your repository under <strong>Settings</strong> → <strong>Secrets and variables</strong> → <strong>Actions</strong> → <strong>Variables</strong> as <code>MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT</code>.</p>
 <ol start="1">
-<li>Open your Foundry project.</li>
-<li>Open <strong>Fine-tuning</strong>.</li>
+<li>Open the Foundry project matching that endpoint. The account name is the hostname before <code>.services.ai.azure.com</code>; the project name follows <code>/api/projects/</code>.</li>
+<li>Open <strong>Build</strong> → <strong>Fine-tuning</strong> in the current Foundry portal.</li>
 <li>Match the job ID to the ID in the GitHub Actions summary.</li>
 <li>Confirm the base model is <code>gpt-4.1-mini-2025-04-14</code>.</li>
-<li>Confirm the job uses three epochs.</li>
+<li>Confirm the job uses three epochs. Check the validated configuration in the Actions log; a commit message alone does not change <code>n_epochs</code>.</li>
 </ol>
-<p>A created job proves that the automation works. It does not prove that the fine-tuned model is better or safe to deploy.</p>
+<p>A created job proves that the automation works. The job&#x27;s fine-tuned model ID is available after success, but <strong>Models</strong> lists only serving deployments until you complete Step 10. <code>medtriage-base</code> is the base deployment used for the comparison. A successful job does not prove that the fine-tuned model is better or safe to deploy.</p>
 <h2>Step 9: Evaluate and choose a checkpoint</h2>
 <p>After training succeeds, compare its checkpoints and held-out results with the base-model metrics stored in the GitHub artifact. Do not automatically assume the final checkpoint is best. Select the checkpoint that improves JSON-schema compliance and urgency-label accuracy without introducing unsafe or incorrect responses.</p>
 <p>Use prompts that were not present in either training or validation data. The same prompts and system instruction must be used for the base and fine-tuned deployments so the comparison is fair.</p>

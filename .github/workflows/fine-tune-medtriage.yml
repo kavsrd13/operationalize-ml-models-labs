@@ -98,6 +98,7 @@ jobs:
           JOB_ID=$(python -c "import json; print(json.load(open('fine_tuning_job.json'))['job']['id'])")
           echo "job_id=$JOB_ID" >> "$GITHUB_OUTPUT"
           echo "### MedTriage fine-tuning submitted" >> "$GITHUB_STEP_SUMMARY"
+          echo "Foundry project endpoint: \`$FOUNDRY_PROJECT_ENDPOINT\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Job ID: \`$JOB_ID\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Commit: \`$GITHUB_SHA\`" >> "$GITHUB_STEP_SUMMARY"
           echo "Baseline metrics:" >> "$GITHUB_STEP_SUMMARY"

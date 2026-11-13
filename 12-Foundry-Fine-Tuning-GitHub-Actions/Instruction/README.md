@@ -222,7 +222,7 @@ The workflow:
 3. Evaluates ten held-out examples against `medtriage-base`.
 4. Uploads the training and validation files through the Azure AI Projects SDK.
 5. Calls `fine_tuning.jobs.create()` with the supervised hyperparameters.
-6. Writes the Foundry job ID to the workflow summary.
+6. Writes the Foundry project endpoint and job ID to the workflow summary.
 7. Monitors the job until it succeeds, fails, or is cancelled.
 8. Uploads the baseline and fine-tuning evidence as a GitHub artifact.
 
@@ -230,15 +230,27 @@ The baseline takes several minutes and fine-tuning takes longer. Do not push ano
 
 ## Step 8: Confirm the Foundry job
 
-Use the resource, project, and Actions URL printed by your setup script:
+Use the **Foundry project endpoint** in this GitHub Actions run summary. If
+you reran setup after a failed deployment, an earlier Azure resource may still
+exist; its `medtriage-base` deployment does not mean the job ran there. You can
+also find the current project endpoint in your repository under **Settings** →
+**Secrets and variables** → **Actions** → **Variables** as
+`MEDTRIAGE_FOUNDRY_PROJECT_ENDPOINT`.
 
-1. Open your Foundry project.
-2. Open **Fine-tuning**.
+1. Open the Foundry project matching that endpoint. The account name is the
+   hostname before `.services.ai.azure.com`; the project name follows
+   `/api/projects/`.
+2. Open **Build** → **Fine-tuning** in the current Foundry portal.
 3. Match the job ID to the ID in the GitHub Actions summary.
 4. Confirm the base model is `gpt-4.1-mini-2025-04-14`.
-5. Confirm the job uses three epochs.
+5. Confirm the job uses three epochs. Check the validated configuration in the
+   Actions log; a commit message alone does not change `n_epochs`.
 
-A created job proves that the automation works. It does not prove that the fine-tuned model is better or safe to deploy.
+A created job proves that the automation works. The job's fine-tuned model ID
+is available after success, but **Models** lists only serving deployments until
+you complete Step 10. `medtriage-base` is the base deployment used for the
+comparison. A successful job does not prove that the fine-tuned model is
+better or safe to deploy.
 
 ## Step 9: Evaluate and choose a checkpoint
 
