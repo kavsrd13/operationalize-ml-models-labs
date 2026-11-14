@@ -76,6 +76,61 @@ python .\13-Foundry-Data-Analyst-Agent\chat.py
 
 `publish.py` uploads `orders.csv`, `order_items.csv`, `customers.csv`, and `sellers.csv` from the exercise `data` folder. It registers the first version of the `olist-data-analyst` prompt agent with the instruction in `instructions/system.txt` and Code Interpreter. No local dataset path is needed at chat time: the agent version references the uploaded files.
 
+The complete agent-creation code below follows the [Microsoft Learn Python Code Interpreter example](https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/code-interpreter?pivots=python). It uses only the four CSVs in this exercise. It keeps the agent version so you can continue asking data questions.
+
+```python
+"""Upload the teaching CSVs and register a Foundry Code Interpreter agent."""
+import os
+from pathlib import Path
+
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import AutoCodeInterpreterToolParam, CodeInterpreterTool, PromptAgentDefinition
+
+from agent_common import AGENT_NAME
+
+ROOT = Path(__file__).resolve().parent
+FILES = [ROOT / "data" / f"{name}.csv" for name in ("orders", "order_items", "customers", "sellers")]
+
+
+def main():
+    instructions = (ROOT / "instructions" / "system.txt").read_text(encoding="utf-8").strip()
+    if not instructions:
+        raise ValueError("instructions/system.txt is empty")
+    model = os.getenv("FOUNDRY_MODEL_DEPLOYMENT", "").strip()
+    if not model:
+        raise ValueError("Set FOUNDRY_MODEL_DEPLOYMENT to an existing model deployment name")
+    endpoint = os.getenv("FOUNDRY_PROJECT_ENDPOINT", "").strip()
+    if not endpoint or "/api/projects/" not in endpoint:
+        raise ValueError("Set FOUNDRY_PROJECT_ENDPOINT to the full Foundry project endpoint")
+
+    # Follow the Microsoft Learn Python Code Interpreter sample.
+    project = AIProjectClient(endpoint=endpoint, credential=DefaultAzureCredential())
+    openai = project.get_openai_client()
+
+    file_ids = []
+    for path in FILES:
+        with path.open("rb") as csv_file:
+            file = openai.files.create(purpose="assistants", file=csv_file)
+        file_ids.append(file.id)
+        print(f"Uploaded {path.name}: {file.id}")
+
+    agent = project.agents.create_version(
+        agent_name=AGENT_NAME,
+        definition=PromptAgentDefinition(
+            model=model,
+            instructions=instructions,
+            tools=[CodeInterpreterTool(container=AutoCodeInterpreterToolParam(file_ids=file_ids))],
+        ),
+        description="Code Interpreter agent for Olist teaching data analysis.",
+    )
+    print(f"Registered agent {agent.name} version {agent.version} using {model}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
 At the `You:` prompt, enter:
 
 ```text
@@ -88,7 +143,13 @@ Expected: **300 orders** and **340 order items**. The terminal should also say *
 Which seller states have the highest total item price? Join the needed files, show the top five, and name the join key.
 ```
 
-Check that the answer uses `seller_id` to join `order_items.csv` and `sellers.csv`, shows calculated values, and says this is a teaching sample. Type `exit` to close chat.
+Check that the answer uses `seller_id` to join `order_items.csv` and `sellers.csv`, shows calculated values, and says this is a teaching sample. Then ask:
+
+```text
+Create a bar chart of the top five seller states by total item price. Use Code Interpreter, join order_items.csv with sellers.csv on seller_id, and provide the chart file.
+```
+
+The terminal downloads a generated chart into `13-Foundry-Data-Analyst-Agent/outputs/` when Foundry returns a file citation. Type `exit` to close chat.
 
 ## Step 6: Change the agent instruction and push
 

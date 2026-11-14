@@ -52,13 +52,68 @@ python .\13-Foundry-Data-Analyst-Agent\publish.py
 python .\13-Foundry-Data-Analyst-Agent\chat.py
 </code></pre>
 <p><code>publish.py</code> uploads <code>orders.csv</code>, <code>order_items.csv</code>, <code>customers.csv</code>, and <code>sellers.csv</code> from the exercise <code>data</code> folder. It registers the first version of the <code>olist-data-analyst</code> prompt agent with the instruction in <code>instructions/system.txt</code> and Code Interpreter. No local dataset path is needed at chat time: the agent version references the uploaded files.</p>
+<p>The complete agent-creation code below follows the <a href="https://learn.microsoft.com/en-us/azure/foundry/agents/how-to/tools/code-interpreter?pivots=python">Microsoft Learn Python Code Interpreter example</a>. It uses only the four CSVs in this exercise. It keeps the agent version so you can continue asking data questions.</p>
+<pre><code class="language-python">&quot;&quot;&quot;Upload the teaching CSVs and register a Foundry Code Interpreter agent.&quot;&quot;&quot;
+import os
+from pathlib import Path
+
+from azure.identity import DefaultAzureCredential
+from azure.ai.projects import AIProjectClient
+from azure.ai.projects.models import AutoCodeInterpreterToolParam, CodeInterpreterTool, PromptAgentDefinition
+
+from agent_common import AGENT_NAME
+
+ROOT = Path(__file__).resolve().parent
+FILES = [ROOT / &quot;data&quot; / f&quot;{name}.csv&quot; for name in (&quot;orders&quot;, &quot;order_items&quot;, &quot;customers&quot;, &quot;sellers&quot;)]
+
+
+def main():
+    instructions = (ROOT / &quot;instructions&quot; / &quot;system.txt&quot;).read_text(encoding=&quot;utf-8&quot;).strip()
+    if not instructions:
+        raise ValueError(&quot;instructions/system.txt is empty&quot;)
+    model = os.getenv(&quot;FOUNDRY_MODEL_DEPLOYMENT&quot;, &quot;&quot;).strip()
+    if not model:
+        raise ValueError(&quot;Set FOUNDRY_MODEL_DEPLOYMENT to an existing model deployment name&quot;)
+    endpoint = os.getenv(&quot;FOUNDRY_PROJECT_ENDPOINT&quot;, &quot;&quot;).strip()
+    if not endpoint or &quot;/api/projects/&quot; not in endpoint:
+        raise ValueError(&quot;Set FOUNDRY_PROJECT_ENDPOINT to the full Foundry project endpoint&quot;)
+
+    # Follow the Microsoft Learn Python Code Interpreter sample.
+    project = AIProjectClient(endpoint=endpoint, credential=DefaultAzureCredential())
+    openai = project.get_openai_client()
+
+    file_ids = []
+    for path in FILES:
+        with path.open(&quot;rb&quot;) as csv_file:
+            file = openai.files.create(purpose=&quot;assistants&quot;, file=csv_file)
+        file_ids.append(file.id)
+        print(f&quot;Uploaded {path.name}: {file.id}&quot;)
+
+    agent = project.agents.create_version(
+        agent_name=AGENT_NAME,
+        definition=PromptAgentDefinition(
+            model=model,
+            instructions=instructions,
+            tools=[CodeInterpreterTool(container=AutoCodeInterpreterToolParam(file_ids=file_ids))],
+        ),
+        description=&quot;Code Interpreter agent for Olist teaching data analysis.&quot;,
+    )
+    print(f&quot;Registered agent {agent.name} version {agent.version} using {model}&quot;)
+
+
+if __name__ == &quot;__main__&quot;:
+    main()
+</code></pre>
 <p>At the <code>You:</code> prompt, enter:</p>
 <pre><code class="language-text">How many orders and order items are in the sample? Use Code Interpreter to read the CSV files and show the counts.
 </code></pre>
 <p>Expected: <strong>300 orders</strong> and <strong>340 order items</strong>. The terminal should also say <strong>Code Interpreter ran for this answer</strong>. Next ask:</p>
 <pre><code class="language-text">Which seller states have the highest total item price? Join the needed files, show the top five, and name the join key.
 </code></pre>
-<p>Check that the answer uses <code>seller_id</code> to join <code>order_items.csv</code> and <code>sellers.csv</code>, shows calculated values, and says this is a teaching sample. Type <code>exit</code> to close chat.</p>
+<p>Check that the answer uses <code>seller_id</code> to join <code>order_items.csv</code> and <code>sellers.csv</code>, shows calculated values, and says this is a teaching sample. Then ask:</p>
+<pre><code class="language-text">Create a bar chart of the top five seller states by total item price. Use Code Interpreter, join order_items.csv with sellers.csv on seller_id, and provide the chart file.
+</code></pre>
+<p>The terminal downloads a generated chart into <code>13-Foundry-Data-Analyst-Agent/outputs/</code> when Foundry returns a file citation. Type <code>exit</code> to close chat.</p>
 <h2>Step 6: Change the agent instruction and push</h2>
 <p>Open <code>13-Foundry-Data-Analyst-Agent/instructions/system.txt</code>. At the end, add:</p>
 <pre><code class="language-text">Finish every answer with one short sentence beginning &quot;Takeaway: &quot;.
