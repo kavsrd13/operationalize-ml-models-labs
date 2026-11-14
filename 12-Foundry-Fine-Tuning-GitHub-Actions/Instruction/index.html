@@ -5,7 +5,7 @@
 <body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header>
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 12: Automatic Foundry fine-tuning from your GitHub repository</h1>
 <h2>Goal</h2>
-<p>Create your own repository from the course template, connect it to your Microsoft Foundry project once, change <code>n_epochs</code> from 2 to 3, and push to <code>main</code>. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.</p>
+<p>Fork the course repository, connect it to your Microsoft Foundry project once, change <code>n_epochs</code> from 2 to 3, and push to <code>main</code>. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.</p>
 <h2>Why fine-tune this model?</h2>
 <p>The base <code>gpt-4.1-mini</code> model can already understand symptom descriptions, but this exercise requires a repeatable task-specific behavior:</p>
 <ul>
@@ -18,7 +18,7 @@
 <p>Supervised fine-tuning shows the model many reviewed input-output examples and updates its weights toward that behavior. This can improve format consistency, label consistency, and response style without putting many examples into every production prompt. Fine-tuning is effective only when the examples are accurate, consistent, representative, and measured against a base-model baseline and a held-out test set.</p>
 <p>Fine-tuning does <strong>not</strong> add a trusted medical knowledge source, guarantee a correct triage decision, or replace prompt safety rules, clinical review, and formal evaluation. This is a training demonstration and must not be used for real patient care.</p>
 <h2>Student workflow</h2>
-<pre><code>Create your repository from the template and clone it
+<pre><code>Fork the course repository and clone your fork
         ↓
 Check your Azure and GitHub CLI sign-ins; run setup.ps1 once
         ↓
@@ -41,26 +41,23 @@ Test the fine-tuned deployment in the Foundry playground</code></pre>
 <li>Git, Python 3.10 or later, PowerShell, <a href="https://learn.microsoft.com/cli/azure/install-azure-cli">Azure CLI</a>, and <a href="https://cli.github.com/">GitHub CLI</a>.</li>
 </ul>
 <p>Fine-tuning is billable. Use an exercise subscription and delete resources when the class is complete.</p>
-<h2>Step 1: Create your GitHub copy and clone it</h2>
-<ol start="1">
-<li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
-<li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
-<li>Clone your GitHub copy. Replace both names below with your GitHub account and repository name. Git creates a local folder with the repository name:</li>
+<h2>Step 1: Fork and clone the course repository</h2>
+<ol>
+<li>Sign in to GitHub in your browser and open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>.</li>
+<li>Select <strong>Fork</strong>, choose your account as owner, and select <strong>Create fork</strong>. Keep the default name <code>operationalize-ml-models-labs</code> and the <code>main</code> branch.</li>
+<li>Clone your fork in PowerShell. Replace <code>YOUR-GITHUB-USERNAME</code> with your account name:</li>
 </ol>
-<pre><code>git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
-Set-Location .\YOUR-REPOSITORY-NAME
-git switch main</code></pre>
-<p>For example, if your repository is <code>kavsrd13/mlops3</code>, run:</p>
-<pre><code>git clone https://github.com/kavsrd13/mlops3.git
-Set-Location .\mlops3
-git switch main</code></pre>
-<ol start="4">
-<li>Confirm that you are in your new clone and <code>origin</code> points to your GitHub copy:</li>
-</ol>
-<pre><code>Get-Location
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
+git switch main
+Get-Location
 git status --short
-git remote get-url origin</code></pre>
-<p><code>git status --short</code> must print nothing. Setup detects your repository from <code>origin</code>; it never asks you to type an owner/repository value.</p>
+git remote get-url origin
+</code></pre>
+<p><code>git status --short</code> must print nothing, and <code>origin</code> must point to your fork. Setup reads your fork from <code>origin</code>; you do not type <code>OWNER/REPO</code>.</p>
+<ol start="4">
+<li>In your fork on GitHub, open <strong>Actions</strong>. If GitHub asks you to enable workflows, select <strong>I understand my workflows, go ahead and enable them</strong> before the first fine-tuning push.</li>
+</ol>
 <h2>Step 2: Check your Azure and GitHub sign-ins</h2>
 <p>If you are already signed in to Azure CLI and GitHub CLI on this computer, skip the login commands. Otherwise, from the repository root, run each one that you still need:</p>
 <pre><code>az login

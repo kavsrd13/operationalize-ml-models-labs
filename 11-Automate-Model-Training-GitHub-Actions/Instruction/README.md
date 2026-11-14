@@ -91,51 +91,31 @@ You need:
 - Available regional quota for at least four dedicated-family vCPUs used by
   `Standard_E4ds_v4`. You can pass another compatible VM size to setup if your
   region has different quota.
-- A GitHub account that can create and administer a repository from a template.
+- A GitHub account that can create and administer a fork of the course repository.
 - Git, Azure CLI, GitHub CLI, PowerShell, and Python installed locally.
 - Permission to run billable Azure ML compute. The cluster scales to zero after
   120 seconds when idle, but the training node incurs cost while running.
 
-## Step 1: Create your GitHub copy and clone it
+## Step 1: Fork and clone the course repository
 
-1. Open
-   [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-2. Select **Use this template** → **Create a new repository**. Choose your
-   GitHub account and give the repository any name, such as `mlops3`.
-3. Clone your GitHub copy without signing in to GitHub CLI. Replace both
-   placeholders with your GitHub account and repository name. Git creates a
-   local folder with the repository name; enter that folder:
+1. Sign in to GitHub in your browser and open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs).
+2. Select **Fork**, choose your GitHub account as owner, and select **Create fork**. Keep the default name `operationalize-ml-models-labs` and the `main` branch.
+3. Clone your fork in PowerShell. Replace `YOUR-GITHUB-USERNAME` with your account name:
 
 ```powershell
-git clone https://github.com/<your-github-name>/<your-repository-name>.git
-Set-Location .\<your-repository-name>
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 git switch main
-```
-
-For example, if your repository is `kavsrd13/mlops3`, run:
-
-```powershell
-git clone https://github.com/kavsrd13/mlops3.git
-Set-Location .\mlops3
-git switch main
-```
-
-4. Confirm you are in the clone you just created, the working tree is clean,
-   and `origin` points to your GitHub copy:
-
-```powershell
 Get-Location
 git status --short
 git remote get-url origin
 ```
 
-`git status --short` must print nothing. Do not continue if it displays modified
-files or if the remote URL names a different repository.
+`git status --short` must print nothing, and `origin` must point to your fork. Run all remaining commands from this folder. Setup detects your repository from `origin`; you do not type `OWNER/REPO`.
 
-You need GitHub CLI authentication only when setup configures secrets and
-variables in your student repository. `gh auth login` identifies your GitHub
-account; the clone's `origin` URL identifies the repository. Setup reads that
-URL automatically, so you never type an owner/repository value.
+4. In your fork on GitHub, open **Actions**. If GitHub asks you to enable workflows, select **I understand my workflows, go ahead and enable them** before the first training push.
+
+You need GitHub CLI authentication only when setup configures secrets and variables in your fork. Setup reuses your existing GitHub CLI session.
 
 ## Step 2: Check your Azure and GitHub sign-ins
 
@@ -372,7 +352,7 @@ repository will be reused for a different subscription.
   `git status --short`, and `git remote get-url origin`; then return to the
   clean folder named after your GitHub repository created in Step 1.
 - **Setup says administrator access is required:** run setup from a repository
-  created under your account with **Use this template**, not the instructor's source repository.
+  forked under your account from the course repository, not the instructor's source repository.
 - **OIDC login fails:** rerun setup from the same student repository. OIDC trust is specific
   to the repository and `main` branch.
 - **Compute quota fails:** choose another region or rerun setup with a VM size

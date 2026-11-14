@@ -6,21 +6,21 @@
 <ul>
 <li>A GitHub account and an Azure subscription where you can create or use a Foundry project, deploy a chat model, create a user-assigned managed identity, assign a role, and use Code Interpreter.</li>
 <li>Git, Python 3.11, PowerShell, Azure CLI, and GitHub CLI on your laptop.</li>
-<li>Your own copy of this repository, created with <strong>Use this template</strong>. Setup must run from that copy, not the instructor repository.</li>
+<li>Your own fork of this repository. Run setup from the fork, not the instructor repository.</li>
 <li>A Foundry account and project with a working chat model deployment. The example test used <code>gpt-4.1-mini</code>; your deployment name can differ. Model calls and Code Interpreter use billable Azure capacity.</li>
 </ul>
-<h2>Step 1: Create your own repository and clone it</h2>
+<h2>Step 1: Fork and clone the course repository</h2>
 <ol>
-<li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>.</li>
-<li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account, use <code>main</code> as the default branch, and create the repository.</li>
-<li>Clone your new repository and enter it. Replace both placeholders:</li>
+<li>Sign in to GitHub in your browser and open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>.</li>
+<li>Select <strong>Fork</strong>, choose your account as owner, and select <strong>Create fork</strong>. Keep the default name <code>operationalize-ml-models-labs</code> and the <code>main</code> branch.</li>
+<li>Clone your fork in PowerShell. Replace <code>YOUR-GITHUB-USERNAME</code> with your account name:</li>
 </ol>
-<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
-Set-Location .\YOUR-REPOSITORY-NAME
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 git switch main
 git remote get-url origin
 </code></pre>
-<p>The last command must show your repository, not the instructor repository. All later commands run from this repository root.</p>
+<p>The last command must show your fork. All later commands run from this repository root. Open the <strong>Actions</strong> tab in your fork and, if prompted, select <strong>I understand my workflows, go ahead and enable them</strong> before your first push.</p>
 <h2>Step 2: Prepare a Foundry project and model</h2>
 <ol>
 <li>Open <a href="https://ai.azure.com/">Microsoft Foundry</a> and choose your subscription.</li>

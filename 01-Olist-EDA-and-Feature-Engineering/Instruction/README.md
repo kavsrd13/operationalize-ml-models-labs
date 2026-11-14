@@ -4,24 +4,19 @@
 
 Understand the Olist tables and construct freight-cost features without target leakage.
 
-## Fork and clone the public repository
+## Fork and clone the course repository
 
-Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:
+Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. Sign in to GitHub in your browser, open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, choose your account as owner, and select **Create fork**. Keep the default repository name and `main` branch.
 
-```powershell
-git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
-```
-
-To save your exercise work in your own GitHub account, sign in at [GitHub](https://github.com/), open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, and then select **Create fork**. Clone your fork instead of the upstream repository:
+Clone your fork from PowerShell, replacing `YOUR-GITHUB-USERNAME` with your own account name:
 
 ```powershell
 git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git remote -v
+git remote get-url origin
 ```
 
-No `gh auth login` command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.
+The last command must show your fork, not the instructor repository. If you already cloned your fork for another exercise, enter that folder instead of cloning again. You do not need `gh auth login` to clone a public fork. GitHub sign-in is needed to create the fork and push your changes.
 
 Run local setup; this lab does not create Azure resources:
 

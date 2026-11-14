@@ -52,31 +52,28 @@
 <ul>
 <li>An Azure subscription where you can create resources and role assignments. <strong>Owner</strong> is sufficient. Alternatively, use <strong>Contributor</strong> plus **User Access Administrator** at the subscription scope.</li>
 <li>Available regional quota for at least four dedicated-family vCPUs used by <code>Standard_E4ds_v4</code>. You can pass another compatible VM size to setup if your region has different quota.</li>
-<li>A GitHub account that can create and administer a repository from a template.</li>
+<li>A GitHub account that can create and administer a fork of the course repository.</li>
 <li>Git, Azure CLI, GitHub CLI, PowerShell, and Python installed locally.</li>
 <li>Permission to run billable Azure ML compute. The cluster scales to zero after 120 seconds when idle, but the training node incurs cost while running.</li>
 </ul>
-<h2>Step 1: Create your GitHub copy and clone it</h2>
-<ol start="1">
-<li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">kavsrd13/operationalize-ml-models-labs</a>.</li>
-<li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account and give the repository any name, such as <code>mlops3</code>.</li>
-<li>Clone your GitHub copy without signing in to GitHub CLI. Replace both placeholders with your GitHub account and repository name. Git creates a local folder with the repository name; enter that folder:</li>
+<h2>Step 1: Fork and clone the course repository</h2>
+<ol>
+<li>Sign in to GitHub in your browser and open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>.</li>
+<li>Select <strong>Fork</strong>, choose your GitHub account as owner, and select <strong>Create fork</strong>. Keep the default name <code>operationalize-ml-models-labs</code> and the <code>main</code> branch.</li>
+<li>Clone your fork in PowerShell. Replace <code>YOUR-GITHUB-USERNAME</code> with your account name:</li>
 </ol>
-<pre><code>git clone https://github.com/&lt;your-github-name&gt;/&lt;your-repository-name&gt;.git
-Set-Location .\&lt;your-repository-name&gt;
-git switch main</code></pre>
-<p>For example, if your repository is <code>kavsrd13/mlops3</code>, run:</p>
-<pre><code>git clone https://github.com/kavsrd13/mlops3.git
-Set-Location .\mlops3
-git switch main</code></pre>
-<ol start="4">
-<li>Confirm you are in the clone you just created, the working tree is clean, and <code>origin</code> points to your GitHub copy:</li>
-</ol>
-<pre><code>Get-Location
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
+git switch main
+Get-Location
 git status --short
-git remote get-url origin</code></pre>
-<p><code>git status --short</code> must print nothing. Do not continue if it displays modified files or if the remote URL names a different repository.</p>
-<p>You need GitHub CLI authentication only when setup configures secrets and variables in your student repository. <code>gh auth login</code> identifies your GitHub account; the clone&#x27;s <code>origin</code> URL identifies the repository. Setup reads that URL automatically, so you never type an owner/repository value.</p>
+git remote get-url origin
+</code></pre>
+<p><code>git status --short</code> must print nothing, and <code>origin</code> must point to your fork. Run all remaining commands from this folder. Setup detects your repository from <code>origin</code>; you do not type <code>OWNER/REPO</code>.</p>
+<ol start="4">
+<li>In your fork on GitHub, open <strong>Actions</strong>. If GitHub asks you to enable workflows, select <strong>I understand my workflows, go ahead and enable them</strong> before the first training push.</li>
+</ol>
+<p>You need GitHub CLI authentication only when setup configures secrets and variables in your fork. Setup reuses your existing GitHub CLI session.</p>
 <h2>Step 2: Check your Azure and GitHub sign-ins</h2>
 <p>If you are already signed in to Azure CLI and GitHub CLI on this computer, skip the login commands. Otherwise, from the repository root, run each one that you still need:</p>
 <pre><code>az login
@@ -203,7 +200,7 @@ az group exists --name $RG</code></pre>
 <ul>
 <li><strong>Setup cannot read the repository:</strong> confirm <code>git remote -v</code> points to your student repository and <code>gh auth status</code> shows its owner account.</li>
 <li><strong>Setup unexpectedly asks for a subscription ID or <code>OWNER/REPO</code>:</strong> you are running an old setup script or are in the wrong clone. Run <code>Get-Location</code>, <code>git status --short</code>, and <code>git remote get-url origin</code>; then return to the clean folder named after your GitHub repository created in Step 1.</li>
-<li><strong>Setup says administrator access is required:</strong> run setup from a repository created under your account with <strong>Use this template</strong>, not the instructor&#x27;s source repository.</li>
+<li><strong>Setup says administrator access is required:</strong> run setup from a repository forked under your account from the course repository, not the instructor&#x27;s source repository.</li>
 <li><strong>OIDC login fails:</strong> rerun setup from the same student repository. OIDC trust is specific to the repository and <code>main</code> branch.</li>
 <li><strong>Compute quota fails:</strong> choose another region or rerun setup with a VM size available in your subscription, for example <code>-VmSize &#x27;&lt;available-cpu-sku&gt;&#x27;</code>.</li>
 <li><strong>Workflow cannot find data:</strong> confirm version <code>1</code> exists in the same workspace configured by <code>AZURE_ML_WORKSPACE</code>.</li>

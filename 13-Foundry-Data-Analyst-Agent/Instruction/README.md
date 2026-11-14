@@ -10,23 +10,23 @@ The agent uses an existing model deployment. It does not train or fine-tune a mo
 
 - A GitHub account and an Azure subscription where you can create or use a Foundry project, deploy a chat model, create a user-assigned managed identity, assign a role, and use Code Interpreter.
 - Git, Python 3.11, PowerShell, Azure CLI, and GitHub CLI on your laptop.
-- Your own copy of this repository, created with **Use this template**. Setup must run from that copy, not the instructor repository.
+- Your own fork of this repository. Run setup from the fork, not the instructor repository.
 - A Foundry account and project with a working chat model deployment. The example test used `gpt-4.1-mini`; your deployment name can differ. Model calls and Code Interpreter use billable Azure capacity.
 
-## Step 1: Create your own repository and clone it
+## Step 1: Fork and clone the course repository
 
-1. Open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs).
-2. Select **Use this template** → **Create a new repository**. Choose your GitHub account, use `main` as the default branch, and create the repository.
-3. Clone your new repository and enter it. Replace both placeholders:
+1. Sign in to GitHub in your browser and open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs).
+2. Select **Fork**, choose your account as owner, and select **Create fork**. Keep the default name `operationalize-ml-models-labs` and the `main` branch.
+3. Clone your fork in PowerShell. Replace `YOUR-GITHUB-USERNAME` with your account name:
 
 ```powershell
-git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
-Set-Location .\YOUR-REPOSITORY-NAME
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 git switch main
 git remote get-url origin
 ```
 
-The last command must show your repository, not the instructor repository. All later commands run from this repository root.
+The last command must show your fork. All later commands run from this repository root. Open the **Actions** tab in your fork and, if prompted, select **I understand my workflows, go ahead and enable them** before your first push.
 
 ## Step 2: Prepare a Foundry project and model
 

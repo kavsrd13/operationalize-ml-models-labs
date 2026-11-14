@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create your own repository from the course template, connect it to your Microsoft Foundry project once, change `n_epochs` from 2 to 3, and push to `main`. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.
+Fork the course repository, connect it to your Microsoft Foundry project once, change `n_epochs` from 2 to 3, and push to `main`. Your push automatically starts a supervised fine-tuning job. No pull request or instructor approval is required.
 
 ## Why fine-tune this model?
 
@@ -31,7 +31,7 @@ real patient care.
 ## Student workflow
 
 ```text
-Create your repository from the template and clone it
+Fork the course repository and clone your fork
         ↓
 Check your Azure and GitHub CLI sign-ins; run setup.ps1 once
         ↓
@@ -58,39 +58,24 @@ You need:
 
 Fine-tuning is billable. Use an exercise subscription and delete resources when the class is complete.
 
-## Step 1: Create your GitHub copy and clone it
+## Step 1: Fork and clone the course repository
 
-1. Open [kavsrd13/operationalize-ml-models-labs](https://github.com/kavsrd13/operationalize-ml-models-labs).
-2. Select **Use this template** → **Create a new repository**. Choose your
-   GitHub account and give the repository any name, such as `mlops3`.
-3. Clone your GitHub copy. Replace both names below with your GitHub account
-   and repository name. Git creates a local folder with the repository name:
+1. Sign in to GitHub in your browser and open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs).
+2. Select **Fork**, choose your account as owner, and select **Create fork**. Keep the default name `operationalize-ml-models-labs` and the `main` branch.
+3. Clone your fork in PowerShell. Replace `YOUR-GITHUB-USERNAME` with your account name:
 
 ```powershell
-git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
-Set-Location .\YOUR-REPOSITORY-NAME
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+Set-Location .\operationalize-ml-models-labs
 git switch main
-```
-
-For example, if your repository is `kavsrd13/mlops3`, run:
-
-```powershell
-git clone https://github.com/kavsrd13/mlops3.git
-Set-Location .\mlops3
-git switch main
-```
-
-4. Confirm that you are in your new clone and `origin` points to your GitHub
-   copy:
-
-```powershell
 Get-Location
 git status --short
 git remote get-url origin
 ```
 
-`git status --short` must print nothing. Setup detects your repository from
-`origin`; it never asks you to type an owner/repository value.
+`git status --short` must print nothing, and `origin` must point to your fork. Setup reads your fork from `origin`; you do not type `OWNER/REPO`.
+
+4. In your fork on GitHub, open **Actions**. If GitHub asks you to enable workflows, select **I understand my workflows, go ahead and enable them** before the first fine-tuning push.
 
 ## Step 2: Check your Azure and GitHub sign-ins
 

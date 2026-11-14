@@ -145,7 +145,7 @@ Write-Host 'Existing Azure and GitHub CLI sessions are ready; no second login is
 
 $GitHubRepo = Get-GitHubRepositoryFromGit
 if ($GitHubRepo -eq 'kavsrd13/operationalize-ml-models-labs') {
-    throw 'This is the course source repository. Create your own repository with Use this template, clone it, and run setup there.'
+    throw 'This is the course source repository. Fork the course repository, clone your fork, and run setup there.'
 }
 $repo = gh api "repos/$GitHubRepo" | ConvertFrom-Json
 Assert-LastExitCode 'Read student repository'

@@ -1,4 +1,4 @@
-# Run from the root of your own GitHub template repository after az login and gh auth login.
+# Run from the root of your own GitHub fork after az login and gh auth login.
 $ErrorActionPreference = 'Stop'
 
 function Check([string]$Step) {
@@ -21,7 +21,7 @@ $origin = (git remote get-url origin).Trim()
 Check 'Read origin remote'
 $repository = $origin -replace '^https://github\.com/', '' -replace '^git@github\.com:', '' -replace '\.git$', ''
 if ($repository -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'origin must point to your GitHub repository.' }
-if ($repository -eq 'kavsrd13/operationalize-ml-models-labs') { throw 'Create your own repository with Use this template first.' }
+if ($repository -eq 'kavsrd13/operationalize-ml-models-labs') { throw 'Fork the course repository and clone your fork first.' }
 $repoJson = gh api "repos/$repository"
 Check 'Read your GitHub repository'
 $repo = $repoJson | ConvertFrom-Json

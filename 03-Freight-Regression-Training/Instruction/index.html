@@ -7,14 +7,21 @@
 <h2>Goal</h2>
 <p>Train a freight-cost model locally, then run the same training problem as an Azure Machine Learning <strong>command job</strong>. You will create or select a resource group and workspace, register the Olist data asset, create a CPU compute cluster, submit the job, and inspect its metrics and MLflow model artifact.</p>
 <p>This exercise trains a model. It does not register the resulting model as a workspace model asset or deploy an endpoint.</p>
-<h2>Step 1: Clone the code and check prerequisites</h2>
-<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor such as VS Code. Clone the public repository from a PowerShell terminal. No GitHub CLI sign-in is needed:</p>
-<pre><code>git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+<h2>Step 1: Fork and clone the code</h2>
+<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor such as VS Code. Sign in to GitHub in your browser, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>, select <strong>Fork</strong>, choose your account as owner, and select <strong>Create fork</strong>. Keep the default repository name and <code>main</code> branch.</p>
+<p>In PowerShell, replace <code>YOUR-GITHUB-USERNAME</code> with your account name:</p>
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
+git remote get-url origin
 python --version
-az --version</code></pre>
-<p>Run the remaining commands from this repository root. If you already cloned it for Exercises 01 or 02, enter that folder instead of cloning again. To save your changes in your own GitHub account, use <strong>Use this template</strong> on the <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">course repository</a> and clone your copy instead. In that case, substitute your repository URL in the <code>git clone</code> command above.</p>
-<p>The actual code is in <a href="../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a>, <a href="../src/train.py"><code>src/train.py</code></a>, and <a href="../jobs/train-job.yml"><code>jobs/train-job.yml</code></a>. The shared resource definitions are <a href="../../datasets/olist/olist-data-asset.yml"><code>olist-data-asset.yml</code></a> and <a href="../../00-Shared-Setup-and-Data/scripts/compute.yml"><code>compute.yml</code></a>.</p>
+az --version
+</code></pre>
+<p>The remote must point to your fork. If you already cloned your fork for Exercises 01 or 02, enter that folder instead of cloning again. Run the remaining commands from the repository root.</p>
+<p>The actual code is in <a href="../freight-cost-local.ipynb"><code>freight-cost-local.ipynb</code></a>,
+<a href="../src/train.py"><code>src/train.py</code></a>, and <a href="../jobs/train-job.yml"><code>jobs/train-job.yml</code></a>.
+The shared resource definitions are
+<a href="../../datasets/olist/olist-data-asset.yml"><code>olist-data-asset.yml</code></a> and
+<a href="../../00-Shared-Setup-and-Data/scripts/compute.yml"><code>compute.yml</code></a>.</p>
 <h2>Step 2: Prepare the data and local Python environment</h2>
 <p>Run this once if you have not completed the shared setup in Exercises 01 or 02:</p>
 <pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>

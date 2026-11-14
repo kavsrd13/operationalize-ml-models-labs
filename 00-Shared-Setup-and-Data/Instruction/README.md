@@ -11,17 +11,17 @@ start a cloud exercise.
 Install Python 3.10 or 3.11 and Git. If you use VS Code, install its **Python**
 and **Jupyter** extensions. Azure CLI is only needed for the cloud setup below.
 
-## 2. Clone the course
+## 2. Fork and clone the course
 
-You can clone the public repository without signing in:
+Sign in to GitHub in your browser, open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, choose your account as owner, and select **Create fork**. Keep the default repository name and `main` branch. Then replace `YOUR-GITHUB-USERNAME` with your account name:
 
 ```powershell
-git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
+git remote get-url origin
 ```
 
-To keep your own changes in GitHub, fork the repository first and clone your
-fork instead. Forking and pushing require a GitHub account; cloning does not.
+The last command must show your fork. If you already cloned your fork, enter its folder instead. No GitHub CLI sign-in is needed for this public clone.
 
 ## 3. Set up locally
 

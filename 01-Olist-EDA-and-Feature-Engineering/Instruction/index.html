@@ -6,17 +6,17 @@
 <main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 01: Olist EDA and feature engineering</h1>
 <h2>Goal</h2>
 <p>Understand the Olist tables and construct freight-cost features without target leakage.</p>
-<h2>Fork and clone the public repository</h2>
-<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. The public course repository can be inspected or cloned without a GitHub login:</p>
-<pre><code>git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git</code></pre>
-<p>To save your exercise work in your own GitHub account, sign in at <a href="https://github.com/">GitHub</a>, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>, select <strong>Fork</strong>, and then select <strong>Create fork</strong>. Clone your fork instead of the upstream repository:</p>
-<pre><code>git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
+<h2>Fork and clone the course repository</h2>
+<p>Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor. Sign in to GitHub in your browser, open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>, select <strong>Fork</strong>, choose your account as owner, and select <strong>Create fork</strong>. Keep the default repository name and <code>main</code> branch.</p>
+<p>Clone your fork from PowerShell, replacing <code>YOUR-GITHUB-USERNAME</code> with your own account name:</p>
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
-git remote add upstream https://github.com/kavsrd13/operationalize-ml-models-labs.git
-git remote -v</code></pre>
-<p>No <code>gh auth login</code> command is needed for cloning. GitHub sign-in is required only to create the fork or push changes to it.</p>
+git remote get-url origin
+</code></pre>
+<p>The last command must show your fork, not the instructor repository. If you already cloned your fork for another exercise, enter that folder instead of cloning again. You do not need <code>gh auth login</code> to clone a public fork. GitHub sign-in is needed to create the fork and push your changes.</p>
 <p>Run local setup; this lab does not create Azure resources:</p>
-<pre><code>python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure</code></pre>
+<pre><code class="language-powershell">python .\00-Shared-Setup-and-Data\scripts\bootstrap.py --skip-azure
+</code></pre>
 <p>Select the <strong>Python (Olist Azure ML)</strong> notebook kernel.</p>
 <h2>Code files</h2>
 <p>The actual code for this exercise is here:</p>

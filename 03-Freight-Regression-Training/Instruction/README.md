@@ -10,25 +10,21 @@ cluster, submit the job, and inspect its metrics and MLflow model artifact.
 This exercise trains a model. It does not register the resulting model as a
 workspace model asset or deploy an endpoint.
 
-## Step 1: Clone the code and check prerequisites
+## Step 1: Fork and clone the code
 
-Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor such as VS
-Code. Clone the public repository from a PowerShell terminal. No GitHub CLI
-sign-in is needed:
+Install Python 3.10 or 3.11, Git, Azure CLI, and a notebook editor such as VS Code. Sign in to GitHub in your browser, open [the course repository](https://github.com/kavsrd13/operationalize-ml-models-labs), select **Fork**, choose your account as owner, and select **Create fork**. Keep the default repository name and `main` branch.
+
+In PowerShell, replace `YOUR-GITHUB-USERNAME` with your account name:
 
 ```powershell
-git clone https://github.com/kavsrd13/operationalize-ml-models-labs.git
+git clone https://github.com/YOUR-GITHUB-USERNAME/operationalize-ml-models-labs.git
 Set-Location .\operationalize-ml-models-labs
+git remote get-url origin
 python --version
 az --version
 ```
 
-Run the remaining commands from this repository root. If you already cloned
-it for Exercises 01 or 02, enter that folder instead of cloning again. To save
-your changes in your own GitHub account, use **Use this template** on the
-[course repository](https://github.com/kavsrd13/operationalize-ml-models-labs)
-and clone your copy instead. In that case, substitute your repository URL in
-the `git clone` command above.
+The remote must point to your fork. If you already cloned your fork for Exercises 01 or 02, enter that folder instead of cloning again. Run the remaining commands from the repository root.
 
 The actual code is in [`freight-cost-local.ipynb`](../freight-cost-local.ipynb),
 [`src/train.py`](../src/train.py), and [`jobs/train-job.yml`](../jobs/train-job.yml).
