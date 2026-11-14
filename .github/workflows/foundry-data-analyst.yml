@@ -1,0 +1,48 @@
+name: Exercise 13 - Publish Foundry data analyst agent
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '13-Foundry-Data-Analyst-Agent/instructions/**'
+      - '13-Foundry-Data-Analyst-Agent/data/**'
+      - '13-Foundry-Data-Analyst-Agent/publish.py'
+      - '13-Foundry-Data-Analyst-Agent/requirements.txt'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: foundry-data-analyst-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository != 'kavsrd13/operationalize-ml-models-labs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FOUNDRY_PROJECT_ENDPOINT: ${{ vars.ANALYST_PROJECT_ENDPOINT }}
+      FOUNDRY_MODEL_DEPLOYMENT: ${{ vars.ANALYST_MODEL_DEPLOYMENT }}
+      ANALYST_AGENT_NAME: ${{ vars.ANALYST_AGENT_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Sign in with GitHub OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.ANALYST_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.ANALYST_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.ANALYST_AZURE_SUBSCRIPTION_ID }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install Foundry SDK
+        run: pip install -r 13-Foundry-Data-Analyst-Agent/requirements.txt
+      - name: Upload CSVs and register new agent version
+        run: python 13-Foundry-Data-Analyst-Agent/publish.py
+      - name: Verify the newest agent in the terminal
+        run: |
+          printf '%s\nexit\n' 'How many orders and order items are in the sample? Use Code Interpreter.' |
+            python 13-Foundry-Data-Analyst-Agent/chat.py

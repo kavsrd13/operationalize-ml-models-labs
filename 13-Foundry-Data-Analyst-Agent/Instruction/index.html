@@ -1,0 +1,94 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Exercise 13: Foundry data analyst agent</title><link rel="stylesheet" href="../../assets/site.css"></head><body><header><a class="brand" href="../../index.html">Operationalize Machine Learning Models</a><span>Student lab guide</span></header><main><nav><a href="../../index.html">← All exercises</a></nav><article><h1>Exercise 13: Foundry data analyst agent with automatic versioning</h1>
+<h2>Goal</h2>
+<p>Create a versioned Microsoft Foundry prompt agent with Code Interpreter and four small, related Olist CSV files. Ask it a data question in your terminal. Then edit its system instruction, push to your own GitHub repository, watch GitHub Actions register a new agent version through OIDC, and chat with the latest version in Streamlit.</p>
+<p>The agent uses an existing model deployment. It does not train or fine-tune a model. Code Interpreter runs Python against uploaded CSV files when analysis is needed.</p>
+<h2>Before you start</h2>
+<ul>
+<li>A GitHub account and an Azure subscription where you can create or use a Foundry project, deploy a chat model, create a user-assigned managed identity, assign a role, and use Code Interpreter.</li>
+<li>Git, Python 3.11, PowerShell, Azure CLI, and GitHub CLI on your laptop.</li>
+<li>Your own copy of this repository, created with <strong>Use this template</strong>. Setup must run from that copy, not the instructor repository.</li>
+<li>A Foundry account and project with a working chat model deployment. The example test used <code>gpt-4.1-mini</code>; your deployment name can differ. Model calls and Code Interpreter use billable Azure capacity.</li>
+</ul>
+<h2>Step 1: Create your own repository and clone it</h2>
+<ol>
+<li>Open <a href="https://github.com/kavsrd13/operationalize-ml-models-labs">the course repository</a>.</li>
+<li>Select <strong>Use this template</strong> → <strong>Create a new repository</strong>. Choose your GitHub account, use <code>main</code> as the default branch, and create the repository.</li>
+<li>Clone your new repository and enter it. Replace both placeholders:</li>
+</ol>
+<pre><code class="language-powershell">git clone https://github.com/YOUR-GITHUB-USERNAME/YOUR-REPOSITORY-NAME.git
+Set-Location .\YOUR-REPOSITORY-NAME
+git switch main
+git remote get-url origin
+</code></pre>
+<p>The last command must show your repository, not the instructor repository. All later commands run from this repository root.</p>
+<h2>Step 2: Prepare a Foundry project and model</h2>
+<ol>
+<li>Open <a href="https://ai.azure.com/">Microsoft Foundry</a> and choose your subscription.</li>
+<li>Open an existing <strong>Foundry project</strong>, or create a Foundry resource and project if you have none. Record the <strong>resource group</strong>, <strong>Foundry account name</strong>, and <strong>project name</strong> from the Azure portal resource overview.</li>
+<li>In the project, open <strong>Models</strong> → <strong>Deployments</strong>. Use an existing chat model deployment, or deploy a supported model such as <code>gpt-4.1-mini</code> where quota is available. Wait for <strong>Succeeded</strong>. Record the <strong>deployment name</strong> shown in the table; this is the name the SDK uses.</li>
+<li>Confirm your user can build agents in this project. Assign yourself <strong>Foundry User</strong> (previously <strong>Azure AI User</strong>) at project scope if necessary. Subscription <strong>Owner</strong> alone does not grant Foundry data-plane access.</li>
+</ol>
+<h2>Step 3: Check sign-ins and install Python packages</h2>
+<p>Only sign in if the existing CLI session is not already for the intended accounts:</p>
+<pre><code class="language-powershell">az account show --output table
+gh auth status
+</code></pre>
+<p>If needed, run <code>az login --use-device-code</code> and/or <code>gh auth login</code> once. Then install:</p>
+<pre><code class="language-powershell">python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r .\13-Foundry-Data-Analyst-Agent\requirements.txt
+</code></pre>
+<h2>Step 4: Connect your GitHub repository to the project</h2>
+<pre><code class="language-powershell">.\13-Foundry-Data-Analyst-Agent\setup.ps1
+</code></pre>
+<p>Select your Azure subscription by typing its displayed number. Enter the four names you recorded in Step 2: resource group, Foundry account, project, and model deployment. The script detects your GitHub repository from <code>origin</code>, verifies the project and deployment, creates a user-assigned identity with an OIDC trust restricted to your repository's <code>main</code> branch, assigns <strong>Foundry User</strong> on the project, and saves the GitHub Actions settings. It prints the project endpoint. It does not ask you to log in again.</p>
+<p>If PowerShell says the script cannot be found, run <code>Get-Location</code> and make sure you are at the repository root. If script execution is blocked, run <code>Set-ExecutionPolicy -Scope Process Bypass</code> in the same terminal and rerun the script.</p>
+<h2>Step 5: Publish and test the first agent version locally</h2>
+<p>Set these values using the endpoint printed by setup and the deployment name from Step 2:</p>
+<pre><code class="language-powershell">$env:FOUNDRY_PROJECT_ENDPOINT = 'https://YOUR-ACCOUNT.services.ai.azure.com/api/projects/YOUR-PROJECT'
+$env:FOUNDRY_MODEL_DEPLOYMENT = 'YOUR-MODEL-DEPLOYMENT'
+$env:ANALYST_AGENT_NAME = 'olist-data-analyst'
+python .\13-Foundry-Data-Analyst-Agent\publish.py
+python .\13-Foundry-Data-Analyst-Agent\chat.py
+</code></pre>
+<p><code>publish.py</code> uploads <code>orders.csv</code>, <code>order_items.csv</code>, <code>customers.csv</code>, and <code>sellers.csv</code> from the exercise <code>data</code> folder. It registers the first version of the <code>olist-data-analyst</code> prompt agent with the instruction in <code>instructions/system.txt</code> and Code Interpreter. No local dataset path is needed at chat time: the agent version references the uploaded files.</p>
+<p>At the <code>You:</code> prompt, enter:</p>
+<pre><code class="language-text">How many orders and order items are in the sample? Use Code Interpreter to read the CSV files and show the counts.
+</code></pre>
+<p>Expected: <strong>300 orders</strong> and <strong>340 order items</strong>. The terminal should also say <strong>Code Interpreter ran for this answer</strong>. Next ask:</p>
+<pre><code class="language-text">Which seller states have the highest total item price? Join the needed files, show the top five, and name the join key.
+</code></pre>
+<p>Check that the answer uses <code>seller_id</code> to join <code>order_items.csv</code> and <code>sellers.csv</code>, shows calculated values, and says this is a teaching sample. Type <code>exit</code> to close chat.</p>
+<h2>Step 6: Change the agent instruction and push</h2>
+<p>Open <code>13-Foundry-Data-Analyst-Agent/instructions/system.txt</code>. At the end, add:</p>
+<pre><code class="language-text">Finish every answer with one short sentence beginning &quot;Takeaway: &quot;.
+</code></pre>
+<p>Save the file. Then run:</p>
+<pre><code class="language-powershell">git add .\13-Foundry-Data-Analyst-Agent\instructions\system.txt
+git commit -m &quot;Improve data analyst agent explanation&quot;
+git push origin main
+</code></pre>
+<p>Open your GitHub repository → <strong>Actions</strong> → <strong>Exercise 13 - Publish Foundry data analyst agent</strong>. The push should start a run. Open its <strong>Upload CSVs and register new agent version</strong> step and verify it prints a new version number. The workflow also asks the agent a sample question. Each instruction or CSV edit pushed to <code>main</code> creates another version; ordinary changes elsewhere do not trigger this workflow. The instructor source repository skips this job.</p>
+<p>In Foundry, open <strong>Build</strong> → <strong>Agents</strong> → <code>olist-data-analyst</code> and compare its versions. The previous version remains available, while requests by agent name use the newest version.</p>
+<h2>Step 7: Chat with the newest agent in Streamlit</h2>
+<p>Keep the same terminal and environment variables from Step 5:</p>
+<pre><code class="language-powershell">streamlit run .\13-Foundry-Data-Analyst-Agent\app.py
+</code></pre>
+<p>Open the local URL printed by Streamlit. Ask <strong>How many orders and order items are in the sample?</strong> and then ask a follow-up about sellers. The answer should use the new <code>Takeaway:</code> ending after the GitHub workflow completes. <strong>New conversation</strong> clears the chat history. Streamlit runs locally on your machine; Foundry runs the agent and Code Interpreter in Azure.</p>
+<h2>Check your result</h2>
+<ul>
+<li>Four linked CSV files appear in the exercise folder and were uploaded during publish.</li>
+<li>The terminal gives the expected counts and reports Code Interpreter use.</li>
+<li>Foundry shows at least two versions of <code>olist-data-analyst</code> after your push.</li>
+<li>The GitHub workflow succeeded using OIDC; no Azure password or API key is stored in the repository.</li>
+<li>Streamlit answers a question using the newest instruction.</li>
+</ul>
+<h2>Cleanup</h2>
+<p>When finished, delete the agent versions and uploaded files from your Foundry project if you no longer need them. Remove the <code>id-olist-analyst-gh-*</code> identity and its project role assignment from the resource group, and delete the model deployment or entire dedicated project if it was created only for this lab. Model and Code Interpreter usage can incur charges.</p>
+<h2>References</h2>
+<ul>
+<li><a href="https://learn.microsoft.com/python/api/overview/azure/ai-projects-readme">Azure AI Projects Python SDK and Code Interpreter</a></li>
+<li><a href="https://learn.microsoft.com/azure/foundry/concepts/rbac-foundry">Foundry role-based access control</a></li>
+<li><a href="https://github.com/Azure/login#login-with-openid-connect-oidc-recommended">Azure Login action with OIDC</a></li>
+</ul>
+</article></main></body></html>
