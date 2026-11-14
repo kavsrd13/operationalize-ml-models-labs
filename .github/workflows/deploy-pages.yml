@@ -46,7 +46,8 @@ jobs:
             cp "$page" "$destination/index.html"
           done < <(find . -path './[0-9][0-9]-*/Instruction/index.html' -print | sort)
           touch _site/.nojekyll
-          expected=$(grep -c 'class="card" href="[^"]*/Instruction/index.html"' index.html)
+          # The shared setup page (00) is published but has no exercise card.
+          expected=$(($(grep -c 'class="card" href="[^"]*/Instruction/index.html"' index.html) + 1))
           actual=$(find _site -path '*/Instruction/index.html' | wc -l)
           test "$actual" -eq "$expected"
 
