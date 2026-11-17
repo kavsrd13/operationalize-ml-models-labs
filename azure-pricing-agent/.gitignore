@@ -1,0 +1,6 @@
+.foundry/
+.venv/
+.env
+__pycache__/
+*.pyc
+infra/main.json
